@@ -33,18 +33,23 @@ class MusicRepositoryImpl @Inject constructor(
                 return Result.success(emptyList())
             }
             
-            // Use Jamendo as primary source with IA as quality fallback
+            // Try Jamendo first, but fall back to IA if suspended
             val jamendoResults = searchJamendo(cleanQuery).getOrElse { emptyList() }
             
-            // For each Jamendo result, check if IA has better quality in background
-            val enhancedResults = enhanceWithIAQuality(jamendoResults, cleanQuery)
-            
-            // Save search to history if we got results
-            if (enhancedResults.isNotEmpty()) {
-                saveSearchQuery(cleanQuery, enhancedResults.size)
+            val finalResults = if (jamendoResults.isNotEmpty()) {
+                // If Jamendo works, enhance with IA quality
+                enhanceWithIAQuality(jamendoResults, cleanQuery)
+            } else {
+                // If Jamendo fails/suspended, use Internet Archive as primary
+                searchInternetArchive(cleanQuery).getOrElse { emptyList() }
             }
             
-            Result.success(enhancedResults)
+            // Save search to history if we got results
+            if (finalResults.isNotEmpty()) {
+                saveSearchQuery(cleanQuery, finalResults.size)
+            }
+            
+            Result.success(finalResults)
         } catch (e: Exception) {
             // Return error - no fake data
             Result.failure(e)
@@ -71,10 +76,10 @@ class MusicRepositoryImpl @Inject constructor(
         return try {
             // Clean the query and add music-specific filters
             val cleanQuery = query.trim().replace("\n", " ")
-            // Enhanced music filtering for better results
-            val musicQuery = "collection:(opensource_audio OR etree OR community_audio OR freemusicarchive) AND mediatype:audio AND format:(VBR MP3 OR FLAC OR Ogg) AND ($cleanQuery)"
+            // Enhanced music filtering for better results with more collections
+            val musicQuery = "collection:(opensource_audio OR etree OR community_audio OR freemusicarchive OR netlabels OR jamendo OR magnatune) AND mediatype:audio AND format:(MP3 OR VBR OR FLAC OR Ogg) AND ($cleanQuery)"
             
-            val response = internetArchiveService.searchAudio(musicQuery)
+            val response = internetArchiveService.searchAudio(musicQuery, limit = 20)
             val tracks = response.response.docs.mapNotNull { it.toDomainModel() }
             Result.success(tracks)
         } catch (e: Exception) {
@@ -122,13 +127,14 @@ class MusicRepositoryImpl @Inject constructor(
         return try {
             val response = jamendoService.getTrendingTracks()
             if (response.headers.status != "success") {
-                return Result.failure(Exception("Jamendo API error: ${response.headers.error_message}"))
+                // Jamendo failed/suspended, try Internet Archive with popular music
+                return searchInternetArchive("popular music classical jazz rock")
             }
             val tracks = response.results.map { it.toDomainModel() }
             Result.success(tracks)
         } catch (e: Exception) {
-            // Return error - no fake data
-            Result.failure(e)
+            // Fallback to Internet Archive for trending content
+            searchInternetArchive("popular music trending")
         }
     }
 
@@ -136,13 +142,14 @@ class MusicRepositoryImpl @Inject constructor(
         return try {
             val response = jamendoService.getNewReleases()
             if (response.headers.status != "success") {
-                return Result.failure(Exception("Jamendo API error: ${response.headers.error_message}"))
+                // Jamendo failed/suspended, try Internet Archive with recent music
+                return searchInternetArchive("new music recent album 2024 2023")
             }
             val tracks = response.results.map { it.toDomainModel() }
             Result.success(tracks)
         } catch (e: Exception) {
-            // Return error - no fake data
-            Result.failure(e)
+            // Fallback to Internet Archive for new releases
+            searchInternetArchive("recent music new releases")
         }
     }
 
