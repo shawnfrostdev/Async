@@ -28,13 +28,15 @@ fun SearchScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "Search Music",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colors.onBackground
         )
         
         OutlinedTextField(

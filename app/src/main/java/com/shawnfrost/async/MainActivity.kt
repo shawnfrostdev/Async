@@ -13,6 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import dagger.hilt.android.AndroidEntryPoint
 import com.shawnfrost.async.navigation.Screen
 import com.shawnfrost.async.ui.components.BottomNavBar
@@ -53,16 +56,32 @@ fun AsyncApp() {
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.Home.route) {
+            composable(
+                route = Screen.Home.route,
+                enterTransition = { fadeIn(animationSpec = tween(0)) },
+                exitTransition = { fadeOut(animationSpec = tween(0)) }
+            ) {
                 HomeScreen()
             }
-            composable(Screen.Search.route) {
+            composable(
+                route = Screen.Search.route,
+                enterTransition = { fadeIn(animationSpec = tween(0)) },
+                exitTransition = { fadeOut(animationSpec = tween(0)) }
+            ) {
                 SearchScreen()
             }
-            composable(Screen.Library.route) {
+            composable(
+                route = Screen.Library.route,
+                enterTransition = { fadeIn(animationSpec = tween(0)) },
+                exitTransition = { fadeOut(animationSpec = tween(0)) }
+            ) {
                 LibraryScreen()
             }
-            composable(Screen.Settings.route) {
+            composable(
+                route = Screen.Settings.route,
+                enterTransition = { fadeIn(animationSpec = tween(0)) },
+                exitTransition = { fadeOut(animationSpec = tween(0)) }
+            ) {
                 SettingsScreen()
             }
         }

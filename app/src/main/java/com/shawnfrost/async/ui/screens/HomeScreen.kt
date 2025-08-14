@@ -31,24 +31,40 @@ fun HomeScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+        contentPadding = PaddingValues(vertical = 16.dp)
     ) {
         item {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Welcome to Async",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                IconButton(onClick = { viewModel.refreshData() }) {
+                Column {
+                    Text(
+                        text = "Welcome to Async",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colors.onBackground
+                    )
+                    Text(
+                        text = "Discover free music",
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colors.onBackground.copy(alpha = 0.7f),
+                        fontWeight = FontWeight.Normal
+                    )
+                }
+                IconButton(
+                    onClick = { viewModel.refreshData() },
+                    modifier = Modifier.size(48.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
-                        contentDescription = "Refresh"
+                        contentDescription = "Refresh",
+                        tint = MaterialTheme.colors.primary
                     )
                 }
             }
@@ -189,55 +205,72 @@ fun TrackCard(
 ) {
     Card(
         modifier = Modifier
-            .width(160.dp)
-            .height(200.dp),
-        elevation = 4.dp,
+            .width(180.dp)
+            .height(240.dp),
+        elevation = 8.dp,
+        shape = MaterialTheme.shapes.medium,
         onClick = onClick
     ) {
         Column(
-            modifier = Modifier.padding(12.dp)
+            modifier = Modifier.padding(16.dp)
         ) {
-            // Placeholder for album art
-            Box(
+            // Album art placeholder with modern design
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp),
-                contentAlignment = Alignment.Center
+                    .height(140.dp),
+                elevation = 4.dp,
+                shape = MaterialTheme.shapes.small,
+                backgroundColor = MaterialTheme.colors.primary.copy(alpha = 0.1f)
             ) {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Play",
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colors.primary
-                )
+                Box(
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = "Play",
+                        modifier = Modifier.size(56.dp),
+                        tint = MaterialTheme.colors.primary
+                    )
+                }
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
             Text(
                 text = track.title,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                color = MaterialTheme.colors.onSurface
             )
             
             Text(
                 text = track.artist,
-                fontSize = 12.sp,
-                color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
+                fontSize = 14.sp,
+                color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f),
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                fontWeight = FontWeight.Normal
             )
             
             Spacer(modifier = Modifier.weight(1f))
             
-            Text(
-                text = track.source,
-                fontSize = 10.sp,
+            // Source badge
+            Surface(
                 color = MaterialTheme.colors.primary,
-                fontWeight = FontWeight.Medium
-            )
+                shape = MaterialTheme.shapes.small,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text(
+                    text = track.source,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colors.onPrimary,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
         }
     }
 } 
