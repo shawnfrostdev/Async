@@ -11,8 +11,8 @@ object MockMusicService {
     fun getTrendingTracks(): List<Track> = listOf(
         Track(
             id = "mock_1",
-            title = "Chill Hop Beat",
-            artist = "LoFi Producer",
+            title = "Night Owl",
+            artist = "Broke For Free",
             duration = 180000L, // 3 minutes
             albumArt = null,
             mp3Url = "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/WFMU/Broke_For_Free/Directionless_EP/Broke_For_Free_-_01_-_Night_Owl.mp3",
@@ -22,8 +22,8 @@ object MockMusicService {
         ),
         Track(
             id = "mock_2", 
-            title = "Jazz Fusion",
-            artist = "Smooth Collective",
+            title = "Let Me Love You (Demo)",
+            artist = "Demo Artist",
             duration = 240000L, // 4 minutes
             albumArt = null,
             mp3Url = "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/WFMU/Broke_For_Free/Something_EP/Broke_For_Free_-_01_-_Something_Elated.mp3",
@@ -33,8 +33,8 @@ object MockMusicService {
         ),
         Track(
             id = "mock_3",
-            title = "Electronic Dreams",
-            artist = "Synth Wave",
+            title = "Enthusiast",
+            artist = "Tours",
             duration = 200000L, // 3:20
             albumArt = null,
             mp3Url = "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Tours/Enthusiast/Tours_-_01_-_Enthusiast.mp3",
@@ -104,9 +104,24 @@ object MockMusicService {
     
     fun searchTracks(query: String): List<Track> {
         val allTracks = getTrendingTracks() + getNewReleases()
-        return allTracks.filter { track ->
+        
+        // If query is empty or too short, return all tracks
+        if (query.isBlank() || query.length < 2) {
+            return allTracks
+        }
+        
+        // Search for matches in title or artist
+        val matches = allTracks.filter { track ->
             track.title.contains(query, ignoreCase = true) ||
             track.artist.contains(query, ignoreCase = true)
+        }
+        
+        // If no matches found, return some tracks anyway to show functionality
+        return if (matches.isNotEmpty()) {
+            matches
+        } else {
+            // Return first 3 tracks as "suggested" results
+            allTracks.take(3)
         }
     }
 } 

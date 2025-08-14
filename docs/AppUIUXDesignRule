@@ -1,35 +1,38 @@
-You are an Android UI/UX designer. Create a cohesive, modern, and accessible mobile UI for a music streaming app that integrates FMA, Internet Archive, Audius, and Jamendo—built on Android using Material Design 3 (Material You).
+You are an expert Android UI/UX designer. Apply only **Android UI best practices** and design principles to improve the overall look and feel of an app. Do not include or assume the app's structure or features — only focus on the design system, typography, colors, spacing, layouts, components, motion, and accessibility.
 
-**Reference Android Design Best Practices**:
-- Material Design 3 principles: theming, color, typography, components. :contentReference[oaicite:1]{index=1}
-- Layout and content: use edge-to-edge layouts, adaptive UI, proper spacing and hierarchy. :contentReference[oaicite:2]{index=2}
-- Behaviors & Patterns: bottom navigation, predictive back, consistent affordances. :contentReference[oaicite:3]{index=3}
-- Accessibility: clear contrast, touch targets, screen reader support. :contentReference[oaicite:4]{index=4}
-- Styles: cohesive color system, motion, typography. :contentReference[oaicite:5]{index=5}
-- Components: use Material components (Cards, Buttons, Navigation Bar, Typography). :contentReference[oaicite:6]{index=6}
+Use as your primary guide: https://developer.android.com/design/ui/mobile and Material Design 3 (Material You) standards.
 
-**App Structure**:
-- **Bottom navbar** with tabs: Home, Search, Library, Settings.
-- **Home**: top banner carousel, horizontal carousels of featured playlists, new releases, trending, personalized recs, genres.
-- **Search**: sticky search bar, recent/popular searches, tabbed results (Tracks, Artists, Albums).
-- **Library**: “Liked Songs” default playlist, user-created playlists, optional downloads.
-- **Settings**: playback quality, downloads, theme, about & attribution note.
+**Requirements:**
+1. **Material 3 (Material You) Theming**  
+   - Adaptive dynamic colors  
+   - Proper light/dark mode  
+   - Contrast-compliant color palettes  
 
-**UI Requirements**:
-1. Use **Material3 theming** that adapts to light/dark and dynamic color.
-2. Ensure each element—buttons, carousels, search bar—follows Material component guidelines.
-3. Layout should be responsive with meaningful spacing, grid alignment, and edge-to-edge content.
-4. Interactions: smooth transitions, back-navigation, predictive back affordances.
-5. Accessibility: minimum 48dp touch areas, semantic labels for UI elements, proper contrast.
-6. Typography: hierarchy for titles, metadata, playlists clearly defined.
-7. Motion/design: subtle animations in banner, card transitions, player controls.
-8. Mini-player: persistent bottom mini player visible across tabs.
-9. Provide Figma-style layout spec (wireframes or high-fidelity screens).
+2. **Typography & Hierarchy**  
+   - Correct usage of headline, title, label, and body text styles  
+   - Visual hierarchy to guide user focus  
 
-**Deliverables**:
-- Description of visual style and theming approach (colors, typography, components).
-- Home screen wireframe or component layout—sections, spacing, carousels.
-- Search interface wireframe—search bar, chips for recents, result lists.
-- Library screen layout—playlists, liked songs, collections.
-- Settings layout.
-- Notes on accessibility, adaptive layout, and component usage following Android best practices.
+3. **Spacing & Layout**  
+   - Follow 8dp grid system  
+   - Proper padding/margins for touch targets (minimum 48dp)  
+   - Edge-to-edge layouts where applicable  
+
+4. **Components**  
+   - Use Material components: Cards, Buttons, Bottom App Bar, Navigation Rail, etc.  
+   - Consistent elevation and shadow usage  
+
+5. **Motion & Interaction**  
+   - Subtle animations for transitions, state changes, and feedback  
+   - Predictive back gesture readiness  
+
+6. **Accessibility**  
+   - Screen reader compatibility  
+   - High contrast mode readiness  
+   - Large text mode responsiveness  
+
+7. **Image References**  
+   Include clear visual references from **modern Android apps** that follow best practices (e.g., Google Podcasts, YouTube Music, Pocket Casts, Spotify on Android).  
+   - Show examples for typography  
+   - Show examples for bottom navigation  
+   - Show examples for card layouts and image usage  
+   - Show examples for mini-player designs  

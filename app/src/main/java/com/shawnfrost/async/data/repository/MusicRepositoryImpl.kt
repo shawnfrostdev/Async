@@ -164,19 +164,27 @@ class MusicRepositoryImpl @Inject constructor(
     }
 
     private fun InternetArchiveService.SearchResponse.Response.Document.toDomainModel(): Track? {
-        if (format == null || (!format.contains("MP3") && !format.contains("FLAC"))) return null
+        // Check for various audio formats in Internet Archive
+        val hasAudioFormat = format?.any { formatItem ->
+            formatItem.contains("MP3", ignoreCase = true) || 
+            formatItem.contains("FLAC", ignoreCase = true) ||
+            formatItem.contains("VBR", ignoreCase = true) ||
+            formatItem.contains("Ogg", ignoreCase = true)
+        } ?: false
+        
+        if (!hasAudioFormat) return null
         
         return Track(
-            id = identifier,
+            id = "ia_$identifier",
             title = title,
-            artist = creator ?: "Unknown Artist",
+            artist = creator ?: "Unknown Artist", 
             duration = 0L, // Duration not available in search results
             albumArt = null,
             mp3Url = "https://archive.org/download/$identifier/$identifier.mp3",
-            flacUrl = if (format.contains("FLAC")) 
+            flacUrl = if (format?.any { it.contains("FLAC", ignoreCase = true) } == true) 
                 "https://archive.org/download/$identifier/$identifier.flac" else null,
             license = "Creative Commons",
-            source = "IA"
+            source = "Internet Archive"
         )
     }
 
