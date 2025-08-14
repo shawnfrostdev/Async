@@ -3,6 +3,7 @@ package com.shawnfrost.async
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
@@ -19,6 +20,7 @@ import androidx.compose.animation.fadeOut
 import dagger.hilt.android.AndroidEntryPoint
 import com.shawnfrost.async.navigation.Screen
 import com.shawnfrost.async.ui.components.BottomNavBar
+import com.shawnfrost.async.ui.components.MiniPlayer
 import com.shawnfrost.async.ui.screens.HomeScreen
 import com.shawnfrost.async.ui.screens.SearchScreen
 import com.shawnfrost.async.ui.screens.LibraryScreen
@@ -48,7 +50,14 @@ fun AsyncApp() {
     
     Scaffold(
         bottomBar = {
-            BottomNavBar(navController = navController)
+            Column {
+                MiniPlayer(
+                    onExpandClick = {
+                        // TODO: Navigate to full player screen
+                    }
+                )
+                BottomNavBar(navController = navController)
+            }
         }
     ) { innerPadding ->
         NavHost(

@@ -15,10 +15,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.shawnfrost.async.ui.viewmodel.SearchViewModel
+import com.shawnfrost.async.ui.viewmodel.MusicPlayerViewModel
 
 @Composable
 fun SearchScreen(
-    viewModel: SearchViewModel = hiltViewModel()
+    viewModel: SearchViewModel = hiltViewModel(),
+    musicPlayerViewModel: MusicPlayerViewModel = hiltViewModel()
 ) {
     val searchQuery by viewModel.searchQuery.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
@@ -145,7 +147,7 @@ fun SearchScreen(
                         SearchResultItem(
                             track = track,
                             onClick = {
-                                // TODO: Handle track click
+                                musicPlayerViewModel.playTrack(track)
                             }
                         )
                     }

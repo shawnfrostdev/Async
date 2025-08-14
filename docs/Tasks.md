@@ -139,18 +139,22 @@ All foundational components are now in place:
 - [ ] Add sorting and filtering options
 
 ### Music Player
-- [ ] Set up ExoPlayer service
-- [ ] Create mini player UI
+- [x] Set up ExoPlayer service
+- [x] Create mini player UI
+- [x] Implement MusicPlayerViewModel for state management
+- [x] Add playback controls:
+  - [x] Play/Pause
+  - [x] Seek (basic implementation)
+  - [ ] Skip/Previous
+  - [ ] Shuffle
+  - [ ] Repeat
+- [x] Add background playback support
+- [x] Implement media notifications
+- [x] Connect track cards to actual playback
+- [x] Add service binding and lifecycle management
 - [ ] Implement full-screen player
-- [ ] Add playback controls:
-  - Play/Pause
-  - Skip/Previous
-  - Seek
-  - Shuffle
-  - Repeat
 - [ ] Handle audio focus and interruptions
-- [ ] Add background playback support
-- [ ] Implement media notifications
+- [ ] Add playlist queue management
 
 ## 🎯 Phase 3: Advanced Features
 

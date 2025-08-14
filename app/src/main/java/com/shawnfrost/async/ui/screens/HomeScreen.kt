@@ -18,10 +18,12 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.shawnfrost.async.domain.model.Track
 import com.shawnfrost.async.ui.viewmodel.HomeViewModel
+import com.shawnfrost.async.ui.viewmodel.MusicPlayerViewModel
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    musicPlayerViewModel: MusicPlayerViewModel = hiltViewModel()
 ) {
     val trendingTracks by viewModel.trendingTracks.collectAsState()
     val newReleases by viewModel.newReleases.collectAsState()
@@ -110,7 +112,7 @@ fun HomeScreen(
                 subtitle = "Latest tracks from Free Music Archive",
                 tracks = newReleases,
                 onTrackClick = { track -> 
-                    // TODO: Handle track click
+                    musicPlayerViewModel.playTrack(track)
                 }
             )
         }
@@ -122,7 +124,7 @@ fun HomeScreen(
                 subtitle = "Popular tracks right now",
                 tracks = trendingTracks,
                 onTrackClick = { track -> 
-                    // TODO: Handle track click
+                    musicPlayerViewModel.playTrack(track)
                 }
             )
         }
