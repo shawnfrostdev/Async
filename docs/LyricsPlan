@@ -1,0 +1,86 @@
+For **lyrics for all songs** — not just the popular mainstream ones — you can’t rely on Genius or Musixmatch alone, because they mostly focus on chart music and commercial tracks.
+Since you’ll have a lot of indie / open-license content from FMA, IA, Audius, Jamendo, etc., you’ll need a **multi-source fallback system**.
+
+Here’s how you can cover almost everything:
+
+---
+
+## **🎯 Lyrics Sourcing Strategy**
+
+### **1. First Priority: Embedded Lyrics (LRC in files)**
+
+* Many open-license FLAC/MP3 files **already have lyrics embedded in metadata** (`USLT` tag in MP3, `LYRICS` in FLAC).
+* Use an **ID3 tag reader** in Android:
+
+  ```kotlin
+  val retriever = MediaMetadataRetriever()
+  retriever.setDataSource(fileUrl, HashMap())
+  val lyrics = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LYRICS)
+  ```
+* If present → instant sync with the track, no API calls.
+
+---
+
+### **2. Second Priority: Lyric Files in Same Collection**
+
+* On Internet Archive, some albums include `.lrc` or `.txt` files with lyrics.
+* When fetching metadata from:
+
+  ```
+  https://archive.org/metadata/<identifier>
+  ```
+
+  → Check for `.lrc` or `.txt` → Download and parse.
+
+---
+
+### **3. Third Priority: Free Lyrics APIs**
+
+For songs with known title + artist, try:
+
+* **Lyrics.ovh** (Free, simple REST API)
+* **Lyrics.fandom.com** (parse HTML for small-scale queries — but careful with scraping limits)
+* **LRCLIB API** (free, open-source crowd-sourced lyric DB, includes synced LRC files)
+  Example:
+
+  ```
+  https://lrclib.net/api/get?track_name=Blue%20Sky&artist_name=John%20Doe
+  ```
+
+---
+
+### **4. Fourth Priority: Search in Public Databases**
+
+* If APIs fail, do a background search in:
+
+  * **Wikilyrics**
+  * **Public GitHub lyric repos**
+  * **OpenLyric** (XML-based, old but still useful)
+* You can even store a small **offline lyric cache** for your top-played tracks.
+
+---
+
+### **5. Syncing Lyrics**
+
+* If you get LRC format → show karaoke-style synced lyrics in your player UI.
+* If you get plain text → display as static lyrics under album art.
+
+---
+
+## **📌 Final Flow**
+
+When a track plays:
+
+1. **Check embedded lyrics** in file metadata.
+2. If none → **Check IA for `.lrc`/`.txt` file**.
+3. If none → **Query LRCLIB / Lyrics.ovh API** with title & artist.
+4. If none → **Fallback to static lyric search** (last resort).
+
+---
+
+✅ Works for **indie & open music**
+✅ Covers **mainstream + underground**
+✅ Legal for public-domain/CC tracks
+✅ No need to pay for Musixmatch API
+
+---

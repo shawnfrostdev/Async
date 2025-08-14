@@ -1,0 +1,110 @@
+Alright — here’s the **full interface plan** for your app with the bottom navbar layout you want, designed like a clean streaming service but adapted for your **FMA + IA hybrid system**.
+
+---
+
+## **📱 Bottom Navbar Structure**
+
+**Tabs:**
+
+1. **Home** 🏠
+2. **Search** 🔍
+3. **Library** 📚
+4. **Settings** ⚙️
+
+---
+
+## **1️⃣ Home Tab (Catalogs & Recommendations)**
+
+**Layout:**
+
+* **Top Banner** → Rotating carousel of featured playlists/albums (pulled from FMA “Editors Picks” + some IA featured collections).
+* **Sections (Horizontal Scroll)**:
+
+  1. **New Additions** → Recent uploads from FMA’s “Recent Tracks” API.
+  2. **Trending** → Tracks sorted by most played/downloaded in the last week (FMA “Charts” API).
+  3. **Genres** → Cards for genres (Jazz, Rock, Electronic, etc.) → opens genre-specific feed.
+  4. **Recommended for You** → Generated from the user’s liked songs + most played genres.
+* **Mini Player at Bottom** → Persistent, shows current track & play/pause.
+
+---
+
+## **2️⃣ Search Tab**
+
+**Layout:**
+
+* **Sticky Top Search Bar** (always visible).
+* If **no search yet** → Show:
+
+  * **Recent Searches** (chips style).
+  * **Popular Searches** (from FMA “Most Downloaded” API).
+* If **search active** → Results in vertical list:
+
+  * **Tabs inside search results**:
+
+    1. **Tracks**
+    2. **Artists**
+    3. **Albums**
+  * Tapping a result → Opens detail page (album view or artist profile).
+* Supports **search by track name, artist, album, or keyword** (filters both FMA + IA).
+
+---
+
+## **3️⃣ Library Tab**
+
+**Sections:**
+
+* **Liked Songs** (Default playlist, auto-add on heart icon tap).
+* **Custom Playlists**:
+
+  * User can **create playlist** → add tracks from anywhere.
+  * Each playlist card shows cover art (first song's cover) & song count.
+* **Offline Downloads** (optional section, if caching enabled).
+* Sorting & filtering (by recently added, name, artist).
+
+---
+
+## **4️⃣ Settings Tab**
+
+**Sections:**
+
+1. **Playback**
+
+   * Preferred Quality: MP3 / FLAC.
+   * Crossfade: On/Off.
+   * Gapless Playback: On/Off.
+2. **Downloads**
+
+   * Offline Mode: On/Off.
+   * Download Quality: MP3 / FLAC.
+3. **Appearance**
+
+   * Theme: Light / Dark / Auto.
+4. **About**
+
+   * Powered by FMA & Internet Archive.
+   * Licenses & Credits.
+
+---
+
+## **🖼 UI Flow Example**
+
+**Home** → Tap “Jazz” in genres → See curated Jazz tracks from FMA → Tap song → App checks if FLAC available on IA → Plays FLAC if found → Shows attribution.
+
+**Search** → Type “Blue Sky” → Tabs show Tracks/Artists/Albums → Pick track → Same quality check logic.
+
+**Library** → Tap Liked Songs → Play shuffled.
+
+**Settings** → Switch Preferred Quality from MP3 → FLAC → All new plays attempt FLAC first.
+
+---
+
+## **📌 How to Handle Recommendations**
+
+Since FMA doesn’t give Spotify-style recommendations, you can:
+
+* Track **user listening history** locally.
+* Pull **more songs from same artist/genre** from FMA API.
+* Display them under “Recommended for You”.
+* Optional: store genre counts in local DB to bias recommendations.
+
+---

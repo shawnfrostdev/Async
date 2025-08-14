@@ -1,0 +1,78 @@
+Alright — if you want your **Home screen** to work *like Spotify*, we don’t have to limit ourselves to just FMA + IA data.
+We can **mix multiple free & legal sources** so it always looks fresh and relevant without needing a giant paid backend.
+
+Here’s the **best stack** for that:
+
+---
+
+## **🎯 Data Sources for Home Screen**
+
+| Section                 | Source                                                          | Why It’s Good                         |
+| ----------------------- | --------------------------------------------------------------- | ------------------------------------- |
+| **Featured / Banner**   | **FMA curated playlists** + manually picked IA collections      | Always free, you control what appears |
+| **New Releases**        | **Jamendo API** (royalty-free music) + FMA “recent tracks”      | Fresh songs every day                 |
+| **Trending Now**        | **Audius API** (free music streaming platform with good search) | Active users → relevant trends        |
+| **Genres You Like**     | Local genre tracking + IA “collections” by genre                | Personalized without paid DB          |
+| **Recommended for You** | Tracks from same genre/artist pulled from Audius/FMA            | Lightweight personalization           |
+
+---
+
+## **🔹 How It Will Work in the App**
+
+1. **Home API Aggregator**
+
+   * Your app makes a **single call** to your small free backend (can be on **Netlify**, **Vercel**, or **GitHub Pages** JSON).
+   * This backend fetches:
+
+     * **Top trending** from Audius.
+     * **Latest releases** from Jamendo.
+     * **Curated free music playlists** from FMA.
+     * **Hand-picked FLAC albums** from IA.
+   * Merges them into a **single JSON feed**.
+
+2. **App UI** (like Spotify)
+
+   * **Top Banner** → Featured albums/playlists.
+   * **Horizontal rows**:
+
+     * New Releases (Jamendo + FMA)
+     * Trending (Audius)
+     * Recommended (Audius + FMA matching genres from user history)
+     * Genres You Like (local tracking)
+
+3. **Playback**
+
+   * If user prefers FLAC → Check IA for that track and stream it if available.
+   * If FLAC not available → Play MP3 from source API (Audius, FMA, Jamendo).
+
+---
+
+## **🖼 Example Home Layout**
+
+```
+[ FEATURED BANNER ]
+[ New Releases ]
+[ Card ][ Card ][ Card ]
+
+[ Trending Now ]
+[ Card ][ Card ][ Card ]
+
+[ Recommended for You ]
+[ Card ][ Card ][ Card ]
+
+[ Genres You Like ]
+[ Card ][ Card ][ Card ]
+```
+
+---
+
+## **✅ Benefits of Mixing These Sources**
+
+* **Audius** → Modern, trending music from independent artists.
+* **Jamendo** → Fresh royalty-free songs, good tagging.
+* **FMA** → Legal, good metadata, curated playlists.
+* **IA** → Lossless archives for high-quality playback.
+
+No single source gives everything, but **this combo feels like Spotify** while staying legal and free.
+
+---

@@ -1,0 +1,155 @@
+Alright — here’s a **full, start-to-finish plan** for building your Android music app that **mixes FMA (good search)** with **Internet Archive (lossless)** while staying **free and legal**.
+
+---
+
+## **📌 Core Concept**
+
+* **FMA** = Search brain + fallback MP3 source.
+* **IA** = High-quality FLAC/MP3 supplier (when available).
+* **Your App** = Seamless search → play → cache → attribution.
+
+---
+
+## **1. App Architecture**
+
+**Type:**
+
+* Native Android (Kotlin)
+* Player: **ExoPlayer**
+* Architecture: MVVM (Model-View-ViewModel)
+* Networking: Retrofit + OkHttp
+* Image loading: Coil or Glide
+* Data persistence: Room (only for storing metadata, no huge DB)
+
+**Modules:**
+
+1. **Search Module**
+2. **Player Module**
+3. **Settings Module**
+4. **Offline Cache Module** (optional)
+
+---
+
+## **2. Data Flow**
+
+### **a) User Search**
+
+1. User types query.
+2. Query goes to **FMA API** first:
+
+   ```
+   GET https://freemusicarchive.org/api/get/tracks.json?api_key=YOUR_KEY&track_title=QUERY
+   ```
+3. Get list of results (title, artist, duration, MP3 link, license info).
+
+### **b) Quality Preference Handling**
+
+1. Check user’s preferred quality in `SharedPreferences` (MP3 or FLAC).
+2. If **FLAC preferred**:
+
+   * Automatically search IA’s **AdvancedSearch API**:
+
+     ```
+     https://archive.org/advancedsearch.php?q=title:"TRACK_TITLE"+creator:"ARTIST_NAME"+mediatype:(audio)+format:(FLAC)&fl[]=identifier,title,creator,format&rows=1&page=1&output=json
+     ```
+   * If FLAC link found → play it.
+   * If not found → fall back to FMA’s MP3 link.
+3. If **MP3 preferred**:
+
+   * Just play FMA’s MP3 link (unless user changes settings).
+
+---
+
+## **3. Playback System**
+
+* Use **ExoPlayer** for both FLAC & MP3.
+* On track start:
+
+  * Show cover art (from FMA or IA metadata).
+  * Display attribution:
+    `"Track Title" by Artist Name (License: CC BY 4.0)`.
+* Allow skip, pause, seek, repeat, shuffle.
+
+---
+
+## **4. Settings**
+
+* **Preferred Quality:** MP3 / FLAC
+* **Offline Mode:** Toggle on/off (downloads tracks for offline listening).
+* **Theme:** Light/Dark/Auto.
+* **Attribution Display:** Always show, or only in “Now Playing”.
+
+---
+
+## **5. Legal Safety**
+
+* Only pull from **FMA API** and **IA's open collections**.
+* Display artist name + license for CC tracks.
+* Do **not** re-host audio — stream from source URLs.
+* Add a “Powered by Free Music Archive & Internet Archive” note in About screen.
+
+---
+
+## **6. Optional Features**
+
+* **Favorites Playlist:** Save track metadata in Room DB for easy access later.
+* **Recent Plays:** Keep a local history.
+* **Offline Downloads:** Store in app’s private folder (encrypted optional).
+* **Waveform Seekbar:** Use ExoPlayer’s analytics to render waveform.
+
+---
+
+## **7. Technical Implementation**
+
+**Dependencies:**
+
+```gradle
+implementation "com.google.android.exoplayer:exoplayer:2.19.0"
+implementation "com.squareup.retrofit2:retrofit:2.9.0"
+implementation "com.squareup.retrofit2:converter-gson:2.9.0"
+implementation "io.coil-kt:coil:2.2.2"
+implementation "androidx.room:room-runtime:2.5.0"
+kapt "androidx.room:room-compiler:2.5.0"
+```
+
+**Key Classes:**
+
+* `SearchViewModel.kt` → Handles FMA + IA queries.
+* `PlayerViewModel.kt` → Controls playback & quality switching.
+* `SettingsViewModel.kt` → Manages user preferences.
+* `TrackRepository.kt` → Talks to APIs, returns track URLs.
+* `AudioPlayerService.kt` → Background playback with notifications.
+
+---
+
+## **8. Flow Example**
+
+**Scenario:**
+User searches “Blue Sky” → Prefers FLAC.
+
+1. FMA API returns:
+
+   * Title: "Blue Sky"
+   * Artist: "John Doe"
+   * MP3 Link: `https://fmafiles/...`
+2. App searches IA for:
+   `"Blue Sky" by John Doe, format:FLAC`
+3. IA returns:
+
+   * Identifier: `bluesky_johndoe_live`
+   * FLAC Link: `https://archive.org/download/bluesky_johndoe_live/BlueSky.flac`
+4. Player streams FLAC.
+5. Attribution displayed: `"Blue Sky" by John Doe (CC BY 3.0)`
+
+---
+
+## **9. Benefits**
+
+✅ Free & legal.
+✅ Lossless option without storing huge files.
+✅ Good search UX (via FMA).
+✅ Large collection (via IA).
+✅ Works on Android out-of-the-box.
+
+---
+
