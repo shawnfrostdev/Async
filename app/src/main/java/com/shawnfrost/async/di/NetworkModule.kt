@@ -2,6 +2,7 @@ package com.shawnfrost.async.di
 
 import com.shawnfrost.async.data.api.FMAService
 import com.shawnfrost.async.data.api.InternetArchiveService
+import com.shawnfrost.async.data.api.JamendoService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,6 +22,10 @@ annotation class FMARetrofit
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class InternetArchiveRetrofit
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class JamendoRetrofit
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -46,7 +51,7 @@ object NetworkModule {
     @FMARetrofit
     fun provideFMARetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://freemusicarchive.org/api/get/")
+            .baseUrl("https://freemusicarchive.org/")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -71,7 +76,24 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @JamendoRetrofit
+    fun provideJamendoRetrofit(okHttpClient: OkHttpClient): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("https://api.jamendo.com/v3.0/")
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    @Provides
+    @Singleton
     fun provideInternetArchiveService(@InternetArchiveRetrofit retrofit: Retrofit): InternetArchiveService {
         return retrofit.create(InternetArchiveService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideJamendoService(@JamendoRetrofit retrofit: Retrofit): JamendoService {
+        return retrofit.create(JamendoService::class.java)
     }
 } 

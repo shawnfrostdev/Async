@@ -2,6 +2,7 @@ package com.shawnfrost.async.data.repository
 
 import com.shawnfrost.async.data.api.FMAService
 import com.shawnfrost.async.data.api.InternetArchiveService
+import com.shawnfrost.async.data.api.JamendoService
 import com.shawnfrost.async.data.local.dao.TrackDao
 import com.shawnfrost.async.data.local.entity.TrackEntity
 import com.shawnfrost.async.domain.model.Track
@@ -14,14 +15,16 @@ import javax.inject.Singleton
 class MusicRepositoryImpl @Inject constructor(
     private val fmaService: FMAService,
     private val internetArchiveService: InternetArchiveService,
+    private val jamendoService: JamendoService,
     private val trackDao: TrackDao
 ) : MusicRepository {
 
     override suspend fun searchTracks(query: String): Result<List<Track>> {
         return try {
-            val fmaResults = searchFMA(query).getOrElse { emptyList() }
+            // Use Jamendo as primary source since FMA API is broken
+            val jamendoResults = searchJamendo(query).getOrElse { emptyList() }
             val iaResults = searchInternetArchive(query).getOrElse { emptyList() }
-            Result.success(fmaResults + iaResults)
+            Result.success(jamendoResults + iaResults)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -30,10 +33,11 @@ class MusicRepositoryImpl @Inject constructor(
     override suspend fun searchFMA(query: String): Result<List<Track>> {
         return try {
             val response = fmaService.searchTracks(query)
-            val tracks = response.map { it.toDomainModel() }
+            val tracks = response.tracks.map { it.toDomainModel() }
             Result.success(tracks)
         } catch (e: Exception) {
-            Result.failure(e)
+            // FMA API is broken, return empty list
+            Result.success(emptyList())
         }
     }
 
@@ -47,10 +51,20 @@ class MusicRepositoryImpl @Inject constructor(
         }
     }
 
+    private suspend fun searchJamendo(query: String): Result<List<Track>> {
+        return try {
+            val response = jamendoService.searchTracks(query = query)
+            val tracks = response.results.map { it.toDomainModel() }
+            Result.success(tracks)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun getTrendingTracks(): Result<List<Track>> {
         return try {
-            val response = fmaService.getTrendingTracks()
-            val tracks = response.map { it.toDomainModel() }
+            val response = jamendoService.getTrendingTracks()
+            val tracks = response.results.map { it.toDomainModel() }
             Result.success(tracks)
         } catch (e: Exception) {
             Result.failure(e)
@@ -59,8 +73,8 @@ class MusicRepositoryImpl @Inject constructor(
 
     override suspend fun getNewReleases(): Result<List<Track>> {
         return try {
-            val response = fmaService.getNewReleases()
-            val tracks = response.map { it.toDomainModel() }
+            val response = jamendoService.getNewReleases()
+            val tracks = response.results.map { it.toDomainModel() }
             Result.success(tracks)
         } catch (e: Exception) {
             Result.failure(e)
@@ -171,6 +185,20 @@ class MusicRepositoryImpl @Inject constructor(
             flacUrl = flacUrl,
             license = license,
             source = source
+        )
+    }
+
+    private fun JamendoService.Track.toDomainModel(): Track {
+        return Track(
+            id = "jamendo_$id",
+            title = name,
+            artist = artist_name,
+            duration = duration.toLong() * 1000, // Convert seconds to milliseconds
+            albumArt = album_image ?: track_image,
+            mp3Url = audio,
+            flacUrl = null, // Jamendo doesn't provide FLAC in free tier
+            license = "Creative Commons",
+            source = "Jamendo"
         )
     }
 } 

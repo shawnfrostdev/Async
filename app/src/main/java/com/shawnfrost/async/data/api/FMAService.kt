@@ -4,22 +4,30 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface FMAService {
-    @GET("tracks")
-    suspend fun searchTracks(
-        @Query("q") query: String,
-        @Query("limit") limit: Int = 20,
-        @Query("page") page: Int = 1
-    ): List<Track>
-
-    @GET("tracks/popular")
+    // FMA now uses web scraping approach - these endpoints are deprecated
+    // We'll implement a fallback with mock data for now
+    
+    @GET("music/charts/all")
     suspend fun getTrendingTracks(
-        @Query("limit") limit: Int = 20
-    ): List<Track>
+        @Query("sort") sort: String = "listens",
+        @Query("pageSize") limit: Int = 20
+    ): FMAResponse
 
-    @GET("tracks/recent")
+    @GET("music/charts/this-week") 
     suspend fun getNewReleases(
-        @Query("limit") limit: Int = 20
-    ): List<Track>
+        @Query("sort") sort: String = "listens",
+        @Query("pageSize") limit: Int = 20
+    ): FMAResponse
+
+    @GET("search/")
+    suspend fun searchTracks(
+        @Query("quicksearch") query: String,
+        @Query("pageSize") limit: Int = 20
+    ): FMAResponse
+
+    data class FMAResponse(
+        val tracks: List<Track> = emptyList()
+    )
 
     data class Track(
         val track_id: String,
