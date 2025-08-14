@@ -3,7 +3,6 @@ package com.shawnfrost.async.data.repository
 import com.shawnfrost.async.data.api.FMAService
 import com.shawnfrost.async.data.api.InternetArchiveService
 import com.shawnfrost.async.data.api.JamendoService
-import com.shawnfrost.async.data.api.MockMusicService
 import com.shawnfrost.async.data.local.dao.TrackDao
 import com.shawnfrost.async.data.local.entity.TrackEntity
 import com.shawnfrost.async.domain.model.Track
@@ -25,22 +24,17 @@ class MusicRepositoryImpl @Inject constructor(
             // Clean the query first
             val cleanQuery = query.trim().replace("\n", " ")
             
-            // Try multiple sources with fallbacks
+            // Try real music sources only
             val jamendoResults = searchJamendo(cleanQuery).getOrElse { emptyList() }
             val iaResults = searchInternetArchive(cleanQuery).getOrElse { emptyList() }
-            val combinedResults = jamendoResults + iaResults
             
-            // If no results from external APIs, use mock data
-            val finalResults = if (combinedResults.isEmpty()) {
-                MockMusicService.searchTracks(cleanQuery)
-            } else {
-                combinedResults
-            }
+            // Combine real results only
+            val finalResults = jamendoResults + iaResults
             
             Result.success(finalResults)
         } catch (e: Exception) {
-            // Fallback to mock data on any error
-            Result.success(MockMusicService.searchTracks(query))
+            // Return empty results on error - no fake data
+            Result.failure(e)
         }
     }
 
@@ -59,7 +53,8 @@ class MusicRepositoryImpl @Inject constructor(
         return try {
             // Clean the query and add music-specific filters
             val cleanQuery = query.trim().replace("\n", " ")
-            val musicQuery = "collection:(opensource_audio OR etree OR community_audio) AND mediatype:audio AND ($cleanQuery)"
+            // Enhanced music filtering for better results
+            val musicQuery = "collection:(opensource_audio OR etree OR community_audio OR freemusicarchive) AND mediatype:audio AND format:(VBR MP3 OR FLAC OR Ogg) AND ($cleanQuery)"
             
             val response = internetArchiveService.searchAudio(musicQuery)
             val tracks = response.response.docs.mapNotNull { it.toDomainModel() }
@@ -85,8 +80,8 @@ class MusicRepositoryImpl @Inject constructor(
             val tracks = response.results.map { it.toDomainModel() }
             Result.success(tracks)
         } catch (e: Exception) {
-            // Fallback to mock data when Jamendo fails
-            Result.success(MockMusicService.getTrendingTracks())
+            // Return error - no fake data
+            Result.failure(e)
         }
     }
 
@@ -96,8 +91,8 @@ class MusicRepositoryImpl @Inject constructor(
             val tracks = response.results.map { it.toDomainModel() }
             Result.success(tracks)
         } catch (e: Exception) {
-            // Fallback to mock data when Jamendo fails
-            Result.success(MockMusicService.getNewReleases())
+            // Return error - no fake data
+            Result.failure(e)
         }
     }
 
@@ -174,9 +169,32 @@ class MusicRepositoryImpl @Inject constructor(
         
         if (!hasAudioFormat) return null
         
+        // Filter out non-music content (podcasts, speeches, etc.)
+        val nonMusicKeywords = listOf(
+            "podcast", "sermon", "speech", "lecture", "talk", "interview", 
+            "homily", "radio", "news", "meditation", "prayer", "audiobook"
+        )
+        
+        val titleLower = title.lowercase()
+        val creatorLower = creator?.lowercase() ?: ""
+        
+        // Skip if title or creator suggests non-music content
+        val isNonMusic = nonMusicKeywords.any { keyword ->
+            titleLower.contains(keyword) || creatorLower.contains(keyword)
+        }
+        
+        if (isNonMusic) return null
+        
+        // Clean up the title for better display
+        val cleanTitle = when {
+            title.contains(" - ") -> title.substringAfter(" - ").trim()
+            title.contains(": ") -> title.substringAfter(": ").trim()
+            else -> title
+        }
+        
         return Track(
             id = "ia_$identifier",
-            title = title,
+            title = cleanTitle,
             artist = creator ?: "Unknown Artist", 
             duration = 0L, // Duration not available in search results
             albumArt = null,
