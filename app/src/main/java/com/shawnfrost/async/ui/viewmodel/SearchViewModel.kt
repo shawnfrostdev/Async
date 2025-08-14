@@ -104,6 +104,12 @@ class SearchViewModel @Inject constructor(
         _searchHistory.value = emptyList()
     }
 
+    fun performSearch() {
+        if (_searchQuery.value.isNotBlank()) {
+            performSearch(_searchQuery.value)
+        }
+    }
+    
     fun retrySearch() {
         if (_searchQuery.value.isNotBlank()) {
             performSearch(_searchQuery.value)

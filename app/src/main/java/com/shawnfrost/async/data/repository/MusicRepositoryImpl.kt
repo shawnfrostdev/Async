@@ -76,8 +76,10 @@ class MusicRepositoryImpl @Inject constructor(
         return try {
             // Clean the query and add music-specific filters
             val cleanQuery = query.trim().replace("\n", " ")
-            // Enhanced music filtering for better results with more collections
-            val musicQuery = "collection:(opensource_audio OR etree OR community_audio OR freemusicarchive OR netlabels OR jamendo OR magnatune) AND mediatype:audio AND format:(MP3 OR VBR OR FLAC OR Ogg) AND ($cleanQuery)"
+            
+            // Make the search more music-focused by searching in title and creator fields specifically
+            // Also prioritize known music collections
+            val musicQuery = "collection:(opensource_audio OR community_audio OR freemusicarchive OR netlabels OR jamendo OR magnatune) AND mediatype:audio AND format:(MP3 OR VBR OR FLAC OR Ogg) AND (title:($cleanQuery) OR creator:($cleanQuery))"
             
             val response = internetArchiveService.searchAudio(musicQuery, limit = 20)
             val tracks = response.response.docs.mapNotNull { it.toDomainModel() }
@@ -216,16 +218,20 @@ class MusicRepositoryImpl @Inject constructor(
         // Filter out non-music content (podcasts, speeches, etc.)
         val nonMusicKeywords = listOf(
             "podcast", "sermon", "speech", "lecture", "talk", "interview", 
-            "homily", "radio", "news", "meditation", "prayer", "audiobook"
+            "homily", "radio", "news", "meditation", "prayer", "audiobook",
+            "recording", "show", "episode", "broadcast", "voice", "chat",
+            "discussion", "commentary", "narrative", "story", "book", "demo"
         )
         
         val titleLower = title.lowercase()
         val creatorLower = creator?.lowercase() ?: ""
         
-        // Skip if title or creator suggests non-music content
+        // More strict filtering for random content
         val isNonMusic = nonMusicKeywords.any { keyword ->
             titleLower.contains(keyword) || creatorLower.contains(keyword)
-        }
+        } || titleLower.matches(Regex(".*\\d{8}.*")) // Filter out date-based recordings
+          || titleLower.length < 3 // Filter out very short titles like "lvl"
+          || titleLower.matches(Regex("^[a-z]{1,4}$")) // Filter out random short strings
         
         if (isNonMusic) return null
         
