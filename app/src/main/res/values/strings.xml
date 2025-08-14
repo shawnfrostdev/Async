@@ -1,3 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- App Name -->
     <string name="app_name">Async</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_library">Library</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Home Screen -->
+    <string name="home_featured">Featured</string>
+    <string name="home_trending">Trending Now</string>
+    <string name="home_new_releases">New Releases</string>
+    <string name="home_recommended">Recommended for You</string>
+    <string name="home_genres">Genres</string>
+
+    <!-- Search Screen -->
+    <string name="search_hint">Search for songs, artists, or albums</string>
+    <string name="search_no_results">No results found</string>
+    <string name="search_error">Something went wrong</string>
+    <string name="search_recent">Recent Searches</string>
+    <string name="search_trending">Trending Searches</string>
+
+    <!-- Library Screen -->
+    <string name="library_liked_songs">Liked Songs</string>
+    <string name="library_playlists">Playlists</string>
+    <string name="library_downloads">Downloads</string>
+    <string name="library_recent">Recently Played</string>
+    <string name="library_create_playlist">Create Playlist</string>
+    <string name="library_empty_liked">No liked songs yet</string>
+    <string name="library_empty_playlists">No playlists yet</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_playback">Playback</string>
+    <string name="settings_quality">Audio Quality</string>
+    <string name="settings_quality_auto">Automatic</string>
+    <string name="settings_quality_high">High (FLAC)</string>
+    <string name="settings_quality_medium">Medium (320kbps)</string>
+    <string name="settings_quality_low">Low (128kbps)</string>
+    <string name="settings_download">Downloads</string>
+    <string name="settings_storage">Storage</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_theme_system">System Default</string>
+    <string name="settings_about">About</string>
+
+    <!-- Player -->
+    <string name="player_now_playing">Now Playing</string>
+    <string name="player_queue">Queue</string>
+    <string name="player_lyrics">Lyrics</string>
+    <string name="player_share">Share</string>
+    <string name="player_add_playlist">Add to Playlist</string>
+    <string name="player_download">Download</string>
+
+    <!-- Common -->
+    <string name="action_play">Play</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_next">Next</string>
+    <string name="action_previous">Previous</string>
+    <string name="action_shuffle">Shuffle</string>
+    <string name="action_repeat">Repeat</string>
+    <string name="action_like">Like</string>
+    <string name="action_unlike">Unlike</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_confirm">Confirm</string>
+
+    <!-- Error Messages -->
+    <string name="error_no_internet">No internet connection</string>
+    <string name="error_playback">Playback error occurred</string>
+    <string name="error_download">Download failed</string>
+    <string name="error_generic">Something went wrong</string>
 </resources>
