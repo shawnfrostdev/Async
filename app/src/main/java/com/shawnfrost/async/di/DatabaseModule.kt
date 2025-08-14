@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.shawnfrost.async.data.local.AsyncDatabase
 import com.shawnfrost.async.data.local.dao.PlaylistDao
+import com.shawnfrost.async.data.local.dao.SearchHistoryDao
 import com.shawnfrost.async.data.local.dao.TrackDao
 import dagger.Module
 import dagger.Provides
@@ -25,7 +26,9 @@ object DatabaseModule {
             context,
             AsyncDatabase::class.java,
             AsyncDatabase.DATABASE_NAME
-        ).build()
+        )
+        .fallbackToDestructiveMigration() // For development - clears DB on schema changes
+        .build()
     }
 
     @Provides
@@ -38,5 +41,11 @@ object DatabaseModule {
     @Singleton
     fun providePlaylistDao(database: AsyncDatabase): PlaylistDao {
         return database.playlistDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideSearchHistoryDao(database: AsyncDatabase): SearchHistoryDao {
+        return database.searchHistoryDao()
     }
 } 

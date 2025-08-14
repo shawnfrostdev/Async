@@ -1,22 +1,26 @@
 package com.shawnfrost.async.data.repository
 
-import com.shawnfrost.async.data.api.FMAService
 import com.shawnfrost.async.data.api.InternetArchiveService
 import com.shawnfrost.async.data.api.JamendoService
+import com.shawnfrost.async.data.local.dao.SearchHistoryDao
 import com.shawnfrost.async.data.local.dao.TrackDao
+import com.shawnfrost.async.data.local.entity.SearchHistoryEntity
 import com.shawnfrost.async.data.local.entity.TrackEntity
 import com.shawnfrost.async.domain.model.Track
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class MusicRepositoryImpl @Inject constructor(
-    private val fmaService: FMAService,
     private val internetArchiveService: InternetArchiveService,
     private val jamendoService: JamendoService,
-    private val trackDao: TrackDao
+    private val trackDao: TrackDao,
+    private val searchHistoryDao: SearchHistoryDao
 ) : MusicRepository {
 
     override suspend fun searchTracks(query: String): Result<List<Track>> {
@@ -24,28 +28,42 @@ class MusicRepositoryImpl @Inject constructor(
             // Clean the query first
             val cleanQuery = query.trim().replace("\n", " ")
             
-            // Try real music sources only
+            // Skip empty queries
+            if (cleanQuery.isBlank()) {
+                return Result.success(emptyList())
+            }
+            
+            // Use Jamendo as primary source with IA as quality fallback
             val jamendoResults = searchJamendo(cleanQuery).getOrElse { emptyList() }
-            val iaResults = searchInternetArchive(cleanQuery).getOrElse { emptyList() }
             
-            // Combine real results only
-            val finalResults = jamendoResults + iaResults
+            // For each Jamendo result, check if IA has better quality in background
+            val enhancedResults = enhanceWithIAQuality(jamendoResults, cleanQuery)
             
-            Result.success(finalResults)
+            // Save search to history if we got results
+            if (enhancedResults.isNotEmpty()) {
+                saveSearchQuery(cleanQuery, enhancedResults.size)
+            }
+            
+            Result.success(enhancedResults)
         } catch (e: Exception) {
-            // Return empty results on error - no fake data
+            // Return error - no fake data
             Result.failure(e)
         }
     }
 
-    override suspend fun searchFMA(query: String): Result<List<Track>> {
+    override suspend fun searchJamendo(query: String): Result<List<Track>> {
         return try {
-            val response = fmaService.searchTracks(query)
-            val tracks = response.tracks.map { it.toDomainModel() }
+            val cleanQuery = query.trim().replace("\n", " ")
+            val response = jamendoService.searchTracks(query = cleanQuery)
+            
+            if (response.headers.status != "success") {
+                return Result.failure(Exception("Jamendo API error: ${response.headers.error_message}"))
+            }
+            
+            val tracks = response.results.map { it.toDomainModel() }
             Result.success(tracks)
         } catch (e: Exception) {
-            // FMA API is broken, return empty list
-            Result.success(emptyList())
+            Result.failure(e)
         }
     }
 
@@ -64,19 +82,48 @@ class MusicRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun searchJamendo(query: String): Result<List<Track>> {
-        return try {
-            val response = jamendoService.searchTracks(query = query)
-            val tracks = response.results.map { it.toDomainModel() }
-            Result.success(tracks)
-        } catch (e: Exception) {
-            Result.failure(e)
+
+
+    // Enhanced quality fallback: check IA for FLAC versions of Jamendo tracks
+    private suspend fun enhanceWithIAQuality(jamendoTracks: List<Track>, originalQuery: String): List<Track> {
+        return coroutineScope {
+            jamendoTracks.map { track ->
+                async {
+                    try {
+                        // Search IA for this specific track with FLAC preference
+                        val iaQuery = "title:\"${track.title}\" AND creator:\"${track.artist}\" AND mediatype:audio AND format:FLAC"
+                        val iaResponse = internetArchiveService.searchAudio(iaQuery)
+                        
+                        // If we find a FLAC match, use its URL, otherwise keep Jamendo
+                        val iaMatch = iaResponse.response.docs.firstOrNull { doc ->
+                            doc.title.contains(track.title, ignoreCase = true) &&
+                            (doc.creator?.contains(track.artist, ignoreCase = true) == true) &&
+                            (doc.format?.any { it.contains("FLAC", ignoreCase = true) } == true)
+                        }
+                        
+                        if (iaMatch != null) {
+                            track.copy(
+                                flacUrl = "https://archive.org/download/${iaMatch.identifier}/${iaMatch.identifier}.flac",
+                                source = "Jamendo + IA FLAC"
+                            )
+                        } else {
+                            track
+                        }
+                    } catch (e: Exception) {
+                        // Silently fall back to original Jamendo track on IA error
+                        track
+                    }
+                }
+            }.awaitAll()
         }
     }
 
     override suspend fun getTrendingTracks(): Result<List<Track>> {
         return try {
             val response = jamendoService.getTrendingTracks()
+            if (response.headers.status != "success") {
+                return Result.failure(Exception("Jamendo API error: ${response.headers.error_message}"))
+            }
             val tracks = response.results.map { it.toDomainModel() }
             Result.success(tracks)
         } catch (e: Exception) {
@@ -88,6 +135,9 @@ class MusicRepositoryImpl @Inject constructor(
     override suspend fun getNewReleases(): Result<List<Track>> {
         return try {
             val response = jamendoService.getNewReleases()
+            if (response.headers.status != "success") {
+                return Result.failure(Exception("Jamendo API error: ${response.headers.error_message}"))
+            }
             val tracks = response.results.map { it.toDomainModel() }
             Result.success(tracks)
         } catch (e: Exception) {
@@ -144,19 +194,6 @@ class MusicRepositoryImpl @Inject constructor(
     }
 
     // Extension functions for mapping
-    private fun FMAService.Track.toDomainModel(): Track {
-        return Track(
-            id = track_id,
-            title = track_title,
-            artist = artist_name,
-            duration = track_duration.toLongOrNull() ?: 0L,
-            albumArt = track_image_file,
-            mp3Url = track_url,
-            flacUrl = null,
-            license = license_title,
-            source = "FMA"
-        )
-    }
 
     private fun InternetArchiveService.SearchResponse.Response.Document.toDomainModel(): Track? {
         // Check for various audio formats in Internet Archive
@@ -246,5 +283,29 @@ class MusicRepositoryImpl @Inject constructor(
             license = "Creative Commons",
             source = "Jamendo"
         )
+    }
+
+    // Search History Implementation
+    override fun getSearchHistory(limit: Int): Flow<List<SearchHistoryEntity>> {
+        return searchHistoryDao.getRecentSearches(limit)
+    }
+
+    override suspend fun saveSearchQuery(query: String, resultCount: Int) {
+        val searchEntity = SearchHistoryEntity(
+            query = query,
+            timestamp = System.currentTimeMillis(),
+            resultCount = resultCount
+        )
+        searchHistoryDao.insertSearch(searchEntity)
+        // Keep only the last 10 searches
+        searchHistoryDao.limitHistorySize(10)
+    }
+
+    override suspend fun clearSearchHistory() {
+        searchHistoryDao.clearAllHistory()
+    }
+
+    override suspend fun deleteSearchQuery(query: String) {
+        searchHistoryDao.deleteSearch(query)
     }
 } 

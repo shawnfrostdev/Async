@@ -1,6 +1,5 @@
 package com.shawnfrost.async.di
 
-import com.shawnfrost.async.data.api.FMAService
 import com.shawnfrost.async.data.api.InternetArchiveService
 import com.shawnfrost.async.data.api.JamendoService
 import dagger.Module
@@ -14,10 +13,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
-
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-annotation class FMARetrofit
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
@@ -46,16 +41,7 @@ object NetworkModule {
             .build()
     }
 
-    @Provides
-    @Singleton
-    @FMARetrofit
-    fun provideFMARetrofit(okHttpClient: OkHttpClient): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl("https://freemusicarchive.org/")
-            .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
+
 
     @Provides
     @Singleton
@@ -68,11 +54,7 @@ object NetworkModule {
             .build()
     }
 
-    @Provides
-    @Singleton
-    fun provideFMAService(@FMARetrofit retrofit: Retrofit): FMAService {
-        return retrofit.create(FMAService::class.java)
-    }
+
 
     @Provides
     @Singleton
