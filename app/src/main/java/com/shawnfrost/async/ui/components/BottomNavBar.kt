@@ -7,7 +7,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,7 +28,7 @@ fun BottomNavBar(
     items: List<BottomNavItem> = listOf(
         BottomNavItem(Screen.Home, Icons.Default.Home, "Home"),
         BottomNavItem(Screen.Search, Icons.Default.Search, "Search"),
-        BottomNavItem(Screen.Library, Icons.Default.Star, "Library"),
+        BottomNavItem(Screen.Library, Icons.Default.LibraryMusic, "Library"),
         BottomNavItem(Screen.Settings, Icons.Default.Settings, "Settings")
     )
 ) {
