@@ -8,14 +8,24 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.History
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.shawnfrost.async.ui.viewmodel.LikedSongsViewModel
+import com.shawnfrost.async.ui.viewmodel.PlaylistViewModel
 
 @Composable
-fun LibraryScreen() {
+fun LibraryScreen(
+    likedSongsViewModel: LikedSongsViewModel = hiltViewModel(),
+    playlistViewModel: PlaylistViewModel = hiltViewModel()
+) {
+    val likedTracks by likedSongsViewModel.likedTracks.collectAsState()
+    val playlists by playlistViewModel.playlists.collectAsState()
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -54,7 +64,7 @@ fun LibraryScreen() {
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text = "Your favorite tracks",
+                            text = "${likedTracks.size} tracks",
                             style = MaterialTheme.typography.body2
                         )
                     }
@@ -86,7 +96,7 @@ fun LibraryScreen() {
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text = "Your custom playlists",
+                            text = "${playlists.size} playlists",
                             style = MaterialTheme.typography.body2
                         )
                     }

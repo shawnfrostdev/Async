@@ -28,6 +28,9 @@ class SearchViewModel @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    private val _searchHistory = MutableStateFlow<List<String>>(emptyList())
+    val searchHistory: StateFlow<List<String>> = _searchHistory.asStateFlow()
+
     init {
         // Auto-search when query changes with debounce
         searchQuery
@@ -59,6 +62,9 @@ class SearchViewModel @Inject constructor(
             _isLoading.value = true
             _errorMessage.value = null
             
+            // Add to search history
+            addToSearchHistory(query)
+            
             try {
                 musicRepository.searchTracks(query)
                     .onSuccess { tracks ->
@@ -75,6 +81,27 @@ class SearchViewModel @Inject constructor(
                 _isLoading.value = false
             }
         }
+    }
+
+    private fun addToSearchHistory(query: String) {
+        val currentHistory = _searchHistory.value.toMutableList()
+        // Remove if already exists to avoid duplicates
+        currentHistory.remove(query)
+        // Add to the beginning
+        currentHistory.add(0, query)
+        // Keep only last 10 searches
+        if (currentHistory.size > 10) {
+            currentHistory.removeAt(currentHistory.size - 1)
+        }
+        _searchHistory.value = currentHistory
+    }
+
+    fun selectFromHistory(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun clearSearchHistory() {
+        _searchHistory.value = emptyList()
     }
 
     fun retrySearch() {

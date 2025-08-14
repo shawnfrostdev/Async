@@ -25,6 +25,7 @@ import com.shawnfrost.async.ui.screens.HomeScreen
 import com.shawnfrost.async.ui.screens.SearchScreen
 import com.shawnfrost.async.ui.screens.LibraryScreen
 import com.shawnfrost.async.ui.screens.SettingsScreen
+import com.shawnfrost.async.ui.screens.PlayerScreen
 import com.shawnfrost.async.ui.theme.AsyncTheme
 
 @AndroidEntryPoint
@@ -53,7 +54,7 @@ fun AsyncApp() {
             Column {
                 MiniPlayer(
                     onExpandClick = {
-                        // TODO: Navigate to full player screen
+                        navController.navigate(Screen.Player.route)
                     }
                 )
                 BottomNavBar(navController = navController)
@@ -92,6 +93,15 @@ fun AsyncApp() {
                 exitTransition = { fadeOut(animationSpec = tween(0)) }
             ) {
                 SettingsScreen()
+            }
+            composable(
+                route = Screen.Player.route,
+                enterTransition = { fadeIn(animationSpec = tween(0)) },
+                exitTransition = { fadeOut(animationSpec = tween(0)) }
+            ) {
+                PlayerScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
             }
         }
     }

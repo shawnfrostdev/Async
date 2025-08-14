@@ -8,6 +8,8 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,16 +21,19 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.shawnfrost.async.domain.model.Track
 import com.shawnfrost.async.ui.viewmodel.HomeViewModel
 import com.shawnfrost.async.ui.viewmodel.MusicPlayerViewModel
+import com.shawnfrost.async.ui.viewmodel.LikedSongsViewModel
 
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
-    musicPlayerViewModel: MusicPlayerViewModel = hiltViewModel()
+    musicPlayerViewModel: MusicPlayerViewModel = hiltViewModel(),
+    likedSongsViewModel: LikedSongsViewModel = hiltViewModel()
 ) {
     val trendingTracks by viewModel.trendingTracks.collectAsState()
     val newReleases by viewModel.newReleases.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    val likedTrackIds by likedSongsViewModel.likedTrackIds.collectAsState()
 
     LazyColumn(
         modifier = Modifier
@@ -111,8 +116,12 @@ fun HomeScreen(
                 title = "New Releases",
                 subtitle = "Latest tracks from Free Music Archive",
                 tracks = newReleases,
+                likedTrackIds = likedTrackIds,
                 onTrackClick = { track -> 
                     musicPlayerViewModel.playTrack(track)
+                },
+                onLikeClick = { track ->
+                    likedSongsViewModel.toggleLikeTrack(track)
                 }
             )
         }
@@ -123,8 +132,12 @@ fun HomeScreen(
                 title = "Trending",
                 subtitle = "Popular tracks right now",
                 tracks = trendingTracks,
+                likedTrackIds = likedTrackIds,
                 onTrackClick = { track -> 
                     musicPlayerViewModel.playTrack(track)
+                },
+                onLikeClick = { track ->
+                    likedSongsViewModel.toggleLikeTrack(track)
                 }
             )
         }
@@ -159,7 +172,9 @@ fun MusicSection(
     title: String,
     subtitle: String,
     tracks: List<Track>,
-    onTrackClick: (Track) -> Unit
+    onTrackClick: (Track) -> Unit,
+    likedTrackIds: Set<String> = emptySet(),
+    onLikeClick: (Track) -> Unit = {}
 ) {
     Column {
         Text(
@@ -192,7 +207,9 @@ fun MusicSection(
                 items(tracks) { track ->
                     TrackCard(
                         track = track,
-                        onClick = { onTrackClick(track) }
+                        isLiked = likedTrackIds.contains(track.id),
+                        onClick = { onTrackClick(track) },
+                        onLikeClick = { onLikeClick(track) }
                     )
                 }
             }
@@ -203,7 +220,9 @@ fun MusicSection(
 @Composable
 fun TrackCard(
     track: Track,
-    onClick: () -> Unit
+    isLiked: Boolean = false,
+    onClick: () -> Unit,
+    onLikeClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier
@@ -259,19 +278,38 @@ fun TrackCard(
             
             Spacer(modifier = Modifier.weight(1f))
             
-            // Source badge
-            Surface(
-                color = MaterialTheme.colors.primary,
-                shape = MaterialTheme.shapes.small,
-                modifier = Modifier.align(Alignment.End)
+            // Bottom row with like button and source badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = track.source,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colors.onPrimary,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
+                // Like button
+                IconButton(
+                    onClick = onLikeClick,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = if (isLiked) "Unlike" else "Like",
+                        tint = if (isLiked) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                
+                // Source badge
+                Surface(
+                    color = MaterialTheme.colors.primary,
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = track.source,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colors.onPrimary,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
             }
         }
     }
