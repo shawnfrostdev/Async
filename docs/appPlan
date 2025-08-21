@@ -1,0 +1,274 @@
+Here’s a **full professional development plan** broken into phases:
+
+***
+
+# **Async: Development Plan**
+
+***
+
+## **Phase 1 — Core Application Foundation**
+
+### **Tech Stack**
+- **Language**: Kotlin (latest stable, e.g., 2.x if stable at release)
+- **UI**: Jetpack Compose (Material3 for theming, navigation-compose for flows)
+- **Asynchronous processing**: Kotlin Coroutines + Flows
+- **Persistence**: Room (for playlists, favorites, history)
+- **DI**: Hilt (for dependency injection)
+- **Networking (only for player)**: Ktor Client (if needed—BUT avoid scraping in core app)
+- **Media framework**: ExoPlayer
+- **Logging/debug**: Timber or Kermit
+
+### **Architecture**
+- **MVVM with Clean Architecture**:
+  - **domain**: use-cases, business logic
+  - **data**: repositories, persistence
+  - **ui**: Compose screens, ViewModels
+  - **extensions**: handled in sandbox, interfaced via a manager
+  
+This separation ensures **the app never knows about specific sources**.
+
+### **Module Structure**
+```
+:app          // Main Compose + DI + navigation
+:core         // Shared utils, extension contract interfaces
+:domain       // Business logic & use cases
+:data         // Persistence (Room), settings
+:playback     // ExoPlayer + MediaSession service
+:extensions   // API definitions, class loaders
+```
+
+***
+
+## **Phase 2 — Defining the Extension API Contract**
+
+Core idea: **extensions implement an interface** defined in `:core`.
+
+### **Shared API Contract (in `:core`)**
+```kotlin
+// Data models shared
+@Serializable
+data class SearchResult(
+    val id: String,
+    val title: String,
+    val artist: String?,
+    val album: String?,
+    val duration: Long?,         // in ms
+    val thumbnailUrl: String?
+)
+
+@Serializable
+data class Artist(
+    val id: String,
+    val name: String
+)
+
+@Serializable
+data class Album(
+    val id: String,
+    val title: String,
+    val artist: String,
+    val year: Int?,
+    val artworkUrl: String?
+)
+
+// Core extension interface
+interface MusicExtension {
+    val id: String                // unique name
+    val version: Int              // for migration
+    val name: String              // display name
+    val developer: String
+
+    suspend fun search(query: String): List<SearchResult>
+    suspend fun getStreamUrl(mediaId: String): String
+    suspend fun getAlbumArt(url: String): ByteArray?
+}
+```
+
+- **Rule**: These interfaces are stable and controlled by Async core repo.
+- Extensions must implement `MusicExtension`.
+
+***
+
+## **Phase 3 — Extension Loader & Manager**
+
+We’ll allow the user to load `.jar`/`.apk` files into a sandboxed loader.
+
+### **Extension Loader Example**
+```kotlin
+class ExtensionLoader(private val context: Context) {
+
+    fun loadExtension(file: File): MusicExtension? {
+        val classLoader = DexClassLoader(
+            file.absolutePath,
+            context.codeCacheDir.absolutePath,
+            null,
+            context.classLoader
+        )
+        return try {
+            val clazz = classLoader.loadClass("com.example.MyExtension")
+            val instance = clazz.getDeclaredConstructor().newInstance()
+            instance as? MusicExtension
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+}
+```
+
+### **ExtensionManager**
+```kotlin
+class ExtensionManager {
+    private val extensions = mutableMapOf<String, MusicExtension>()
+
+    fun register(ext: MusicExtension) {
+        extensions[ext.id] = ext
+    }
+
+    fun getAll(): List<MusicExtension> = extensions.values.toList()
+
+    fun disable(id: String) {
+        extensions.remove(id)
+    }
+
+    fun get(id: String): MusicExtension? = extensions[id]
+}
+```
+
+- **Updating** is simply replacing the registered extension with a newer JAR.
+- **Securing**: allow only signed or whitelisted packages (could verify using a public key signature inside Async).
+
+***
+
+## **Phase 4 — Media Playback Engine**
+
+Async uses **ExoPlayer in a Foreground Service with MediaSession**.
+
+### **Setup Example**
+```kotlin
+@AndroidEntryPoint
+class PlayerService : MediaBrowserServiceCompat() {
+
+    private lateinit var exoPlayer: ExoPlayer
+    private lateinit var session: MediaSessionCompat
+
+    override fun onCreate() {
+        super.onCreate()
+
+        exoPlayer = ExoPlayer.Builder(this).build()
+        session = MediaSessionCompat(this, "AsyncPlayer").apply {
+            isActive = true
+        }
+
+        val connector = MediaSessionConnector(session)
+        connector.setPlayer(exoPlayer)
+        sessionToken = session.sessionToken
+    }
+
+    fun playFromExtension(extension: MusicExtension, songId: String) {
+        lifecycleScope.launch {
+            val url = extension.getStreamUrl(songId)
+            val item = MediaItem.fromUri(url)
+            exoPlayer.setMediaItem(item)
+            exoPlayer.prepare()
+            exoPlayer.play()
+        }
+    }
+}
+```
+
+- Handles **notifications**, **audio focus**, and integrates with system UI.
+- Async doesn’t care **where music comes from** — it only knows `streamUrl`.
+
+***
+
+## **Phase 5 — Developing a Sample Scraping Extension**
+
+> This **lives outside the Async repo**. Users or community must build & distribute their own.
+
+### **Steps**
+1. Create a new **Android Library module** (or pure Kotlin library).
+2. Add dependency on `:core` (for `MusicExtension`).
+3. Implement scraping with:
+   - **OkHttp** → HTTP requests
+   - **Jsoup** → HTML parsing
+
+Example skeleton (hypothetical site):
+```kotlin
+class ExampleMusicExtension : MusicExtension {
+    override val id = "example"
+    override val version = 1
+    override val name = "Example Source"
+    override val developer = "CommunityDev"
+
+    override suspend fun search(query: String): List<SearchResult> {
+        val html = OkHttpClient().newCall(
+            Request.Builder()
+            .url("https://example.com/search?q=$query")
+            .build())
+            .execute()
+            .body?.string() ?: return emptyList()
+
+        val doc = Jsoup.parse(html)
+        return doc.select(".song-item").map {
+            SearchResult(
+                id = it.attr("data-id"),
+                title = it.select(".title").text(),
+                artist = it.select(".artist").text(),
+                album = null,
+                duration = null,
+                thumbnailUrl = it.select("img").attr("src")
+            )
+        }
+    }
+
+    override suspend fun getStreamUrl(mediaId: String): String {
+        // parse page -> return direct mp3 URL
+        return "https://cdn.example.com/$mediaId.mp3"
+    }
+
+    override suspend fun getAlbumArt(url: String): ByteArray? {
+        return OkHttpClient().newCall(Request.Builder().url(url).build())
+            .execute().body?.bytes()
+    }
+}
+```
+
+- To bypass anti-bot: randomize User-Agent, exponential backoff, lightweight caching.
+- The extension is **independent** and GPL/permissive depending on contributor.
+
+***
+
+## **Phase 6 — Security, Legal, and Ethical Considerations**
+
+### **Security**
+- **Sandboxing**: Extensions must run in isolated ClassLoaders.
+- **Signing**: Require extensions to be signed with developer certs.
+- **Restricted Surface**: Interfaces expose **only the data model contract**. No raw system/context injection into extension.
+- **Validation**: Before loading, scan for suspicious reflection or restricted APIs if possible.
+
+### **Legal/Ethical**
+- **Neutral Core**: Async does not distribute or reference any scraping code.
+- **README Disclaimer Example**:
+  ```
+  Async is a free, open-source music PLAYER.
+  It does not provide or promote copyrighted music.
+  Extensions are community-built and are the sole responsibility of their developers.
+  Async project maintainers do not endorse or distribute third-party extensions.
+  ```
+- Extensions must:
+  - Respect `robots.txt`.
+  - Avoid overloading sources (rate limiting).
+  - Be **user-installed**, not shipped in core repo.
+
+***
+
+# ✅ Conclusion
+
+By the end:
+- **Async Core** is a beautiful, legal Compose-based music player with ExoPlayer.
+- **Extensions** are dynamically loaded with a stable API contract.
+- **Security** ensures the core app and repos remain clean.
+- **Legal protection**: Async never scrapes—it’s just a modular player.
+
+***
