@@ -25,8 +25,10 @@ fun AsyncApp() {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
         
-        // Show bottom navigation for main screens, hide for player
-        val showBottomNav = currentRoute != AsyncDestinations.PLAYER
+        // Show bottom navigation for main screens, hide for player and settings screens
+        val showBottomNav = currentRoute != AsyncDestinations.PLAYER && 
+                           currentRoute != AsyncDestinations.EXTENSIONS &&
+                           currentRoute != AsyncDestinations.SETTINGS
         
         Scaffold(
             modifier = Modifier.fillMaxSize(),

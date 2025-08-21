@@ -1,4 +1,4 @@
-# 🔤 Font Setup Guide - DM Mono
+# Font Setup Guide - DM Mono
 
 The Async Music Player uses **DM Mono** throughout the entire application for a consistent, modern monospace appearance.
 

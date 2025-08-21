@@ -21,6 +21,7 @@ fun ExtensionManagementScreen(
     var showAddRepositoryDialog by remember { mutableStateOf(false) }
     
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
                 title = { Text("Extensions & Sources") },
@@ -88,15 +89,9 @@ private fun EmptyRepositoryState(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "🎵",
-            style = MaterialTheme.typography.displayLarge,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        
-        Text(
             text = "No Extensions Yet",
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 16.dp)
         )
         
         Text(
@@ -106,18 +101,6 @@ private fun EmptyRepositoryState(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 32.dp)
         )
-        
-        Button(
-            onClick = onAddRepository,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null,
-                modifier = Modifier.padding(end = 8.dp)
-            )
-            Text("Add Your First Repository")
-        }
     }
 }
 

@@ -37,8 +37,8 @@ fun MiniPlayer(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "♪",
-                    style = MaterialTheme.typography.titleMedium,
+                    text = "ASYNC",
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
