@@ -20,36 +20,35 @@ fun ExtensionManagementScreen(
 ) {
     var showAddRepositoryDialog by remember { mutableStateOf(false) }
     
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                title = { Text("Extensions & Sources") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { showAddRepositoryDialog = true }) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Add Repository"
-                        )
-                    }
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // Top bar with proper positioning
+        TopAppBar(
+            title = { Text("Extensions & Sources") },
+            navigationIcon = {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back"
+                    )
                 }
-            )
-        }
-    ) { paddingValues ->
+            },
+            actions = {
+                IconButton(onClick = { showAddRepositoryDialog = true }) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Repository"
+                    )
+                }
+            }
+        )
         if (repositories.isEmpty()) {
             // Show empty state for first-time users
             EmptyRepositoryState(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
+                    .weight(1f),
                 onAddRepository = { showAddRepositoryDialog = true }
             )
         } else {
@@ -57,7 +56,7 @@ fun ExtensionManagementScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues),
+                    .weight(1f),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
