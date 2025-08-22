@@ -10,24 +10,16 @@ import androidx.compose.ui.unit.sp
 import com.example.async.R
 
 /**
- * Complete Material Design 3 Typography system using DM Mono font
+ * Custom Typography system using DM Mono font with optimized sizes for music app
  * 
- * Font Sizes (Material Design 3 compliant):
- * - Display Large: Hero text, main titles (57sp)
- * - Display Medium: Section headers (45sp)  
- * - Display Small: Subsection headers (36sp)
- * - Headline Large: Card titles, dialog titles (32sp)
- * - Headline Medium: List headers (28sp)
- * - Headline Small: Component titles (24sp)
- * - Title Large: Screen titles, app bar titles (22sp)
- * - Title Medium: Card subtitles (16sp)
- * - Title Small: Dense lists, tabs (14sp)
- * - Body Large: Main content, article text (16sp)
- * - Body Medium: Default body text (14sp)
- * - Body Small: Captions, metadata (12sp)
- * - Label Large: Buttons, prominent labels (14sp)
- * - Label Medium: Form labels, chips (12sp)
- * - Label Small: Dense UI, timestamps (11sp)
+ * Font Sizes (Custom optimized for Async music player):
+ * - Headline Large: Main titles and important headers (24sp)
+ * - Headline Medium: Section headers and screen titles (16sp)
+ * - Title Medium: Card subtitles and component titles (16sp)
+ * - Body Large: Main content and descriptions (12sp)
+ * - Body Small: Captions, metadata, and secondary text (12sp)
+ * 
+ * Other sizes maintain Material Design 3 standards for consistency
  * 
  * DM Mono TTF files included:
  * - dm_mono_regular.ttf, dm_mono_medium.ttf + italic variants
@@ -62,15 +54,15 @@ val AsyncTypography = Typography(
     headlineLarge = TextStyle(
         fontFamily = AsyncFontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 32.sp,
-        lineHeight = 40.sp,
+        fontSize = 24.sp,
+        lineHeight = 32.sp,
         letterSpacing = 0.sp
     ),
     headlineMedium = TextStyle(
         fontFamily = AsyncFontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 28.sp,
-        lineHeight = 36.sp,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
         letterSpacing = 0.sp
     ),
     headlineSmall = TextStyle(
@@ -92,7 +84,7 @@ val AsyncTypography = Typography(
         fontWeight = FontWeight.Medium,
         fontSize = 16.sp,
         lineHeight = 24.sp,
-        letterSpacing = 0.15.sp
+        letterSpacing = 0.sp
     ),
     titleSmall = TextStyle(
         fontFamily = AsyncFontFamily,
@@ -104,9 +96,9 @@ val AsyncTypography = Typography(
     bodyLarge = TextStyle(
         fontFamily = AsyncFontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
+        fontSize = 12.sp,
+        lineHeight = 18.sp,
+        letterSpacing = 0.sp
     ),
     bodyMedium = TextStyle(
         fontFamily = AsyncFontFamily,
@@ -119,8 +111,8 @@ val AsyncTypography = Typography(
         fontFamily = AsyncFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.4.sp
+        lineHeight = 18.sp,
+        letterSpacing = 0.sp
     ),
     labelLarge = TextStyle(
         fontFamily = AsyncFontFamily,

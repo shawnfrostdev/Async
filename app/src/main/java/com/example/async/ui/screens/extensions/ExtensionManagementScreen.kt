@@ -42,7 +42,7 @@ fun ExtensionManagementScreen(
                 )
             }
             Text(
-                text = "Extensions & Sources",
+                text = "Extensions",
                 style = MaterialTheme.typography.headlineLarge,
                 modifier = Modifier.weight(1f)
             )

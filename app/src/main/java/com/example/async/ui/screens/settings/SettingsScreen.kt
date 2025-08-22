@@ -27,7 +27,7 @@ fun SettingsScreen(
         )
             // Extensions & Sources setting item
             SettingsItem(
-                title = "Extensions & Sources",
+                title = "Extensions",
                 subtitle = "Manage music sources and extensions",
                 onClick = onNavigateToExtensions
             )
