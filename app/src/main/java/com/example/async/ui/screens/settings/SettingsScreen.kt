@@ -3,7 +3,7 @@ package com.example.async.ui.screens.settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Extension
+import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,7 +32,7 @@ fun SettingsScreen(
             SettingsItem(
                 title = "Extensions",
                 subtitle = "Manage music sources and extensions",
-                icon = Icons.Default.Extension,
+                icon = Icons.Outlined.Extension,
                 onClick = onNavigateToExtensions
             )
             

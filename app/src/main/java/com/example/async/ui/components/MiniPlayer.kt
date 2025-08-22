@@ -2,7 +2,7 @@ package com.example.async.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -73,7 +73,7 @@ fun MiniPlayer(
                 modifier = Modifier.size(40.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.PlayArrow,
+                    imageVector = Icons.Outlined.PlayArrow,
                     contentDescription = stringResource(R.string.action_play),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
