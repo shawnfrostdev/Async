@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,7 +33,7 @@ enum class PlayerTab {
 @Composable
 fun PlayerScreen(
     onNavigateBack: () -> Unit = {},
-    currentTrack: SearchResult? = null,
+    currentTrack: SearchResult,
     isPlaying: Boolean = false,
     currentPosition: Long = 0,
     duration: Long = 0,
@@ -45,8 +46,12 @@ fun PlayerScreen(
     onShuffleToggle: () -> Unit = {},
     onRepeatToggle: () -> Unit = {},
     onQueueTrackClick: (SearchResult) -> Unit = {},
+    onFavoriteToggle: () -> Unit = {},
+    onAddToPlaylist: () -> Unit = {},
+    onShare: () -> Unit = {},
     shuffleEnabled: Boolean = false,
-    repeatMode: RepeatMode = RepeatMode.OFF
+    repeatMode: RepeatMode = RepeatMode.OFF,
+    isFavorite: Boolean = false
 ) {
     var selectedTab by remember { mutableStateOf(PlayerTab.NOW_PLAYING) }
     
@@ -75,6 +80,44 @@ fun PlayerScreen(
                 text = "Now Playing",
                 modifier = Modifier.weight(1f)
             )
+            
+            // More options menu
+            var showMenu by remember { mutableStateOf(false) }
+            Box {
+                IconButton(onClick = { showMenu = true }) {
+                    Icon(
+                        imageVector = Icons.Outlined.MoreVert,
+                        contentDescription = "More Options"
+                    )
+                }
+                
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { BodyMedium("Add to Playlist") },
+                        onClick = {
+                            showMenu = false
+                            onAddToPlaylist()
+                        },
+                        leadingIcon = {
+                            Icon(Icons.AutoMirrored.Outlined.PlaylistAdd, contentDescription = null)
+                        }
+                    )
+                    
+                    DropdownMenuItem(
+                        text = { BodyMedium("Share") },
+                        onClick = {
+                            showMenu = false
+                            onShare()
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Outlined.Share, contentDescription = null)
+                        }
+                    )
+                }
+            }
         }
         
         // Tab row
@@ -104,25 +147,23 @@ fun PlayerScreen(
         // Tab content
         when (selectedTab) {
             PlayerTab.NOW_PLAYING -> {
-                if (currentTrack != null) {
-                    NowPlayingContent(
-                        track = currentTrack,
-                        isPlaying = isPlaying,
-                        currentPosition = currentPosition,
-                        duration = duration,
-                        onPlay = onPlay,
-                        onPause = onPause,
-                        onNext = onNext,
-                        onPrevious = onPrevious,
-                        onSeek = onSeek,
-                        onShuffleToggle = onShuffleToggle,
-                        onRepeatToggle = onRepeatToggle,
-                        shuffleEnabled = shuffleEnabled,
-                        repeatMode = repeatMode
-                    )
-                } else {
-                    EmptyPlayerState()
-                }
+                NowPlayingContent(
+                    track = currentTrack,
+                    isPlaying = isPlaying,
+                    currentPosition = currentPosition,
+                    duration = duration,
+                    onPlay = onPlay,
+                    onPause = onPause,
+                    onNext = onNext,
+                    onPrevious = onPrevious,
+                    onSeek = onSeek,
+                    onShuffleToggle = onShuffleToggle,
+                    onRepeatToggle = onRepeatToggle,
+                    onFavoriteToggle = onFavoriteToggle,
+                    shuffleEnabled = shuffleEnabled,
+                    repeatMode = repeatMode,
+                    isFavorite = isFavorite
+                )
             }
             PlayerTab.QUEUE -> {
                 QueueContent(
@@ -147,8 +188,10 @@ private fun NowPlayingContent(
     onSeek: (Long) -> Unit,
     onShuffleToggle: () -> Unit,
     onRepeatToggle: () -> Unit,
+    onFavoriteToggle: () -> Unit,
     shuffleEnabled: Boolean,
-    repeatMode: RepeatMode
+    repeatMode: RepeatMode,
+    isFavorite: Boolean
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -164,6 +207,8 @@ private fun NowPlayingContent(
         // Track Info
         TrackInfoDisplay(
             track = track,
+            isFavorite = isFavorite,
+            onFavoriteToggle = onFavoriteToggle,
             modifier = Modifier.fillMaxWidth()
         )
         
@@ -229,6 +274,8 @@ private fun AlbumArtDisplay(
 @Composable
 private fun TrackInfoDisplay(
     track: SearchResult,
+    isFavorite: Boolean,
+    onFavoriteToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -243,29 +290,52 @@ private fun TrackInfoDisplay(
             overflow = TextOverflow.Ellipsis
         )
         
-        TitleMedium(
-            text = track.artist ?: "Unknown Artist",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        
-        track.album?.takeIf { it.isNotBlank() }?.let { album ->
-            BodyMedium(
-                text = album,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(AppSpacing.s)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f)
+            ) {
+                TitleMedium(
+                    text = track.artist ?: "Unknown Artist",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                
+                track.album?.takeIf { it.isNotBlank() }?.let { album ->
+                    BodyMedium(
+                        text = album,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                
+                // Extension source
+                LabelMedium(
+                    text = track.extensionId,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            
+            // Favorite button
+            IconButton(
+                onClick = onFavoriteToggle,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Outlined.Favorite else Icons.Outlined.FavoriteBorder,
+                    contentDescription = if (isFavorite) "Remove from Favorites" else "Add to Favorites",
+                    tint = if (isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
-        
-        // Extension source
-        LabelMedium(
-            text = track.extensionId,
-            color = MaterialTheme.colorScheme.primary
-        )
     }
 }
 
@@ -464,35 +534,6 @@ private fun QueueContent(
                     showExtensionSource = true
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun EmptyPlayerState() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.s)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.MusicNote,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            TitleMedium(
-                text = "No Track Playing",
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            BodyMedium(
-                text = "Search for music and start playing to see controls here",
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center
-            )
         }
     }
 }

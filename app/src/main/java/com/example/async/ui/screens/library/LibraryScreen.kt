@@ -5,214 +5,37 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.automirrored.outlined.PlaylistPlay
+import androidx.compose.material.icons.automirrored.outlined.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.async.core.model.SearchResult
 import com.async.domain.model.Playlist
-import com.async.domain.model.Track
 import com.example.async.ui.components.cards.BaseCard
-import com.example.async.ui.components.music.CompactTrackItem
 import com.example.async.ui.components.music.EmptyTrackList
 import com.example.async.ui.components.text.BodyMedium
-import com.example.async.ui.components.text.BodySmall
 import com.example.async.ui.components.text.HeadlineLarge
 import com.example.async.ui.components.text.LabelMedium
 import com.example.async.ui.components.text.TitleMedium
 import com.example.async.ui.theme.AppSpacing
-
-enum class LibraryTab {
-    RECENT, FAVORITES, PLAYLISTS, DOWNLOADS
-}
 
 @Composable
 fun LibraryScreen(
     onNavigateBack: () -> Unit = {},
     onNavigateToPlaylists: () -> Unit = {},
     onNavigateToPlayer: () -> Unit = {},
-    onTrackClick: (SearchResult) -> Unit = {},
-    onPlayTrack: (SearchResult) -> Unit = {},
-    onPlaylistClick: (Playlist) -> Unit = {}
-) {
-    var selectedTab by remember { mutableStateOf(LibraryTab.RECENT) }
-    
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(AppSpacing.m)
-    ) {
-        // Header
-        HeadlineLarge(
-            text = "Library",
-            modifier = Modifier.padding(bottom = AppSpacing.m)
-        )
-        
-        // Tab row
-        ScrollableTabRow(
-            selectedTabIndex = selectedTab.ordinal,
-            modifier = Modifier.fillMaxWidth(),
-            edgePadding = 0.dp
-        ) {
-            LibraryTab.values().forEach { tab ->
-                Tab(
-                    selected = selectedTab == tab,
-                    onClick = { selectedTab = tab },
-                    text = {
-                        TitleMedium(
-                            text = when (tab) {
-                                LibraryTab.RECENT -> "Recent"
-                                LibraryTab.FAVORITES -> "Favorites"
-                                LibraryTab.PLAYLISTS -> "Playlists"
-                                LibraryTab.DOWNLOADS -> "Downloads"
-                            }
-                        )
-                    }
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(AppSpacing.m))
-        
-        // Tab content
-        when (selectedTab) {
-            LibraryTab.RECENT -> RecentContent(
-                onTrackClick = onTrackClick,
-                onPlayTrack = onPlayTrack
-            )
-            LibraryTab.FAVORITES -> FavoritesContent(
-                onTrackClick = onTrackClick,
-                onPlayTrack = onPlayTrack
-            )
-            LibraryTab.PLAYLISTS -> PlaylistsContent(
-                onPlaylistClick = onPlaylistClick,
-                onNavigateToPlaylists = onNavigateToPlaylists
-            )
-            LibraryTab.DOWNLOADS -> DownloadsContent(
-                onTrackClick = onTrackClick,
-                onPlayTrack = onPlayTrack
-            )
-        }
-    }
-}
-
-@Composable
-private fun RecentContent(
-    onTrackClick: (SearchResult) -> Unit,
-    onPlayTrack: (SearchResult) -> Unit
-) {
-    // Sample recent tracks - in real implementation this would come from ViewModel
-    val recentTracks = remember {
-        listOf(
-            SearchResult(
-                id = "1",
-                extensionId = "spotify",
-                title = "Blinding Lights",
-                artist = "The Weeknd",
-                album = "After Hours",
-                duration = 200000,
-                thumbnailUrl = null
-            ),
-            SearchResult(
-                id = "2",
-                extensionId = "youtube",
-                title = "Shape of You",
-                artist = "Ed Sheeran",
-                album = "Divide",
-                duration = 233000,
-                thumbnailUrl = null
-            ),
-            SearchResult(
-                id = "3",
-                extensionId = "soundcloud",
-                title = "Bad Guy",
-                artist = "Billie Eilish",
-                album = "When We All Fall Asleep, Where Do We Go?",
-                duration = 194000,
-                thumbnailUrl = null
-            )
-        )
-    }
-    
-    if (recentTracks.isEmpty()) {
-        EmptyTrackList(
-            message = "No recently played tracks. Start listening to music to see your history here."
-        )
-    } else {
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
-        ) {
-            items(recentTracks) { track ->
-                CompactTrackItem(
-                    track = track,
-                    onTrackClick = { onTrackClick(track) },
-                    onPlayTrack = { onPlayTrack(track) },
-                    showExtensionSource = true
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun FavoritesContent(
-    onTrackClick: (SearchResult) -> Unit,
-    onPlayTrack: (SearchResult) -> Unit
-) {
-    // Sample favorite tracks - in real implementation this would come from ViewModel
-    val favoriteTracks = remember {
-        listOf(
-            SearchResult(
-                id = "fav1",
-                extensionId = "spotify",
-                title = "Bohemian Rhapsody",
-                artist = "Queen",
-                album = "A Night at the Opera",
-                duration = 354000,
-                thumbnailUrl = null
-            ),
-            SearchResult(
-                id = "fav2",
-                extensionId = "youtube",
-                title = "Stairway to Heaven",
-                artist = "Led Zeppelin",
-                album = "Led Zeppelin IV",
-                duration = 482000,
-                thumbnailUrl = null
-            )
-        )
-    }
-    
-    if (favoriteTracks.isEmpty()) {
-        EmptyTrackList(
-            message = "No favorite tracks yet. Tap the heart icon on any track to add it to your favorites."
-        )
-    } else {
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
-        ) {
-            items(favoriteTracks) { track ->
-                CompactTrackItem(
-                    track = track,
-                    onTrackClick = { onTrackClick(track) },
-                    onPlayTrack = { onPlayTrack(track) },
-                    showExtensionSource = true
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PlaylistsContent(
-    onPlaylistClick: (Playlist) -> Unit,
-    onNavigateToPlaylists: () -> Unit
+    onPlaylistClick: (Playlist) -> Unit = {},
+    onCreatePlaylist: () -> Unit = {}
 ) {
     // Sample playlists - in real implementation this would come from ViewModel
     val playlists = remember {
         listOf(
             Playlist.createFavoritesPlaylist().copy(trackCount = 25, totalDuration = 6480000),
+            Playlist.createRecentlyPlayedPlaylist().copy(trackCount = 50, totalDuration = 12750000),
+            Playlist.createMostPlayedPlaylist().copy(trackCount = 30, totalDuration = 7920000),
             Playlist.createUserPlaylist("My Chill Mix", "Perfect for relaxing").copy(
                 id = 4,
                 trackCount = 15,
@@ -222,26 +45,56 @@ private fun PlaylistsContent(
                 id = 5,
                 trackCount = 20,
                 totalDuration = 4800000
+            ),
+            Playlist.createUserPlaylist("Study Focus", "Instrumental tracks for concentration").copy(
+                id = 6,
+                trackCount = 12,
+                totalDuration = 2880000
+            ),
+            Playlist.createUserPlaylist("Road Trip Vibes", "Songs for long drives").copy(
+                id = 7,
+                trackCount = 35,
+                totalDuration = 8400000
+            ),
+            Playlist.createUserPlaylist("Throwback Thursday", "Nostalgic hits from the past").copy(
+                id = 8,
+                trackCount = 40,
+                totalDuration = 9600000
             )
         )
     }
     
-    Column {
-        // View all playlists button
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(AppSpacing.m)
+    ) {
+        // Header with create button
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TitleMedium("Your Playlists")
+            HeadlineLarge(
+                text = "Library",
+                modifier = Modifier.weight(1f)
+            )
             
-            TextButton(onClick = onNavigateToPlaylists) {
-                LabelMedium("View All")
+            FloatingActionButton(
+                onClick = onCreatePlaylist,
+                containerColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(56.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Add,
+                    contentDescription = "Create Playlist"
+                )
             }
         }
         
-        Spacer(modifier = Modifier.height(AppSpacing.s))
+        Spacer(modifier = Modifier.height(AppSpacing.m))
         
+        // Playlists list
         if (playlists.isEmpty()) {
             EmptyTrackList(
                 message = "No playlists yet. Create your first playlist to organize your music."
@@ -250,7 +103,7 @@ private fun PlaylistsContent(
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(AppSpacing.s)
             ) {
-                items(playlists.take(5)) { playlist -> // Show only first 5
+                items(playlists) { playlist ->
                     PlaylistLibraryCard(
                         playlist = playlist,
                         onClick = { onPlaylistClick(playlist) }
@@ -274,13 +127,13 @@ private fun PlaylistLibraryCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(AppSpacing.s),
+                .padding(AppSpacing.m),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(AppSpacing.s)
+            horizontalArrangement = Arrangement.spacedBy(AppSpacing.m)
         ) {
             // Playlist artwork placeholder
             Card(
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(56.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
@@ -290,10 +143,19 @@ private fun PlaylistLibraryCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.PlayArrow,
+                        imageVector = if (playlist.isSystemPlaylist) {
+                            when (playlist.name) {
+                                Playlist.FAVORITES -> Icons.Outlined.Favorite
+                                Playlist.RECENTLY_PLAYED -> Icons.Outlined.History
+                                Playlist.MOST_PLAYED -> Icons.AutoMirrored.Outlined.TrendingUp
+                                else -> Icons.Outlined.PlayArrow
+                            }
+                        } else {
+                            Icons.AutoMirrored.Outlined.PlaylistPlay
+                        },
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -301,17 +163,46 @@ private fun PlaylistLibraryCard(
             // Playlist info
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
             ) {
                 TitleMedium(
                     text = playlist.getDisplayName(),
-                    maxLines = 1
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 
-                LabelMedium(
-                    text = "${playlist.getTrackCountText()} • ${playlist.getFormattedDuration()}",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (!playlist.getDisplayDescription().equals("No description", ignoreCase = true)) {
+                    BodyMedium(
+                        text = playlist.getDisplayDescription(),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(AppSpacing.xs),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    LabelMedium(
+                        text = playlist.getTrackCountText(),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    if (playlist.totalDuration > 0) {
+                        LabelMedium(
+                            text = " • ${playlist.getFormattedDuration()}",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    
+                    if (playlist.isSystemPlaylist) {
+                        LabelMedium(
+                            text = " • System",
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
             
             // Forward arrow
@@ -321,34 +212,6 @@ private fun PlaylistLibraryCard(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp)
             )
-        }
-    }
-}
-
-@Composable
-private fun DownloadsContent(
-    onTrackClick: (SearchResult) -> Unit,
-    onPlayTrack: (SearchResult) -> Unit
-) {
-    // Sample downloaded tracks - in real implementation this would come from ViewModel
-    val downloadedTracks = remember { emptyList<SearchResult>() }
-    
-    if (downloadedTracks.isEmpty()) {
-        EmptyTrackList(
-            message = "No downloaded tracks. Download music for offline listening."
-        )
-    } else {
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
-        ) {
-            items(downloadedTracks) { track ->
-                CompactTrackItem(
-                    track = track,
-                    onTrackClick = { onTrackClick(track) },
-                    onPlayTrack = { onPlayTrack(track) },
-                    showExtensionSource = true
-                )
-            }
         }
     }
 } 

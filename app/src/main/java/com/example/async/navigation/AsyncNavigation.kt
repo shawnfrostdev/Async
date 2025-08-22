@@ -171,7 +171,18 @@ fun AsyncNavigation(
         
         // Player screen
         composable(AsyncDestinations.PLAYER) {
+            // TODO: Get current track from ViewModel
+            val sampleTrack = com.async.core.model.SearchResult(
+                id = "sample",
+                extensionId = "sample",
+                title = "Sample Track",
+                artist = "Sample Artist",
+                album = "Sample Album",
+                duration = 180000,
+                thumbnailUrl = null
+            )
             PlayerScreen(
+                currentTrack = sampleTrack,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

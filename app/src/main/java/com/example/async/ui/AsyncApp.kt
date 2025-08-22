@@ -43,7 +43,18 @@ fun AsyncApp() {
                     if (showBottomNav) {
                         Column {
                             // Mini player above bottom navigation
+                            // TODO: Get current track from ViewModel
+                            val sampleTrack = com.async.core.model.SearchResult(
+                                id = "sample",
+                                extensionId = "sample",
+                                title = "Sample Track",
+                                artist = "Sample Artist",
+                                album = "Sample Album",
+                                duration = 180000,
+                                thumbnailUrl = null
+                            )
                             MiniPlayer(
+                                currentTrack = null, // Set to null to hide mini player when no track
                                 onExpandPlayer = {
                                     navController.navigate(AsyncDestinations.PLAYER)
                                 }
