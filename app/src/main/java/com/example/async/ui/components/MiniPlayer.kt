@@ -2,23 +2,17 @@ package com.example.async.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.example.async.R
-
 @Composable
 fun MiniPlayer(
-    onExpandPlayer: () -> Unit = {},
-    isPlaying: Boolean = false,
-    onPlayPause: () -> Unit = {},
-    trackTitle: String = "",
-    trackArtist: String = ""
+    onExpandPlayer: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -50,31 +44,29 @@ fun MiniPlayer(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = if (trackTitle.isNotEmpty()) trackTitle else "No song selected",
+                    text = "No song selected",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (trackArtist.isNotEmpty()) {
-                    Text(
-                        text = trackArtist,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                Text(
+                    text = "Extension integration coming soon",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
             
             // Play/pause button
             IconButton(
-                onClick = onPlayPause,
+                onClick = { /* TODO: Connect to PlaybackManager */ },
                 modifier = Modifier.size(40.dp)
             ) {
                 Icon(
                     imageVector = Icons.Outlined.PlayArrow,
-                    contentDescription = stringResource(R.string.action_play),
+                    contentDescription = "Play",
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }

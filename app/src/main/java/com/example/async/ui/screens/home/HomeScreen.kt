@@ -1,14 +1,22 @@
 package com.example.async.ui.screens.home
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import com.example.async.R
+import androidx.compose.ui.unit.dp
+import com.example.async.ui.components.text.HeadlineLarge
+import com.example.async.ui.components.text.BodyMedium
+import com.example.async.ui.components.text.LabelMedium
+import com.example.async.ui.components.text.TitleMedium
+import com.example.async.ui.theme.AppSpacing
 
 @Composable
 fun HomeScreen(
@@ -17,13 +25,44 @@ fun HomeScreen(
     onNavigateToPlayer: () -> Unit = {},
     onNavigateToPlaylists: () -> Unit = {}
 ) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(AppSpacing.m)
     ) {
-        Text(
-            text = stringResource(R.string.title_home),
-            style = MaterialTheme.typography.headlineMedium
+        // Header
+        HeadlineLarge(
+            text = "Home",
+            modifier = Modifier.padding(bottom = AppSpacing.m)
         )
+        
+        // Extension integration placeholder
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(AppSpacing.m)
+            ) {
+                TitleMedium(
+                    text = "Music Discovery Coming Soon",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                BodyMedium(
+                    text = "Extension integration will provide music recommendations, recent tracks, and popular content here",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                )
+                Spacer(modifier = Modifier.height(AppSpacing.s))
+                Button(
+                    onClick = onNavigateToSearch,
+                    contentPadding = AppSpacing.smallButtonPadding
+                ) {
+                    LabelMedium("Go to Search")
+                }
+            }
+        }
     }
 } 

@@ -35,7 +35,6 @@ data class Repository(
 data class Extension(
     val name: String,
     val version: String,
-    val description: String,
     val isInstalled: Boolean = false
 )
 
@@ -52,22 +51,24 @@ fun ExtensionManagementScreen(
                     url = "https://github.com/example/music-extensions",
                     name = "Music Extensions",
                     extensions = listOf(
-                        Extension("Spotify Extension", "1.0.0", "Connect to Spotify for streaming"),
-                        Extension("YouTube Music", "2.1.0", "Access YouTube Music library"),
-                        Extension("SoundCloud", "1.5.0", "Stream from SoundCloud")
+                        Extension("Spotify Extension", "1.0.0", isInstalled = false),
+                        Extension("YouTube Music", "2.1.0", isInstalled = false),
+                        Extension("SoundCloud", "1.5.0", isInstalled = true)
                     )
                 ),
                 Repository(
                     url = "https://github.com/community/async-plugins",
                     name = "Community Plugins",
                     extensions = listOf(
-                        Extension("Last.fm Scrobbler", "1.2.0", "Scrobble tracks to Last.fm"),
-                        Extension("Lyrics Provider", "1.0.1", "Fetch lyrics for current track")
+                        Extension("Last.fm Scrobbler", "1.2.0", isInstalled = true),
+                        Extension("Lyrics Provider", "1.0.1", isInstalled = false)
                     )
                 )
             )
         )
     }
+    
+    var expandedRepositories by remember { mutableStateOf(setOf<String>()) }
     
     Column(
         modifier = Modifier
@@ -116,21 +117,19 @@ fun ExtensionManagementScreen(
             ) {
                 items(repositories) { repository ->
                     RepositoryItem(
-                        repository = repository,
+                        repository = repository.copy(isExpanded = expandedRepositories.contains(repository.url)),
                         onToggleExpanded = { url ->
-                            repositories = repositories.map { repo ->
-                                if (repo.url == url) {
-                                    repo.copy(isExpanded = !repo.isExpanded)
-                                } else {
-                                    repo
-                                }
+                            expandedRepositories = if (expandedRepositories.contains(url)) {
+                                expandedRepositories - url
+                            } else {
+                                expandedRepositories + url
                             }
                         },
                         onInstallExtension = { extensionName ->
-                            // Future: Handle extension installation
+                            // TODO: Handle extension installation from repository
                         },
                         onUninstallExtension = { extensionName ->
-                            // Future: Handle extension uninstallation
+                            // TODO: Handle extension uninstallation
                         }
                     )
                 }
@@ -147,7 +146,7 @@ fun ExtensionManagementScreen(
                 val newRepository = Repository(
                     url = url,
                     extensions = listOf(
-                        Extension("Sample Extension", "1.0.0", "Example extension from $url")
+                        Extension("Sample Extension", "1.0.0", isInstalled = false)
                     )
                 )
                 repositories = repositories + newRepository

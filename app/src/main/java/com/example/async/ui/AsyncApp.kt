@@ -46,9 +46,7 @@ fun AsyncApp() {
                             MiniPlayer(
                                 onExpandPlayer = {
                                     navController.navigate(AsyncDestinations.PLAYER)
-                                },
-                                trackTitle = "", // Empty until playback is implemented
-                                trackArtist = ""  // Empty until playback is implemented
+                                }
                             )
                             AsyncBottomNavigation(navController = navController)
                         }
