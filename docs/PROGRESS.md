@@ -262,20 +262,22 @@ The data layer now provides:
 - **Scaffold Integration**: AsyncApp with conditional navigation visibility and mini player
 - **Material3 Theming**: Complete theme system with AsyncTheme, typography, and colors
 
-**✨ NEWLY COMPLETED - Navigation Animations:**
-- **Black Fade Transitions**: Smooth fade out to black and fade in from black effects
-- **Slide Animations**: Right-to-left enter, left-to-right exit with proper pop reversal
-- **Performance Optimized**: 0.3s duration with FastOutSlowInEasing for natural motion
+**✨ UPDATED - Smart Navigation Animations:**
+- **Tab Navigation**: Fade-only transitions for bottom nav (Home, Search, Library, Settings)
+- **Other Navigation**: Slide + fade animations for Player, Extensions, etc.
+- **Performance Optimized**: 0.2s duration with FastOutSlowInEasing for snappy feel
 - **Hardware Acceleration**: Optimized for 60fps performance following Android dev guidelines
-- **Material Design Compliance**: Proper easing curves and timing for premium feel
+- **Smart Animation Logic**: Different animations based on destination type
 
 ### **📊 Animation Technical Achievements:**
 
-- **Optimized Animation Constants**: 300ms slide duration with 150ms fade timing
+- **Smart Animation Logic**: Different transitions for tab navigation vs other navigation
+- **Tab Destinations**: HOME, SEARCH, LIBRARY, SETTINGS use fade-only (200ms)
+- **Other Destinations**: PLAYER, PLAYLISTS, EXTENSIONS use slide + fade (200ms)
 - **Material Design Easing**: FastOutSlowInEasing for natural motion feel
 - **Four Animation Types**: enterTransition, exitTransition, popEnterTransition, popExitTransition
 - **Memory Efficient**: Hardware-accelerated animations with proper resource management
-- **Consistent Performance**: Smooth transitions across all navigation scenarios
+- **Consistent Performance**: Smooth transitions optimized for each navigation type
 
 ### Next Steps:
 Continue with **Phase 6: UI Layer Implementation**:
@@ -288,4 +290,4 @@ Continue with **Phase 6: UI Layer Implementation**:
 
 ---
 
-*Updated: Navigation animations completed with premium performance optimization* 
+*Updated: Smart navigation animations with differentiated tab and screen transitions (0.2s duration)* 

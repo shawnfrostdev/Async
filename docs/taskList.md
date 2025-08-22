@@ -255,10 +255,10 @@ This document breaks down the development plan into actionable tasks organized b
   - [x] AsyncApp main scaffold structure ✅
   - [x] Material3 theme and typography system ✅
   - [x] Mini player integration ✅
-- [x] **Navigation Animations** ✅ **NEWLY COMPLETED**
-  - [x] Black fade transition effects (fade out/in from black) ✅
-  - [x] Slide animations (right-to-left enter, left-to-right exit) ✅
-  - [x] 0.3s duration for all transitions ✅
+- [x] **Navigation Animations** ✅ **UPDATED**
+  - [x] Tab navigation: Fade-only transitions (0.2s) ✅
+  - [x] Other navigation: Slide + fade animations (0.2s) ✅
+  - [x] Smart animation logic based on destination type ✅
   - [x] Material Design easing curves (FastOutSlowInEasing) ✅
   - [x] Performance optimization following Android dev guidelines ✅
   - [x] Pop navigation animations (proper directional reversal) ✅
@@ -328,9 +328,10 @@ This document breaks down the development plan into actionable tasks organized b
 ## **Phase 8: Performance & Polish**
 
 ### **8.1 Performance Optimization**
-- [x] **Navigation Animation Optimization** ✅ **NEWLY COMPLETED**
-  - [x] Hardware-accelerated slide animations ✅
-  - [x] Optimized timing and easing curves ✅
+- [x] **Navigation Animation Optimization** ✅ **UPDATED**
+  - [x] Differentiated animations for tab vs other navigation ✅
+  - [x] Hardware-accelerated transitions ✅
+  - [x] Optimized 0.2s timing and easing curves ✅
   - [x] Memory-efficient animation objects ✅
   - [x] 60fps targeting with FastOutSlowInEasing ✅
 - [ ] Optimize Compose recomposition

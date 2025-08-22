@@ -26,19 +26,33 @@ import com.example.async.ui.screens.extensions.ExtensionManagementScreen
  * Animation constants following Android design guidelines for optimal performance
  */
 private object AnimationConstants {
-    const val ANIMATION_DURATION = 300 // 0.3 seconds as requested
-    const val FADE_DURATION = 150 // Shorter fade for smoother black transition
+    const val ANIMATION_DURATION = 200 // 0.2 seconds as requested
     
     // Material Design easing for natural motion
     val MOTION_EASING = FastOutSlowInEasing
 }
 
 /**
+ * Tab destinations that use fade-only animations
+ */
+private val TAB_DESTINATIONS = setOf(
+    AsyncDestinations.HOME,
+    AsyncDestinations.SEARCH,
+    AsyncDestinations.LIBRARY,
+    AsyncDestinations.SETTINGS
+)
+
+/**
+ * Helper function to determine if a route is a tab destination
+ */
+private fun isTabDestination(route: String?): Boolean {
+    return route in TAB_DESTINATIONS
+}
+
+/**
  * Main navigation graph for the Async music player with optimized animations
- * Implements black fade transitions with slide animations:
- * - Entering: slide from right to left + fade in from black
- * - Exiting: slide left to right + fade out to black
- * - Duration: 0.3s for all transitions
+ * - Tab navigation (Home, Search, Library, Settings): Fade only (0.2s)
+ * - Other navigation (Player, Extensions, etc.): Slide + fade (0.2s)
  * - Optimized for 60fps performance
  */
 @Composable
@@ -51,67 +65,129 @@ fun AsyncNavigation(
         navController = navController,
         startDestination = startDestination,
         modifier = modifier,
-        enterTransition = {
-            // Entering: slide from right + fade in from black
-            slideInHorizontally(
-                animationSpec = tween(
-                    durationMillis = AnimationConstants.ANIMATION_DURATION,
-                    easing = AnimationConstants.MOTION_EASING
-                ),
-                initialOffsetX = { fullWidth -> fullWidth }
-            ) + fadeIn(
-                animationSpec = tween(
-                    durationMillis = AnimationConstants.FADE_DURATION,
-                    delayMillis = AnimationConstants.FADE_DURATION,
-                    easing = AnimationConstants.MOTION_EASING
-                )
-            )
+        enterTransition = { 
+            val targetRoute = targetState.destination.route
+            val initialRoute = initialState.destination.route
+            
+            when {
+                // Both are tab destinations - fade only
+                isTabDestination(targetRoute) && isTabDestination(initialRoute) -> {
+                    fadeIn(
+                        animationSpec = tween(
+                            durationMillis = AnimationConstants.ANIMATION_DURATION,
+                            easing = AnimationConstants.MOTION_EASING
+                        )
+                    )
+                }
+                // Non-tab destination - slide + fade
+                else -> {
+                    slideInHorizontally(
+                        animationSpec = tween(
+                            durationMillis = AnimationConstants.ANIMATION_DURATION,
+                            easing = AnimationConstants.MOTION_EASING
+                        ),
+                        initialOffsetX = { fullWidth -> fullWidth }
+                    ) + fadeIn(
+                        animationSpec = tween(
+                            durationMillis = AnimationConstants.ANIMATION_DURATION,
+                            easing = AnimationConstants.MOTION_EASING
+                        )
+                    )
+                }
+            }
         },
-        exitTransition = {
-            // Exiting: slide to left + fade out to black
-            slideOutHorizontally(
-                animationSpec = tween(
-                    durationMillis = AnimationConstants.ANIMATION_DURATION,
-                    easing = AnimationConstants.MOTION_EASING
-                ),
-                targetOffsetX = { fullWidth -> -fullWidth }
-            ) + fadeOut(
-                animationSpec = tween(
-                    durationMillis = AnimationConstants.FADE_DURATION,
-                    easing = AnimationConstants.MOTION_EASING
-                )
-            )
+        exitTransition = { 
+            val targetRoute = targetState.destination.route
+            val initialRoute = initialState.destination.route
+            
+            when {
+                // Both are tab destinations - fade only
+                isTabDestination(targetRoute) && isTabDestination(initialRoute) -> {
+                    fadeOut(
+                        animationSpec = tween(
+                            durationMillis = AnimationConstants.ANIMATION_DURATION,
+                            easing = AnimationConstants.MOTION_EASING
+                        )
+                    )
+                }
+                // Non-tab destination - slide + fade
+                else -> {
+                    slideOutHorizontally(
+                        animationSpec = tween(
+                            durationMillis = AnimationConstants.ANIMATION_DURATION,
+                            easing = AnimationConstants.MOTION_EASING
+                        ),
+                        targetOffsetX = { fullWidth -> -fullWidth }
+                    ) + fadeOut(
+                        animationSpec = tween(
+                            durationMillis = AnimationConstants.ANIMATION_DURATION,
+                            easing = AnimationConstants.MOTION_EASING
+                        )
+                    )
+                }
+            }
         },
-        popEnterTransition = {
-            // Pop entering: slide from left + fade in from black
-            slideInHorizontally(
-                animationSpec = tween(
-                    durationMillis = AnimationConstants.ANIMATION_DURATION,
-                    easing = AnimationConstants.MOTION_EASING
-                ),
-                initialOffsetX = { fullWidth -> -fullWidth }
-            ) + fadeIn(
-                animationSpec = tween(
-                    durationMillis = AnimationConstants.FADE_DURATION,
-                    delayMillis = AnimationConstants.FADE_DURATION,
-                    easing = AnimationConstants.MOTION_EASING
-                )
-            )
+        popEnterTransition = { 
+            val targetRoute = targetState.destination.route
+            val initialRoute = initialState.destination.route
+            
+            when {
+                // Both are tab destinations - fade only
+                isTabDestination(targetRoute) && isTabDestination(initialRoute) -> {
+                    fadeIn(
+                        animationSpec = tween(
+                            durationMillis = AnimationConstants.ANIMATION_DURATION,
+                            easing = AnimationConstants.MOTION_EASING
+                        )
+                    )
+                }
+                // Non-tab destination - slide + fade (reverse direction)
+                else -> {
+                    slideInHorizontally(
+                        animationSpec = tween(
+                            durationMillis = AnimationConstants.ANIMATION_DURATION,
+                            easing = AnimationConstants.MOTION_EASING
+                        ),
+                        initialOffsetX = { fullWidth -> -fullWidth }
+                    ) + fadeIn(
+                        animationSpec = tween(
+                            durationMillis = AnimationConstants.ANIMATION_DURATION,
+                            easing = AnimationConstants.MOTION_EASING
+                        )
+                    )
+                }
+            }
         },
-        popExitTransition = {
-            // Pop exiting: slide to right + fade out to black
-            slideOutHorizontally(
-                animationSpec = tween(
-                    durationMillis = AnimationConstants.ANIMATION_DURATION,
-                    easing = AnimationConstants.MOTION_EASING
-                ),
-                targetOffsetX = { fullWidth -> fullWidth }
-            ) + fadeOut(
-                animationSpec = tween(
-                    durationMillis = AnimationConstants.FADE_DURATION,
-                    easing = AnimationConstants.MOTION_EASING
-                )
-            )
+        popExitTransition = { 
+            val targetRoute = targetState.destination.route
+            val initialRoute = initialState.destination.route
+            
+            when {
+                // Both are tab destinations - fade only
+                isTabDestination(targetRoute) && isTabDestination(initialRoute) -> {
+                    fadeOut(
+                        animationSpec = tween(
+                            durationMillis = AnimationConstants.ANIMATION_DURATION,
+                            easing = AnimationConstants.MOTION_EASING
+                        )
+                    )
+                }
+                // Non-tab destination - slide + fade (reverse direction)
+                else -> {
+                    slideOutHorizontally(
+                        animationSpec = tween(
+                            durationMillis = AnimationConstants.ANIMATION_DURATION,
+                            easing = AnimationConstants.MOTION_EASING
+                        ),
+                        targetOffsetX = { fullWidth -> fullWidth }
+                    ) + fadeOut(
+                        animationSpec = tween(
+                            durationMillis = AnimationConstants.ANIMATION_DURATION,
+                            easing = AnimationConstants.MOTION_EASING
+                        )
+                    )
+                }
+            }
         }
     ) {
         // Home screen - main entry point
