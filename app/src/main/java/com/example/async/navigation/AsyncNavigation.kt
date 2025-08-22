@@ -2,6 +2,12 @@ package com.example.async.navigation
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -17,7 +23,23 @@ import com.example.async.ui.screens.settings.SettingsScreen
 import com.example.async.ui.screens.extensions.ExtensionManagementScreen
 
 /**
- * Main navigation graph for the Async music player
+ * Animation constants following Android design guidelines for optimal performance
+ */
+private object AnimationConstants {
+    const val ANIMATION_DURATION = 300 // 0.3 seconds as requested
+    const val FADE_DURATION = 150 // Shorter fade for smoother black transition
+    
+    // Material Design easing for natural motion
+    val MOTION_EASING = FastOutSlowInEasing
+}
+
+/**
+ * Main navigation graph for the Async music player with optimized animations
+ * Implements black fade transitions with slide animations:
+ * - Entering: slide from right to left + fade in from black
+ * - Exiting: slide left to right + fade out to black
+ * - Duration: 0.3s for all transitions
+ * - Optimized for 60fps performance
  */
 @Composable
 fun AsyncNavigation(
@@ -29,10 +51,68 @@ fun AsyncNavigation(
         navController = navController,
         startDestination = startDestination,
         modifier = modifier,
-        enterTransition = { EnterTransition.None },
-        exitTransition = { ExitTransition.None },
-        popEnterTransition = { EnterTransition.None },
-        popExitTransition = { ExitTransition.None }
+        enterTransition = {
+            // Entering: slide from right + fade in from black
+            slideInHorizontally(
+                animationSpec = tween(
+                    durationMillis = AnimationConstants.ANIMATION_DURATION,
+                    easing = AnimationConstants.MOTION_EASING
+                ),
+                initialOffsetX = { fullWidth -> fullWidth }
+            ) + fadeIn(
+                animationSpec = tween(
+                    durationMillis = AnimationConstants.FADE_DURATION,
+                    delayMillis = AnimationConstants.FADE_DURATION,
+                    easing = AnimationConstants.MOTION_EASING
+                )
+            )
+        },
+        exitTransition = {
+            // Exiting: slide to left + fade out to black
+            slideOutHorizontally(
+                animationSpec = tween(
+                    durationMillis = AnimationConstants.ANIMATION_DURATION,
+                    easing = AnimationConstants.MOTION_EASING
+                ),
+                targetOffsetX = { fullWidth -> -fullWidth }
+            ) + fadeOut(
+                animationSpec = tween(
+                    durationMillis = AnimationConstants.FADE_DURATION,
+                    easing = AnimationConstants.MOTION_EASING
+                )
+            )
+        },
+        popEnterTransition = {
+            // Pop entering: slide from left + fade in from black
+            slideInHorizontally(
+                animationSpec = tween(
+                    durationMillis = AnimationConstants.ANIMATION_DURATION,
+                    easing = AnimationConstants.MOTION_EASING
+                ),
+                initialOffsetX = { fullWidth -> -fullWidth }
+            ) + fadeIn(
+                animationSpec = tween(
+                    durationMillis = AnimationConstants.FADE_DURATION,
+                    delayMillis = AnimationConstants.FADE_DURATION,
+                    easing = AnimationConstants.MOTION_EASING
+                )
+            )
+        },
+        popExitTransition = {
+            // Pop exiting: slide to right + fade out to black
+            slideOutHorizontally(
+                animationSpec = tween(
+                    durationMillis = AnimationConstants.ANIMATION_DURATION,
+                    easing = AnimationConstants.MOTION_EASING
+                ),
+                targetOffsetX = { fullWidth -> fullWidth }
+            ) + fadeOut(
+                animationSpec = tween(
+                    durationMillis = AnimationConstants.FADE_DURATION,
+                    easing = AnimationConstants.MOTION_EASING
+                )
+            )
+        }
     ) {
         // Home screen - main entry point
         composable(AsyncDestinations.HOME) {
