@@ -5,6 +5,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Extension
@@ -17,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.async.ui.components.text.BodyMedium
 import com.example.async.ui.components.text.BodySmall
+import com.example.async.ui.components.text.HeadlineLarge
 import com.example.async.ui.components.text.LabelMedium
 import com.example.async.ui.components.text.TitleMedium
 import com.example.async.ui.theme.AppSpacing
@@ -87,10 +90,10 @@ fun ExtensionManagementScreen(
                     contentDescription = "Back"
                 )
             }
-            TitleMedium(
-                text = "Extensions",
-                modifier = Modifier.weight(1f)
-            )
+                         HeadlineLarge(
+                 text = "Extensions",
+                 modifier = Modifier.weight(1f)
+             )
             IconButton(onClick = { showAddRepositoryDialog = true }) {
                 Icon(
                     imageVector = Icons.Outlined.Add,
@@ -178,7 +181,7 @@ private fun RepositoryItem(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(AppSpacing.m),
+                        .padding(horizontal = AppSpacing.m, vertical = AppSpacing.s),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -215,17 +218,15 @@ private fun RepositoryItem(
             if (repository.isExpanded) {
                 Column(
                     modifier = Modifier.padding(
-                        start = AppSpacing.m,
-                        end = AppSpacing.m,
-                        bottom = AppSpacing.m
+                        horizontal = AppSpacing.s,
+                        vertical = AppSpacing.xs
                     )
                 ) {
                     repository.extensions.forEach { extension ->
                         ExtensionItem(
                             extension = extension,
                             onInstall = { onInstallExtension(extension.name) },
-                            onUninstall = { onUninstallExtension(extension.name) },
-                            modifier = Modifier.padding(vertical = AppSpacing.xs)
+                            onUninstall = { onUninstallExtension(extension.name) }
                         )
                     }
                 }
@@ -241,61 +242,57 @@ private fun ExtensionItem(
     onUninstall: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = AppSpacing.xs, horizontal = AppSpacing.s),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(AppSpacing.s)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(AppSpacing.m),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(AppSpacing.s)
+        // Extension icon
+        Icon(
+            imageVector = Icons.Outlined.Extension,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
+        
+        // Extension info
+        Column(
+            modifier = Modifier.weight(1f)
         ) {
-            // Extension icon
-            Icon(
-                imageVector = Icons.Outlined.Extension,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
+            TitleMedium(
+                text = extension.name,
+                color = MaterialTheme.colorScheme.onSurface
             )
-            
-            // Extension info
-            Column(
-                modifier = Modifier.weight(1f)
+            BodySmall(
+                text = "v${extension.version}",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
+        // Install/Uninstall icon button
+        if (extension.isInstalled) {
+            IconButton(
+                onClick = onUninstall,
+                modifier = Modifier.size(40.dp)
             ) {
-                TitleMedium(
-                    text = extension.name,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                BodySmall(
-                    text = "v${extension.version}",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                BodySmall(
-                    text = extension.description,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    contentDescription = "Uninstall",
+                    tint = MaterialTheme.colorScheme.error
                 )
             }
-            
-            // Install/Uninstall button
-            if (extension.isInstalled) {
-                OutlinedButton(
-                    onClick = onUninstall,
-                    contentPadding = AppSpacing.smallButtonPadding
-                ) {
-                    LabelMedium("Uninstall")
-                }
-            } else {
-                Button(
-                    onClick = onInstall,
-                    contentPadding = AppSpacing.smallButtonPadding
-                ) {
-                    LabelMedium("Install")
-                }
+        } else {
+            IconButton(
+                onClick = onInstall,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Download,
+                    contentDescription = "Install",
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
         }
     }
