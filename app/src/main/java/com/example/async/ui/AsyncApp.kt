@@ -5,12 +5,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.async.navigation.AsyncDestinations
 import com.example.async.navigation.AsyncNavigation
+import com.example.async.ui.animation.config.AnimationConfig
+import com.example.async.ui.animation.navigation.LocalAnimationConfig
 import com.example.async.ui.components.AsyncBottomNavigation
 import com.example.async.ui.components.MiniPlayer
 import com.example.async.ui.theme.AsyncTheme
@@ -20,38 +24,43 @@ import com.example.async.ui.theme.AsyncTheme
  */
 @Composable
 fun AsyncApp() {
+    val context = LocalContext.current
+    val animationConfig = AnimationConfig.fromSystemSettings(context)
+    
     AsyncTheme {
-        val navController = rememberNavController()
-        val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentRoute = navBackStackEntry?.destination?.route
-        
-        // Show bottom navigation for main screens, hide for player and extension screens
-        val showBottomNav = currentRoute != AsyncDestinations.PLAYER && 
-                           currentRoute != AsyncDestinations.EXTENSIONS
-        
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            bottomBar = {
-                if (showBottomNav) {
-                    Column {
-                        // Mini player above bottom navigation
-                        MiniPlayer(
-                            onExpandPlayer = {
-                                navController.navigate(AsyncDestinations.PLAYER)
-                            },
-                            trackTitle = "", // Empty until playback is implemented
-                            trackArtist = ""  // Empty until playback is implemented
-                        )
-                        AsyncBottomNavigation(navController = navController)
+        CompositionLocalProvider(LocalAnimationConfig provides animationConfig) {
+            val navController = rememberNavController()
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route
+            
+            // Show bottom navigation for main screens, hide for player and extension screens
+            val showBottomNav = currentRoute != AsyncDestinations.PLAYER && 
+                               currentRoute != AsyncDestinations.EXTENSIONS
+            
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                bottomBar = {
+                    if (showBottomNav) {
+                        Column {
+                            // Mini player above bottom navigation
+                            MiniPlayer(
+                                onExpandPlayer = {
+                                    navController.navigate(AsyncDestinations.PLAYER)
+                                },
+                                trackTitle = "", // Empty until playback is implemented
+                                trackArtist = ""  // Empty until playback is implemented
+                            )
+                            AsyncBottomNavigation(navController = navController)
+                        }
                     }
+                },
+                content = { paddingValues ->
+                    AsyncNavigation(
+                        navController = navController,
+                        modifier = Modifier.padding(paddingValues)
+                    )
                 }
-            },
-            content = { paddingValues ->
-                AsyncNavigation(
-                    navController = navController,
-                    modifier = Modifier.padding(paddingValues)
-                )
-            }
-        )
+            )
+        }
     }
 } 

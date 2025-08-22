@@ -14,6 +14,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.async.ui.animation.config.AppAnimationSpecs
+import com.example.async.ui.animation.navigation.LocalAnimationConfig
 import com.example.async.ui.screens.home.HomeScreen
 import com.example.async.ui.screens.search.SearchScreen
 import com.example.async.ui.screens.library.LibraryScreen
@@ -64,6 +66,7 @@ fun AsyncNavigation(
     startDestination: String = AsyncDestinations.HOME,
     modifier: Modifier = Modifier
 ) {
+    val animationConfig = LocalAnimationConfig.current
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -75,28 +78,11 @@ fun AsyncNavigation(
             when {
                 // Both are tab destinations - fade from black with delay
                 isTabDestination(targetRoute) && isTabDestination(initialRoute) -> {
-                    fadeIn(
-                        animationSpec = tween(
-                            durationMillis = AnimationConstants.FADE_IN_DURATION,
-                            delayMillis = AnimationConstants.FADE_IN_DELAY,
-                            easing = AnimationConstants.MOTION_EASING
-                        )
-                    )
+                    AppAnimationSpecs.fadeEnter(animationConfig)
                 }
                 // Non-tab destination - slide + fade
                 else -> {
-                    slideInHorizontally(
-                        animationSpec = tween(
-                            durationMillis = AnimationConstants.ANIMATION_DURATION,
-                            easing = AnimationConstants.MOTION_EASING
-                        ),
-                        initialOffsetX = { fullWidth -> fullWidth }
-                    ) + fadeIn(
-                        animationSpec = tween(
-                            durationMillis = AnimationConstants.ANIMATION_DURATION,
-                            easing = AnimationConstants.MOTION_EASING
-                        )
-                    )
+                    AppAnimationSpecs.enter(animationConfig)
                 }
             }
         },
@@ -107,27 +93,11 @@ fun AsyncNavigation(
             when {
                 // Both are tab destinations - fade to black
                 isTabDestination(targetRoute) && isTabDestination(initialRoute) -> {
-                    fadeOut(
-                        animationSpec = tween(
-                            durationMillis = AnimationConstants.FADE_OUT_DURATION,
-                            easing = AnimationConstants.MOTION_EASING
-                        )
-                    )
+                    AppAnimationSpecs.fadeExit(animationConfig)
                 }
                 // Non-tab destination - slide + fade
                 else -> {
-                    slideOutHorizontally(
-                        animationSpec = tween(
-                            durationMillis = AnimationConstants.ANIMATION_DURATION,
-                            easing = AnimationConstants.MOTION_EASING
-                        ),
-                        targetOffsetX = { fullWidth -> -fullWidth }
-                    ) + fadeOut(
-                        animationSpec = tween(
-                            durationMillis = AnimationConstants.ANIMATION_DURATION,
-                            easing = AnimationConstants.MOTION_EASING
-                        )
-                    )
+                    AppAnimationSpecs.exit(animationConfig)
                 }
             }
         },
@@ -138,27 +108,15 @@ fun AsyncNavigation(
             when {
                 // Both are tab destinations - fade from black with delay
                 isTabDestination(targetRoute) && isTabDestination(initialRoute) -> {
-                    fadeIn(
-                        animationSpec = tween(
-                            durationMillis = AnimationConstants.FADE_IN_DURATION,
-                            delayMillis = AnimationConstants.FADE_IN_DELAY,
-                            easing = AnimationConstants.MOTION_EASING
-                        )
-                    )
+                    AppAnimationSpecs.fadeEnter(animationConfig)
                 }
                 // Non-tab destination - slide + fade (reverse direction)
                 else -> {
                     slideInHorizontally(
-                        animationSpec = tween(
-                            durationMillis = AnimationConstants.ANIMATION_DURATION,
-                            easing = AnimationConstants.MOTION_EASING
-                        ),
+                        animationSpec = AppAnimationSpecs.largeMotionOffset(animationConfig),
                         initialOffsetX = { fullWidth -> -fullWidth }
                     ) + fadeIn(
-                        animationSpec = tween(
-                            durationMillis = AnimationConstants.ANIMATION_DURATION,
-                            easing = AnimationConstants.MOTION_EASING
-                        )
+                        animationSpec = AppAnimationSpecs.contentTransition(animationConfig)
                     )
                 }
             }
@@ -170,26 +128,15 @@ fun AsyncNavigation(
             when {
                 // Both are tab destinations - fade to black
                 isTabDestination(targetRoute) && isTabDestination(initialRoute) -> {
-                    fadeOut(
-                        animationSpec = tween(
-                            durationMillis = AnimationConstants.FADE_OUT_DURATION,
-                            easing = AnimationConstants.MOTION_EASING
-                        )
-                    )
+                    AppAnimationSpecs.fadeExit(animationConfig)
                 }
                 // Non-tab destination - slide + fade (reverse direction)
                 else -> {
                     slideOutHorizontally(
-                        animationSpec = tween(
-                            durationMillis = AnimationConstants.ANIMATION_DURATION,
-                            easing = AnimationConstants.MOTION_EASING
-                        ),
+                        animationSpec = AppAnimationSpecs.largeMotionOffset(animationConfig),
                         targetOffsetX = { fullWidth -> fullWidth }
                     ) + fadeOut(
-                        animationSpec = tween(
-                            durationMillis = AnimationConstants.ANIMATION_DURATION,
-                            easing = AnimationConstants.MOTION_EASING
-                        )
+                        animationSpec = AppAnimationSpecs.contentTransition(animationConfig)
                     )
                 }
             }
