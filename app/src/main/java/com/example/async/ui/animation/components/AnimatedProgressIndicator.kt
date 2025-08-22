@@ -62,7 +62,7 @@ fun AnimatedCircularProgressIndicator(
         )
         
         CircularProgressIndicator(
-            progress = animatedProgress,
+            progress = { animatedProgress },
             modifier = modifier,
             color = color,
             strokeWidth = strokeWidth,
@@ -101,7 +101,7 @@ fun AnimatedLinearProgressIndicator(
         )
         
         LinearProgressIndicator(
-            progress = animatedProgress,
+            progress = { animatedProgress },
             modifier = modifier,
             color = color,
             trackColor = trackColor,
