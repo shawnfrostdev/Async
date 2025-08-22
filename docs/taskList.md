@@ -256,8 +256,9 @@ This document breaks down the development plan into actionable tasks organized b
   - [x] Material3 theme and typography system ✅
   - [x] Mini player integration ✅
 - [x] **Navigation Animations** ✅ **UPDATED**
-  - [x] Tab navigation: Fade-only transitions (0.2s) ✅
+  - [x] Tab navigation: Fade to black → fade from black (0.2s) ✅
   - [x] Other navigation: Slide + fade animations (0.2s) ✅
+  - [x] Black transition moment for tab switching ✅
   - [x] Smart animation logic based on destination type ✅
   - [x] Material Design easing curves (FastOutSlowInEasing) ✅
   - [x] Performance optimization following Android dev guidelines ✅

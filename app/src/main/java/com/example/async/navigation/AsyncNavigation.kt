@@ -27,13 +27,16 @@ import com.example.async.ui.screens.extensions.ExtensionManagementScreen
  */
 private object AnimationConstants {
     const val ANIMATION_DURATION = 200 // 0.2 seconds as requested
+    const val FADE_OUT_DURATION = 100 // First half: fade to black
+    const val FADE_IN_DURATION = 100 // Second half: fade from black
+    const val FADE_IN_DELAY = 100 // Delay for fade in to create black moment
     
     // Material Design easing for natural motion
     val MOTION_EASING = FastOutSlowInEasing
 }
 
 /**
- * Tab destinations that use fade-only animations
+ * Tab destinations that use fade-to-black animations
  */
 private val TAB_DESTINATIONS = setOf(
     AsyncDestinations.HOME,
@@ -51,8 +54,8 @@ private fun isTabDestination(route: String?): Boolean {
 
 /**
  * Main navigation graph for the Async music player with optimized animations
- * - Tab navigation (Home, Search, Library, Settings): Fade only (0.2s)
- * - Other navigation (Player, Extensions, etc.): Slide + fade (0.2s)
+ * - Tab navigation: Fade to black → fade from black (0.2s total)
+ * - Other navigation: Slide + fade animations (0.2s)
  * - Optimized for 60fps performance
  */
 @Composable
@@ -70,11 +73,12 @@ fun AsyncNavigation(
             val initialRoute = initialState.destination.route
             
             when {
-                // Both are tab destinations - fade only
+                // Both are tab destinations - fade from black with delay
                 isTabDestination(targetRoute) && isTabDestination(initialRoute) -> {
                     fadeIn(
                         animationSpec = tween(
-                            durationMillis = AnimationConstants.ANIMATION_DURATION,
+                            durationMillis = AnimationConstants.FADE_IN_DURATION,
+                            delayMillis = AnimationConstants.FADE_IN_DELAY,
                             easing = AnimationConstants.MOTION_EASING
                         )
                     )
@@ -101,11 +105,11 @@ fun AsyncNavigation(
             val initialRoute = initialState.destination.route
             
             when {
-                // Both are tab destinations - fade only
+                // Both are tab destinations - fade to black
                 isTabDestination(targetRoute) && isTabDestination(initialRoute) -> {
                     fadeOut(
                         animationSpec = tween(
-                            durationMillis = AnimationConstants.ANIMATION_DURATION,
+                            durationMillis = AnimationConstants.FADE_OUT_DURATION,
                             easing = AnimationConstants.MOTION_EASING
                         )
                     )
@@ -132,11 +136,12 @@ fun AsyncNavigation(
             val initialRoute = initialState.destination.route
             
             when {
-                // Both are tab destinations - fade only
+                // Both are tab destinations - fade from black with delay
                 isTabDestination(targetRoute) && isTabDestination(initialRoute) -> {
                     fadeIn(
                         animationSpec = tween(
-                            durationMillis = AnimationConstants.ANIMATION_DURATION,
+                            durationMillis = AnimationConstants.FADE_IN_DURATION,
+                            delayMillis = AnimationConstants.FADE_IN_DELAY,
                             easing = AnimationConstants.MOTION_EASING
                         )
                     )
@@ -163,11 +168,11 @@ fun AsyncNavigation(
             val initialRoute = initialState.destination.route
             
             when {
-                // Both are tab destinations - fade only
+                // Both are tab destinations - fade to black
                 isTabDestination(targetRoute) && isTabDestination(initialRoute) -> {
                     fadeOut(
                         animationSpec = tween(
-                            durationMillis = AnimationConstants.ANIMATION_DURATION,
+                            durationMillis = AnimationConstants.FADE_OUT_DURATION,
                             easing = AnimationConstants.MOTION_EASING
                         )
                     )

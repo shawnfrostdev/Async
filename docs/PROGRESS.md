@@ -263,8 +263,9 @@ The data layer now provides:
 - **Material3 Theming**: Complete theme system with AsyncTheme, typography, and colors
 
 **✨ UPDATED - Smart Navigation Animations:**
-- **Tab Navigation**: Fade-only transitions for bottom nav (Home, Search, Library, Settings)
+- **Tab Navigation**: Fade to black → fade from black for bottom nav (Home, Search, Library, Settings)
 - **Other Navigation**: Slide + fade animations for Player, Extensions, etc.
+- **Black Transition Moment**: Brief black screen between tab transitions for visual separation
 - **Performance Optimized**: 0.2s duration with FastOutSlowInEasing for snappy feel
 - **Hardware Acceleration**: Optimized for 60fps performance following Android dev guidelines
 - **Smart Animation Logic**: Different animations based on destination type
@@ -272,8 +273,9 @@ The data layer now provides:
 ### **📊 Animation Technical Achievements:**
 
 - **Smart Animation Logic**: Different transitions for tab navigation vs other navigation
-- **Tab Destinations**: HOME, SEARCH, LIBRARY, SETTINGS use fade-only (200ms)
+- **Tab Destinations**: HOME, SEARCH, LIBRARY, SETTINGS use fade-to-black (100ms out + 100ms in)
 - **Other Destinations**: PLAYER, PLAYLISTS, EXTENSIONS use slide + fade (200ms)
+- **Black Transition Effect**: 100ms delay creates visible black moment between tab transitions
 - **Material Design Easing**: FastOutSlowInEasing for natural motion feel
 - **Four Animation Types**: enterTransition, exitTransition, popEnterTransition, popExitTransition
 - **Memory Efficient**: Hardware-accelerated animations with proper resource management
@@ -290,4 +292,4 @@ Continue with **Phase 6: UI Layer Implementation**:
 
 ---
 
-*Updated: Smart navigation animations with differentiated tab and screen transitions (0.2s duration)* 
+*Updated: Smart navigation animations with fade-to-black tab transitions and slide+fade screen transitions* 
