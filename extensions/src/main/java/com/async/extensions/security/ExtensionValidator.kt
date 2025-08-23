@@ -7,7 +7,7 @@ import com.async.core.extension.ExtensionApi
 import com.async.core.extension.MusicExtension
 import com.async.core.model.ExtensionException
 import com.async.core.model.ExtensionResult
-import timber.log.Timber
+import logcat.logcat
 import java.io.File
 import java.io.FileInputStream
 import java.security.MessageDigest
@@ -63,7 +63,7 @@ class ExtensionValidator @Inject constructor(
      */
     suspend fun validateExtensionFile(extensionFile: File): ExtensionResult<ValidationResult> {
         return try {
-            Timber.d("Validating extension file: ${extensionFile.name}")
+            logcat { "Validating extension file: ${extensionFile.name}" }
             
             val validationResult = ValidationResult()
             
@@ -98,7 +98,7 @@ class ExtensionValidator @Inject constructor(
             }
             
         } catch (e: Exception) {
-            Timber.e(e, "Extension validation failed")
+            logcat { "Extension validation failed - ${e.message}" }
             ExtensionResult.Error(
                 ExtensionException.GenericError(
                     "Validation failed: ${e.message}",
@@ -162,7 +162,7 @@ class ExtensionValidator @Inject constructor(
             // In production, this would check against known developer certificates
             false
         } catch (e: Exception) {
-            Timber.w(e, "Failed to check extension trust status")
+            logcat { "Failed to check extension trust status - ${e.message}" }
             false
         }
     }
@@ -178,7 +178,7 @@ class ExtensionValidator @Inject constructor(
                 getJarSignature(extensionFile)
             }
         } catch (e: Exception) {
-            Timber.w(e, "Failed to get extension signature")
+            logcat { "Failed to get extension signature - ${e.message}" }
             null
         }
     }

@@ -8,7 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import timber.log.Timber
+import logcat.logcat
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -47,9 +47,9 @@ class ExtensionStorage @Inject constructor(
                     .putString(KEY_EXTENSION_PREFIX + extensionId, jsonString)
                     .apply()
                 
-                Timber.d("Saved extension info: $extensionId")
+                logcat { "Saved extension info: $extensionId" }
             } catch (e: Exception) {
-                Timber.e(e, "Failed to save extension info: $extensionId")
+                logcat { "Failed to save extension info: $extensionId - ${e.message}" }
             }
         }
     }
@@ -65,7 +65,7 @@ class ExtensionStorage @Inject constructor(
                 
                 json.decodeFromString<ExtensionInfo>(jsonString)
             } catch (e: Exception) {
-                Timber.e(e, "Failed to load extension info: $extensionId")
+                logcat { "Failed to load extension info: $extensionId - ${e.message}" }
                 null
             }
         }
@@ -88,14 +88,14 @@ class ExtensionStorage @Inject constructor(
                             val extensionInfo = json.decodeFromString<ExtensionInfo>(value)
                             result[extensionId] = extensionInfo
                         } catch (e: Exception) {
-                            Timber.w(e, "Failed to parse extension info for key: $key")
+                            logcat { "Failed to parse extension info for key: $key - ${e.message}" }
                         }
                     }
                 }
                 
-                Timber.d("Loaded ${result.size} extension infos")
+                logcat { "Loaded ${result.size} extension infos" }
             } catch (e: Exception) {
-                Timber.e(e, "Failed to load extension infos")
+                logcat { "Failed to load extension infos - ${e.message}" }
             }
             
             result
@@ -113,9 +113,9 @@ class ExtensionStorage @Inject constructor(
                     .remove(KEY_EXTENSION_CONFIG_PREFIX + extensionId)
                     .apply()
                 
-                Timber.d("Removed extension info: $extensionId")
+                logcat { "Removed extension info: $extensionId" }
             } catch (e: Exception) {
-                Timber.e(e, "Failed to remove extension info: $extensionId")
+                logcat { "Failed to remove extension info: $extensionId - ${e.message}" }
             }
         }
     }
@@ -134,9 +134,9 @@ class ExtensionStorage @Inject constructor(
                     .putString(KEY_EXTENSION_CONFIG_PREFIX + extensionId, jsonString)
                     .apply()
                 
-                Timber.d("Saved extension configuration: $extensionId")
+                logcat { "Saved extension configuration: $extensionId" }
             } catch (e: Exception) {
-                Timber.e(e, "Failed to save extension configuration: $extensionId")
+                logcat { "Failed to save extension configuration: $extensionId - ${e.message}" }
             }
         }
     }
@@ -152,7 +152,7 @@ class ExtensionStorage @Inject constructor(
                 
                 json.decodeFromString<Map<String, Any>>(jsonString)
             } catch (e: Exception) {
-                Timber.e(e, "Failed to load extension configuration: $extensionId")
+                logcat { "Failed to load extension configuration: $extensionId - ${e.message}" }
                 emptyMap()
             }
         }
@@ -168,7 +168,7 @@ class ExtensionStorage @Inject constructor(
                 val updatedInfo = currentInfo.copy(status = status)
                 saveExtensionInfo(extensionId, updatedInfo)
             } catch (e: Exception) {
-                Timber.e(e, "Failed to update extension status: $extensionId")
+                logcat { "Failed to update extension status: $extensionId - ${e.message}" }
             }
         }
     }
@@ -190,9 +190,9 @@ class ExtensionStorage @Inject constructor(
                 }
                 
                 editor.apply()
-                Timber.i("Cleared all extension data")
+                logcat { "Cleared all extension data" }
             } catch (e: Exception) {
-                Timber.e(e, "Failed to clear extension data")
+                logcat { "Failed to clear extension data - ${e.message}" }
             }
         }
     }
@@ -224,7 +224,7 @@ class ExtensionStorage @Inject constructor(
                     totalUsage = totalUsage
                 )
             } catch (e: Exception) {
-                Timber.e(e, "Failed to calculate extension stats")
+                logcat { "Failed to calculate extension stats - ${e.message}" }
                 ExtensionStats()
             }
         }

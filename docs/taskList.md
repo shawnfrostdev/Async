@@ -1,563 +1,384 @@
-# Async Music Player - Development Task List
+# Async Music Player - Production-Ready Task List
 
-This document breaks down the development plan into actionable tasks organized by phases.
-
----
-
-## **Phase 1: Core Application Foundation** ✅ COMPLETED
-
-### **1.1 Project Setup & Dependencies** ✅ COMPLETED
-- [x] Update Gradle dependencies to include required libraries
-  - [x] Add Jetpack Compose BOM and core libraries
-  - [x] Add Material3 dependencies
-  - [x] Add Navigation Compose
-  - [x] Add Kotlin Coroutines and Flow dependencies
-  - [x] Add Room database dependencies
-  - [x] Add Hilt dependency injection
-  - [x] Add ExoPlayer dependencies
-  - [x] Add Timber/Kermit for logging
-- [x] Configure Kotlin compiler options for Compose
-- [x] Set up Hilt in Application class
-- [x] Configure ProGuard rules for all dependencies
-
-### **1.2 Module Structure Setup** ✅ COMPLETED
-- [x] Create `:core` module
-  - [x] Set up build.gradle.kts for core module
-  - [x] Create core utility classes and constants
-- [x] Create `:domain` module
-  - [x] Set up build.gradle.kts for domain module
-  - [x] Create use case interfaces and business logic
-- [x] Create `:data` module
-  - [x] Set up build.gradle.kts for data module
-  - [x] Create repository interfaces
-- [x] Create `:playback` module
-  - [x] Set up build.gradle.kts for playback module
-  - [x] Create media service structure
-- [x] Create `:extensions` module
-  - [x] Set up build.gradle.kts for extensions module
-  - [x] Create extension management interfaces
-- [x] Update main app module dependencies
-
-### **1.3 Architecture Foundation** ✅ COMPLETED  
-- [x] Set up Clean Architecture structure
-  - [x] Create base classes for ViewModels
-  - [x] Create base classes for Use Cases
-  - [x] Create base classes for Repositories
-- [x] Implement MVVM pattern setup
-  - [x] Create ViewState sealed classes
-  - [x] Create UIEvent sealed classes
-  - [x] Create navigation structure
+This document breaks down the development plan into actionable tasks organized by phases, updated based on the comprehensive app review and production requirements.
 
 ---
 
-## **Phase 2: Extension API Contract Definition** ✅ COMPLETED
+## **Phase 1: Core Application Foundation** ✅ **COMPLETED**
 
-### **2.1 Core Data Models (in `:core` module)** ✅ COMPLETED
-- [x] Create `SearchResult` data class with @Serializable
-- [x] Create `Artist` data class with @Serializable
-- [x] Create `Album` data class with @Serializable
-- [x] Create `Playlist` data class (if needed)
-- [x] Add validation rules for data models
+### **1.1 Project Setup & Dependencies** ✅ **COMPLETED**
+- [x] **1.1.1** Update Gradle dependencies to include required libraries
+  - [x] **1.1.1.1** Add Jetpack Compose BOM and core libraries
+  - [x] **1.1.1.2** Add Material3 dependencies
+  - [x] **1.1.1.3** Add Voyager Navigation (NOT Navigation Compose)
+  - [x] **1.1.1.4** Add Kotlin Coroutines and Flow dependencies
+  - [x] **1.1.1.5** Add Room database dependencies
+  - [x] **1.1.1.6** Manual Dependency Injection with AppModule (Hilt replaced due to compilation issues)
+  - [x] **1.1.1.7** Add ExoPlayer (Media3) dependencies
+  - [x] **1.1.1.8** Add Logcat logging (NOT Timber)
+  - [x] **1.1.1.9** Add SharedPreferences support (DataStore available but unused)
+  - [x] **1.1.1.10** Add Glide for image loading (imported but commented out)
+- [x] **1.1.2** Configure Kotlin compiler options for Compose
+- [x] **1.1.3** Set up manual dependency injection with AppModule
+- [x] **1.1.4** Configure ProGuard rules for all dependencies
 
-### **2.2 Extension Interface (in `:core` module)** ✅ COMPLETED
-- [x] Create `MusicExtension` interface
-  - [x] Define required properties (id, version, name, developer)
-  - [x] Define `search()` suspend function
-  - [x] Define `getStreamUrl()` suspend function
-  - [x] Define `getAlbumArt()` suspend function
-- [x] Create extension metadata classes
-- [x] Create extension result wrapper classes
-- [x] Add error handling interfaces for extensions
+**Dependency Status Update:**
+- ✅ **Working**: Compose, Material3, Voyager, Room, ExoPlayer, Coroutines, Serialization, Manual DI
+- ⚠️ **Partial**: Glide (commented out)
+- ❌ **Missing**: Ktor Client, Timber, Navigation Compose (replaced), Hilt (replaced with manual DI)
+- 📝 **Note**: Documentation updated to reflect actual dependencies vs. planned ones
 
-### **2.3 Extension Contract Documentation** ✅ COMPLETED
-- [x] Create extension developer documentation
-- [x] Create extension API specification
-- [x] Create example extension template
-- [x] Define extension security requirements
+### **1.2 Multi-Module Architecture Setup** ✅ **COMPLETED**
+- [x] **1.2.1** Create `:app` module (Main UI, navigation, dependency injection)
+- [x] **1.2.2** Create `:core` module (Shared models, extension contracts)
+- [x] **1.2.3** Create `:domain` module (Business logic, use cases)
+- [x] **1.2.4** Create `:data` module (Repositories, database, caching)
+- [x] **1.2.5** Create `:playback` module (ExoPlayer service, media session)
+- [x] **1.2.6** Create `:extensions` module (Extension system, loading, management)
 
----
-
-## **Phase 3: Extension Loader & Manager** ✅ COMPLETED
-
-### **3.1 Extension Loader (in `:extensions` module)** ✅ COMPLETED
-- [x] Create `ExtensionLoader` class
-  - [x] Implement DexClassLoader integration
-  - [x] Add file validation logic
-  - [x] Implement error handling and logging
-  - [x] Add extension signature verification
-- [x] Create extension file management utilities
-- [x] Implement extension installation flow
-- [x] Add extension update mechanism
-
-### **3.2 Extension Manager (in `:extensions` module)** ✅ COMPLETED
-- [x] Create `ExtensionManager` class
-  - [x] Implement extension registration
-  - [x] Implement extension retrieval methods
-  - [x] Add extension enable/disable functionality
-  - [x] Implement extension lifecycle management
-- [x] Create extension state persistence
-- [x] Add extension conflict resolution
-- [x] Implement extension dependency management
-
-### **3.3 Extension Security & Sandboxing** ✅ COMPLETED
-- [x] Implement ClassLoader isolation
-- [x] Add extension permission system
-- [x] Create extension validation rules
-- [x] Implement extension signing verification
-- [x] Add runtime security checks
-- [x] Create extension resource access controls
-
-### **3.4 Extension UI Management** ✅ COMPLETED
-- [x] Create extension management screen ✅
-- [x] Implement repository list with dropdown functionality ✅
-- [x] Add extension installation/uninstall UI with download/delete icons ✅
-- [x] Create repository addition dialog with URL validation ✅
-- [x] Implement expandable repository cards ✅
-- [x] Add extension metadata display (name, version) ✅
-- [x] Use outlined icons consistently throughout extension UI ✅
-- [x] Integrate with UI design system (AppSpacing, typography) ✅
-
-**Extension Management Features Implemented:**
-- **Repository Management**: Add repositories via URL, expandable list view
-- **Extension Display**: Individual extension cards with install/uninstall actions
-- **UI Consistency**: Proper spacing, typography, and outlined icon usage
-- **Interactive Elements**: Dropdown toggles, icon buttons, validation dialogs
-- **Sample Data**: Pre-populated with music streaming extensions for testing
+### **1.3 Architecture Foundation** ✅ **COMPLETED**
+- [x] **1.3.1** Set up Clean Architecture structure
+- [x] **1.3.2** Implement MVVM pattern setup
+- [x] **1.3.3** Create navigation structure
+- [x] **1.3.4** Fix Application class and AndroidManifest.xml issues
 
 ---
 
-## **Phase 4: Media Playback Engine** ✅ COMPLETED
+## **Phase 2: Extension System Implementation** ✅ **COMPLETED**
 
-### **4.1 Media Service (in `:playback` module)** ✅ COMPLETED
-- [x] Create `PlayerService` extending MediaBrowserServiceCompat
-  - [x] Set up ExoPlayer instance
-  - [x] Configure MediaSessionCompat
-  - [x] Implement MediaSessionConnector
-  - [x] Add Hilt dependency injection
-- [x] Implement foreground service setup
-- [x] Add service lifecycle management
-- [x] Configure service notifications
+### **2.1 Extension API Contract** ✅ **COMPLETED**
+- [x] **2.1.1** Create `MusicExtension` interface with versioned API contract
+- [x] **2.1.2** Create core data models (`SearchResult`, `Artist`, `Album`)
+- [x] **2.1.3** Implement extension metadata and result wrapper classes
+- [x] **2.1.4** Add extension security requirements and validation
 
-### **4.2 ExoPlayer Integration** ✅ COMPLETED
-- [x] Configure ExoPlayer with optimal settings
-- [x] Implement media item creation from extension URLs
-- [x] Add audio focus handling
-- [x] Implement playback state management
-- [x] Add error handling and retry logic
-- [x] Configure audio attributes for music playback
+### **2.2 Extension Management System** ✅ **COMPLETED**
+- [x] **2.2.1** Create `ExtensionLoader` with DexClassLoader integration
+- [x] **2.2.2** Create `ExtensionManager` with lifecycle management
+- [x] **2.2.3** Implement extension security and sandboxing
+- [x] **2.2.4** Add extension storage and metadata persistence
+- [x] **2.2.5** Implement extension enable/disable functionality
 
-### **4.3 Media Session & System Integration** ✅ COMPLETED
-- [x] Implement MediaSessionCompat callbacks
-- [x] Add playback controls (play, pause, skip, etc.)
-- [x] Implement queue management
-- [x] Add repeat and shuffle functionality
-- [x] Configure lock screen controls
-- [x] Implement Android Auto integration
-- [x] Add notification controls
-
-### **4.4 Playback Repository & Use Cases** ✅ COMPLETED
-- [x] Create playback repository interface
-- [x] Implement playback use cases
-  - [x] Play from extension use case
-  - [x] Queue management use cases
-  - [x] Playback control use cases
-- [x] Add playback state observation
-- [x] Implement current track management
-
-**Key Components Implemented:**
-- **PlayerService**: Complete MediaBrowserServiceCompat with ExoPlayer integration
-- **PlaybackManager**: Core playback logic with extension integration
-- **PlaybackNotificationManager**: Rich media notifications with album art
-- **NotificationActionReceiver**: Notification button handling
-- **System Integration**: Permissions, MediaSession, foreground service
-- **Extension Integration**: Seamless connection to extension system
-- **State Management**: Reactive StateFlow-based updates
-- **Queue Management**: Add, remove, shuffle, repeat functionality
-- **Search Capability**: Multi-extension parallel search
-- **Error Handling**: Comprehensive error recovery
+### **2.3 Extension Repository System** ⚠️ **PARTIALLY COMPLETED**
+- [x] **2.3.1** Create extension repository browsing UI
+- [x] **2.3.2** Implement extension installation/uninstall UI
+- [ ] **2.3.3** Connect extension repository to remote sources
+- [ ] **2.3.4** Implement extension ratings and reviews system
+- [ ] **2.3.5** Add extension update notifications
 
 ---
 
-## **Phase 5: Data Layer Implementation**
+## **Phase 3: Data Layer & Persistence** ✅ **COMPLETED**
 
-### **5.1 Room Database (in `:data` module)** ✅ COMPLETED
-- [x] Create database entities ✅
-  - [x] Track entity ✅
-  - [x] Playlist entity ✅
-  - [x] PlaylistTrack entity (many-to-many) ✅
-  - [x] Play history entity ✅
-  - [x] User settings entity ✅
-- [x] Create DAO interfaces ✅
-  - [x] TrackDao with 30+ operations ✅
-  - [x] PlaylistDao with transaction support ✅
-  - [x] PlayHistoryDao with analytics ✅
-  - [x] UserSettingsDao with type safety ✅
-- [x] Implement database class (AsyncDatabase) ✅
-- [x] Set up database configuration and dependencies ✅
+### **3.1 Room Database Implementation** ✅ **COMPLETED**
+- [x] **3.1.1** Create database entities (Track, Playlist, PlaylistTrack, PlayHistory, UserSettings)
+- [x] **3.1.2** Create DAO interfaces with comprehensive operations
+- [x] **3.1.3** Implement AsyncDatabase with proper configuration
+- [x] **3.1.4** Set up database migrations and versioning
 
-### **5.2 Repository Implementations** ✅ COMPLETED
-- [x] Create repository interfaces in `:domain` ✅
-  - [x] TrackRepository interface ✅
-  - [x] PlaylistRepository interface ✅
-  - [x] HistoryRepository interface ✅
-  - [x] SettingsRepository interface ✅
-- [x] Create domain models ✅
-  - [x] Track domain model ✅
-  - [x] Playlist domain model ✅
-  - [x] PlayHistoryItem domain model ✅
-- [x] Implement repositories in `:data` ✅
-  - [x] TrackRepositoryImpl ✅
-  - [x] PlaylistRepositoryImpl ✅
-  - [x] SettingsRepositoryImpl ✅
-  - [x] Fix all compilation issues ✅
-- [x] Add data mapping between layers ✅
-  - [x] TrackMapper (Entity ↔ Domain) ✅
-  - [x] PlaylistMapper (Entity ↔ Domain) ✅
-- [x] Add repository error handling ✅
-  - [x] Created AsyncResult<T, E> for type-safe error handling ✅
-  - [x] Updated all repository interfaces to use AsyncResult ✅
-- [x] 🔧 Fix repository implementation dependencies ✅
+### **3.2 Repository Pattern Implementation** ✅ **COMPLETED**
+- [x] **3.2.1** Create repository interfaces in domain layer
+- [x] **3.2.2** Implement repository classes in data layer
+- [x] **3.2.3** Add data mapping between layers
+- [x] **3.2.4** Implement comprehensive error handling with AsyncResult
 
-### **5.3 Data Synchronization** ✅ COMPLETED
-- [x] Implement data caching strategies ✅
-  - [x] DataSyncManager for comprehensive sync operations ✅
-  - [x] CacheStrategy for intelligent cache optimization ✅
-  - [x] Priority-based track cleanup with scoring system ✅
-  - [x] Cache efficiency monitoring and metrics ✅
-- [x] Add offline data management ✅
-  - [x] OfflineDataManager for offline functionality ✅
-  - [x] Essential data caching for offline use ✅
-  - [x] Offline search and recommendations ✅
-  - [x] Offline readiness checks and status monitoring ✅
-- [x] Create data cleanup utilities ✅
-  - [x] Smart cleanup based on usage patterns ✅
-  - [x] Storage optimization and orphaned data removal ✅
-  - [x] Configurable retention policies ✅
-  - [x] Automated maintenance operations ✅
-- [x] Implement data export/import functionality ✅
-  - [x] DataExportImport for backup and migration ✅
-  - [x] JSON-based export/import with versioning ✅
-  - [x] Selective export (playlists only, settings only) ✅
-  - [x] Merge and replace import modes ✅
-  - [x] Data validation and integrity checks ✅
+### **3.3 Data Synchronization & Caching** ✅ **COMPLETED**
+- [x] **3.3.1** Implement intelligent caching strategies
+- [x] **3.3.2** Add offline data management
+- [x] **3.3.3** Create data cleanup utilities
+- [x] **3.3.4** Implement data export/import functionality
 
 ---
 
-## **Phase 6: UI Layer Implementation** ✅ **COMPLETED**
+## **Phase 4: Media Playback System** ✅ **COMPLETED**
 
-### **6.1 Navigation Setup** ✅ COMPLETED
-- [x] Set up Navigation Compose ✅
-  - [x] AsyncNavigation with NavHost and proper destinations ✅
-  - [x] AsyncDestinations object with all app routes ✅
-  - [x] Proper navigation parameter handling and callbacks ✅
-- [x] Define navigation routes ✅
-  - [x] Home, Search, Library, Player, Playlists, Settings, Extensions ✅
-  - [x] Route-based navigation state management ✅
-  - [x] Navigation callbacks and event handling ✅
-- [x] Implement navigation state management ✅
-  - [x] Bottom navigation with state persistence ✅
-  - [x] Conditional navigation visibility ✅
-  - [x] Navigation back stack management ✅
-- [x] Create navigation utilities ✅
-  - [x] AsyncBottomNavigation component ✅
-  - [x] AsyncApp main scaffold structure ✅
-  - [x] Material3 theme and typography system ✅
-  - [x] Mini player integration ✅
-- [x] **Navigation Animations** ✅ **UPDATED**
-  - [x] Tab navigation: Fade to black → fade from black (0.2s) ✅
-  - [x] Other navigation: Slide + fade animations (0.2s) ✅
-  - [x] Black transition moment for tab switching ✅
-  - [x] Smart animation logic based on destination type ✅
-  - [x] Material Design easing curves (FastOutSlowInEasing) ✅
-  - [x] Performance optimization following Android dev guidelines ✅
-  - [x] Pop navigation animations (proper directional reversal) ✅
-- [x] **Comprehensive Animation System** ✅ **COMPLETED**
-  - [x] AnimationConfig with system settings integration ✅
-  - [x] AppAnimationSpecs with Material Design 3 compliance ✅
-  - [x] Music player specific animation timings ✅
-  - [x] Animated FAB components for player controls ✅
-  - [x] Progress indicators with smooth transitions ✅
-  - [x] NavigationTransitions with multiple transition types ✅
-  - [x] Performance modes (High, Balanced, Battery Saver) ✅
-  - [x] Accessibility support (reduced motion) ✅
-  - [x] Hilt dependency injection integration ✅
+### **4.1 ExoPlayer Integration** ✅ **COMPLETED**
+- [x] **4.1.1** Create PlayerService with MediaBrowserServiceCompat
+- [x] **4.1.2** Configure ExoPlayer with optimal settings
+- [x] **4.1.3** Implement MediaSessionCompat integration
+- [x] **4.1.4** Add audio focus handling and system integration
 
-- [x] **UI Design System** ✅ **NEWLY COMPLETED**
-  - [x] AppSpacing: Comprehensive spacing system with semantic naming ✅
-  - [x] AppText: Complete Material Design 3 typography components ✅
-  - [x] Music-specific text components (TrackTitle, ArtistName, etc.) ✅
-  - [x] AppButtons: Full button system with music player variants ✅
-  - [x] AppCards: Base cards and music-specific cards (Track, Album, Playlist) ✅
-  - [x] Layout components with dividers and semantic spacers ✅
-  - [x] Input components with search and form fields ✅
-  - [x] Uses existing DM Mono font family ✅
-  - [x] Component module for dependency injection ✅
+### **4.2 Playback Management** ✅ **COMPLETED**
+- [x] **4.2.1** Create PlaybackManager with extension integration
+- [x] **4.2.2** Implement queue management (add, remove, shuffle, repeat)
+- [x] **4.2.3** Add playback state observation with StateFlow
+- [x] **4.2.4** Implement notification controls and lock screen integration
 
-### **6.2 Core UI Screens** ✅ **COMPLETED** 
-- [x] Create main activity with Compose ✅
-- [x] Create settings screen with extension navigation ✅
-- [x] Create extension management screen with repository list ✅
-- [x] Implement home/dashboard screen with discovery UI ✅
-- [x] Create search screen with extension integration UI ✅  
-- [x] Implement now playing screen with full player controls ✅
-- [x] Create MiniPlayer component with playback integration ✅
-- [x] Create TrackListComponents for music display ✅
-- [x] Create playlist management screens ✅ **NEWLY COMPLETED**
-- [x] Create library screen with extension content ✅ **NEWLY COMPLETED**
-
-**Updated Status**: 
-- ✅ **UI Structure**: All main screens implemented with proper Material Design 3
-- ✅ **Extension UI**: Repository management, dropdown functionality, install/uninstall
-- ✅ **Music UI**: Track lists, player controls, search interface
-- ✅ **Playlist Management**: Complete playlist creation, editing, deletion UI ✅ **COMPLETED**
-- ✅ **Library Screens**: Clean playlist-only view (no tabs) ✅ **REFACTORED**
-- ✅ **Player Components**: Complete music player with all functions ✅ **ENHANCED**
-- ✅ **MiniPlayer**: Conditional rendering (only shows when track playing) ✅ **REFACTORED**
-- ✅ **Theme System**: Material3, dark/light themes, dynamic colors, typography ✅ **COMPLETE**
-- ✅ **UI Experience**: Proper music app behavior (no empty states) ✅ **NEWLY COMPLETED**
-- ⚠️ **Integration**: UI ready but ViewModels blocked by Windows Hilt path issues
-- ❌ **Missing**: Actual music search, display, and playback functionality in UI
-
-### **6.3 Player UI Components** ✅ **COMPLETED**
-- [x] Create player controls component ✅ **NEWLY COMPLETED**
-- [x] Implement progress bar with seeking ✅ **NEWLY COMPLETED**
-- [x] Add album art display component ✅ **NEWLY COMPLETED**
-- [x] Create queue/up next component ✅ **NEWLY COMPLETED**
-- [x] Implement mini player component ✅ *(was already completed)*
-- [ ] Add playback speed controls *(feature not needed for MVP)*
-
-### **6.4 Extension UI Integration** ✅ **COMPLETED**
-- [x] Create extension management UI ✅
-- [x] Implement repository and extension display ✅
-- [x] Add extension installation/uninstall UI ✅
-- [x] Implement search results from multiple extensions ✅ **NEWLY COMPLETED**
-- [x] Add extension source indicators in search results ✅ **NEWLY COMPLETED**
-- [x] Create extension-specific settings UI ✅ **NEWLY COMPLETED**
-- [x] Add extension enable/disable functionality ✅ **NEWLY COMPLETED**
-- [x] Implement extension info dialogs ✅ **NEWLY COMPLETED**
-- [x] Create extension status indicators ✅ **NEWLY COMPLETED**
-- [ ] Connect extension manager to actual extension system *(requires ViewModels)*
-- [ ] Create ViewModels to bridge UI and extension backend *(blocked by Hilt issues)*
-
-**Updated Status**:
-- ✅ **Extension Management UI**: Complete repository list with dropdown, install/uninstall, settings
-- ✅ **Extension Settings UI**: Full settings dialogs with text, switch, dropdown, number inputs
-- ✅ **Extension Information**: Detailed info dialogs with permissions and descriptions
-- ✅ **Search Integration**: Multi-extension search with status indicators and source display
-- ✅ **Extension Controls**: Enable/disable functionality, error handling, status tracking
-- ✅ **Backend Integration**: Extension system is ready and functional
-- ⚠️ **Missing Bridge**: No ViewModels connect the UI to the backend ExtensionManager (blocked by Hilt)
-- ⚠️ **Mock Data**: UI currently uses realistic sample data instead of real extensions
-
-### **6.5 Theme & Styling** ✅ **COMPLETED**
-- [x] Implement Material3 theming ✅ *(was already completed)*
-- [x] Create custom color schemes ✅ *(was already completed)*
-- [x] Add dark/light theme support ✅ *(was already completed)*
-- [x] Implement dynamic theming (Material You) ✅ *(was already completed)*
-- [x] Create consistent typography system ✅ *(was already completed)*
-
-### **6.6 UI Experience Refinements** ✅ **COMPLETED**
-- [x] Remove empty state UI from PlayerScreen ✅ **NEWLY COMPLETED**
-- [x] Make PlayerScreen only show when track is selected ✅ **NEWLY COMPLETED**
-- [x] Simplify LibraryScreen to playlist-only view ✅ **NEWLY COMPLETED**
-- [x] Remove tabs from LibraryScreen (Recent, Favorites, Downloads) ✅ **NEWLY COMPLETED**
-- [x] Enhance PlayerScreen with complete music player functionality ✅ **NEWLY COMPLETED**
-  - [x] Add favorite toggle with heart icon ✅
-  - [x] Add share and playlist options in more menu ✅
-  - [x] Improve track info display layout ✅
-  - [x] Add all typical music player controls ✅
-- [x] Update MiniPlayer to conditional rendering ✅ **NEWLY COMPLETED**
-  - [x] Only show when currentTrack is not null ✅
-  - [x] Add previous/next controls to mini player ✅
-  - [x] Hide completely when no current track ✅
-- [x] Fix compilation errors and deprecated icon warnings ✅ **NEWLY COMPLETED**
-
-**UI Refactoring Results:**
-- ✅ **Proper Music App Behavior**: No empty states, conditional UI rendering
-- ✅ **Clean Library Interface**: Focused on playlists only, no unnecessary tabs
-- ✅ **Enhanced Player Experience**: Complete music player functionality
-- ✅ **Smart MiniPlayer**: Shows only when music is playing
-- ✅ **Modern UX Patterns**: Follows typical music app conventions
-
-### **6.7 Final Extension UI Integration** ✅ **NEWLY COMPLETED**
-- [x] Enhanced extension management with comprehensive settings UI ✅ **NEWLY COMPLETED**
-- [x] Extension-specific settings dialogs (text, switch, dropdown, number inputs) ✅ **NEWLY COMPLETED**
-- [x] Extension information dialogs with permissions and descriptions ✅ **NEWLY COMPLETED**
-- [x] Multi-extension search results with source indicators ✅ **NEWLY COMPLETED**
-- [x] Real-time extension status tracking during search ✅ **NEWLY COMPLETED**
-- [x] Extension enable/disable controls with visual feedback ✅ **NEWLY COMPLETED**
-- [x] Error handling and status messages for extensions ✅ **NEWLY COMPLETED**
-- [x] Search results display with extension source badges ✅ **NEWLY COMPLETED**
-- [x] Simulated multi-extension search functionality ✅ **NEWLY COMPLETED**
-
-**Extension Integration Features Completed:**
-- ✅ **Full Extension Management**: Install, uninstall, enable, disable, settings, info
-- ✅ **Settings System**: Complete settings UI with validation and different input types
-- ✅ **Search Integration**: Multi-extension search with real-time status tracking
-- ✅ **Visual Feedback**: Status indicators, progress tracking, error messages
-- ✅ **Extension Information**: Detailed extension info with permissions display
-- ✅ **Realistic Sample Data**: Comprehensive mock data showing all functionality
+### **4.3 Advanced Playback Features** ⚠️ **PARTIALLY COMPLETED**
+- [x] **4.3.1** Basic playback controls (play, pause, skip, previous)
+- [x] **4.3.2** Repeat and shuffle functionality
+- [ ] **4.3.3** Crossfade and gapless playback
+- [ ] **4.3.4** Audio equalizer integration
+- [ ] **4.3.5** Sleep timer functionality
 
 ---
 
-## **Phase 6.5: CRITICAL UI-Backend Integration** ❌ **HIGH PRIORITY**
+## **Phase 5: UI System & Design** ✅ **COMPLETED**
 
-### **6.5.1 ViewModels & State Management** 🔄 **BLOCKED BY WINDOWS HILT ISSUE**
-- [x] **ExtensionViewModel**: Created but blocked by Windows path issues ⚠️
-- [x] **SearchViewModel**: Created but blocked by Windows path issues ⚠️
-- [x] **HomeViewModel**: Created but blocked by Windows path issues ⚠️
-- [x] **PlayerViewModel**: Created but blocked by Windows path issues ⚠️
-- [ ] **LibraryViewModel**: Manage user's music library and playlists
+### **5.1 Design System Implementation** ✅ **COMPLETED**
+- [x] **5.1.1** Material 3 theming with dynamic colors
+- [x] **5.1.2** Custom typography system using DM Mono font
+- [x] **5.1.3** AppSpacing system with semantic naming
+- [x] **5.1.4** Complete component library (AppText, AppButtons, AppCards)
+- [x] **5.1.5** Responsive layouts for different screen sizes
 
-**BLOCKER**: Hilt annotation processing fails on Windows with long package paths.
-**WORKAROUND NEEDED**: Alternative state management or shorter package names.
+### **5.2 Navigation System** ✅ **COMPLETED**
+- [x] **5.2.1** Bottom navigation with 4 main tabs (Home, Search, Library, Settings)
+- [x] **5.2.2** Navigation state management and persistence
+- [x] **5.2.3** Animation system with Material Design 3 compliance
+- [x] **5.2.4** Zero-animation transitions for snappy performance
 
-### **6.5.2 Extension Integration** 🔄 **UI READY, BACKEND INTEGRATION BLOCKED**
-- [x] **Extension Management UI**: Complete repository list with dropdown ✅
-- [x] **Search UI**: Complete search interface with extension status ✅
-- [x] **Player UI**: Complete now playing interface with controls ✅
-- [x] **Track Display**: Complete track list components ✅
-- [ ] **Real Extension Loading**: Replace mock data with actual ExtensionManager (blocked by ViewModels)
-- [ ] **Repository Fetching**: Implement real repository URL processing (blocked by ViewModels)
-- [ ] **Extension Installation**: Connect download buttons to actual installation (blocked by ViewModels)
-- [ ] **Extension Search**: Implement multi-extension search (blocked by ViewModels)
-- [ ] **Stream Integration**: Connect search results to PlaybackManager (blocked by ViewModels)
-
-### **6.5.3 Music Content Display** ✅ **UI COMPLETED**
-- [x] **Search Results UI**: Complete search interface with track display ✅
-- [x] **Track List Components**: Complete with play buttons and extension source indicators ✅
-- [x] **Now Playing UI**: Complete player with controls, progress, metadata ✅
-- [ ] **Album Art Loading**: Extension artwork integration
-- [ ] **Music Library**: User's saved tracks and playlists
-
-**CURRENT BLOCKER**: The app has a complete backend (extensions + playback) but the UI screens are just placeholders. Users can manage extensions but can't search or play music because the UI isn't connected to the backend systems.
+### **5.3 Core UI Screens** ✅ **COMPLETED**
+- [x] **5.3.1** Home screen with discovery and trending content
+- [x] **5.3.2** Search screen with multi-extension search interface
+- [x] **5.3.3** Library screen with playlist management
+- [x] **5.3.4** Settings screen with comprehensive configuration
+- [x] **5.3.5** Player screen with full playback controls
+- [x] **5.3.6** MiniPlayer component with conditional rendering
 
 ---
 
-## **Phase 7: Advanced Features**
+## **Phase 6: Tab-Specific Feature Implementation** 🔄 **IN PROGRESS**
 
-### **7.1 Search & Discovery**
-- [ ] Implement multi-extension search
-- [ ] Add search history and suggestions
-- [ ] Create search filters and sorting
-- [ ] Implement trending/popular content discovery
-- [ ] Add voice search integration
+### **6.1 🏠 Home Tab Features** ⚠️ **UI READY, BACKEND INTEGRATION NEEDED**
+- [x] **6.1.1** Discovery and engagement UI layout
+- [x] **6.1.2** Trending tracks display with card layout
+- [x] **6.1.3** Recently played section
+- [ ] **6.1.4** Connect to real extension data for trending content
+- [ ] **6.1.5** Implement personalized recommendations algorithm
+- [ ] **6.1.6** Add quick access to favorites and playlists
+- [ ] **6.1.7** Implement promotional cards for new releases
+- [ ] **6.1.8** Add paging for performance with large catalogs
+- [ ] **6.1.9** Implement skeleton loaders for async content
 
-### **7.2 Playlist Management**
-- [ ] Create playlist creation/editing UI
-- [ ] Implement playlist sharing functionality
-- [ ] Add smart playlist generation
-- [ ] Create collaborative playlists
-- [ ] Implement playlist import/export
+### **6.2 🔍 Search Tab Features** ⚠️ **UI READY, BACKEND INTEGRATION NEEDED**
+- [x] **6.2.1** Universal search interface with real-time suggestions
+- [x] **6.2.2** Multi-extension search UI with source indicators
+- [x] **6.2.3** Search results display with metadata
+- [ ] **6.2.4** Connect to actual ExtensionManager for real search
+- [ ] **6.2.5** Implement search by genre, moods, year, extension
+- [ ] **6.2.6** Add search history management (clear/edit/remove)
+- [ ] **6.2.7** Implement advanced filters (bitrate, release date)
+- [ ] **6.2.8** Add debouncing and local cache for performance
+- [ ] **6.2.9** Implement graceful error states (no results, poor connection)
 
-### **7.3 User Preferences**
-- [ ] Create comprehensive settings system
-- [ ] Implement audio equalizer
-- [ ] Add crossfade and gapless playback
-- [ ] Create sleep timer functionality
-- [ ] Add playback statistics tracking
+### **6.3 📚 Library Tab Features** ✅ **COMPLETED**
+- [x] **6.3.1** Custom playlist management (full CRUD operations)
+- [x] **6.3.2** Playlist creation with name and description
+- [x] **6.3.3** Playlist editing and deletion with confirmation
+- [x] **6.3.4** Track count and total duration display
+- [ ] **6.3.5** Implement saved/favorited tracks & artists section
+- [ ] **6.3.6** Add recently played with timeline and timestamps
+- [ ] **6.3.7** Implement sorting and smart metatags
+- [ ] **6.3.8** Add drag-and-drop for playlist reordering
+- [ ] **6.3.9** Implement bulk actions (multi-select for delete)
+- [ ] **6.3.10** Add background sync for library data and backup/restore
 
-### **7.4 Offline Features**
-- [ ] Implement track caching system
-- [ ] Add offline mode indicator
-- [ ] Create cache management UI
-- [ ] Implement smart caching based on usage
-
----
-
-## **Phase 8: Performance & Polish**
-
-### **8.1 Performance Optimization**
-- [x] **Navigation Animation Optimization** ✅ **UPDATED**
-  - [x] Differentiated animations for tab vs other navigation ✅
-  - [x] Hardware-accelerated transitions ✅
-  - [x] Optimized 0.2s timing and easing curves ✅
-  - [x] Memory-efficient animation objects ✅
-  - [x] 60fps targeting with FastOutSlowInEasing ✅
-- [ ] Optimize Compose recomposition
-- [ ] Implement lazy loading for large lists
-- [ ] Add image loading optimization
-- [ ] Optimize database queries
-- [ ] Implement memory leak detection and fixes
-
-### **8.2 Error Handling & Logging**
-- [ ] Implement comprehensive error handling
-- [ ] Add user-friendly error messages
-- [ ] Create crash reporting system
-- [ ] Add debugging tools for extensions
-- [ ] Implement analytics (privacy-focused)
-
-### **8.3 Testing**
-- [ ] Write unit tests for use cases
-- [ ] Create repository tests
-- [ ] Add UI tests for main flows
-- [ ] Test extension loading and management
-- [ ] Add integration tests for playback engine
-- [ ] Create performance tests
-
-### **8.4 Accessibility**
-- [ ] Add content descriptions for screen readers
-- [ ] Implement keyboard navigation
-- [ ] Add high contrast theme support
-- [ ] Create large text support
-- [ ] Add voice command integration
+### **6.4 ⚙️ Settings Tab Features** ⚠️ **PARTIALLY COMPLETED**
+- [x] **6.4.1** Basic settings structure with grouped categories
+- [x] **6.4.2** Extension manager integration
+- [ ] **6.4.3** Playback preferences (crossfade, gapless, audio effects)
+- [ ] **6.4.4** Audio quality settings with bitrate options
+- [ ] **6.4.5** Data/export management (import/export user data, manage storage, clear cache)
+- [ ] **6.4.6** App appearance (theme selector, accent color, font size)
+- [ ] **6.4.7** Notification and background playback options
+- [ ] **6.4.8** Help/about section with app info
+- [ ] **6.4.9** Extension permissions and sandbox settings
+- [ ] **6.4.10** Color/theme picker with dynamic preview
 
 ---
 
-## **Phase 9: Security & Legal Compliance**
+## **Phase 7: Player System Enhancement** ⚠️ **PARTIALLY COMPLETED**
 
-### **9.1 Security Implementation**
-- [ ] Implement extension signature verification
-- [ ] Add runtime permission system for extensions
-- [ ] Create security audit tools
-- [ ] Implement secure storage for sensitive data
-- [ ] Add network security configurations
+### **7.1 Mini Player Enhancement** ✅ **COMPLETED**
+- [x] **7.1.1** Persistent bottom placement with proper height
+- [x] **7.1.2** Conditional rendering (only when track playing)
+- [x] **7.1.3** Track info display (artwork, title, artist)
+- [x] **7.1.4** Basic controls (play/pause, next)
+- [x] **7.1.5** Tap to expand to full player
 
-### **9.2 Legal & Ethical Compliance**
-- [ ] Create legal disclaimers
-- [ ] Implement terms of service
-- [ ] Add privacy policy
-- [ ] Create extension developer guidelines
-- [ ] Implement content filtering options
+### **7.2 Full Player Enhancement** ⚠️ **PARTIALLY COMPLETED**
+- [x] **7.2.1** Large artwork display with fallback
+- [x] **7.2.2** Complete playback controls (play, pause, skip, previous)
+- [x] **7.2.3** Progress bar with seek functionality
+- [x] **7.2.4** Repeat and shuffle modes
+- [x] **7.2.5** Queue management and add to playlist
+- [ ] **7.2.6** Connect to actual PlaybackManager for real functionality
+- [ ] **7.2.7** Implement lyrics display (if available from extensions)
+- [ ] **7.2.8** Add metadata display with extension source
+- [ ] **7.2.9** Implement smooth animation transitions
+- [ ] **7.2.10** Add swipe down gesture to collapse
 
-### **9.3 Documentation**
-- [ ] Create user documentation
-- [ ] Write extension developer guide
-- [ ] Create API documentation
-- [ ] Add troubleshooting guides
-- [ ] Create video tutorials
-
----
-
-## **Phase 10: Release Preparation**
-
-### **10.1 App Store Preparation**
-- [ ] Create app store listings
-- [ ] Design app icons and screenshots
-- [ ] Write app descriptions
-- [ ] Create promotional materials
-- [ ] Set up app store optimization
-
-### **10.2 Distribution**
-- [ ] Set up Google Play Console
-- [ ] Configure app signing
-- [ ] Create release builds
-- [ ] Set up staged rollout
-- [ ] Prepare F-Droid distribution
-
-### **10.3 Community & Support**
-- [ ] Create GitHub repository structure
-- [ ] Set up issue templates
-- [ ] Create contribution guidelines
-- [ ] Set up community forums/Discord
-- [ ] Plan extension marketplace/directory
+### **7.3 Audio System Integration** ❌ **NOT STARTED**
+- [ ] **7.3.1** Connect player UI to PlaybackManager service
+- [ ] **7.3.2** Implement real-time playback state synchronization
+- [ ] **7.3.3** Add audio focus management integration
+- [ ] **7.3.4** Implement background playback with notifications
+- [ ] **7.3.5** Add MediaSession integration for system controls
+- [ ] **7.3.6** Implement queue persistence across app restarts
 
 ---
 
-## **Notes:**
-- Extensions will be developed in separate repositories by the community
-- The core app should never contain any scraping functionality
-- All extension-related code should be properly sandboxed
-- Security and legal compliance should be prioritized throughout development
-- UI should be modern, intuitive, and accessible
-- Performance should be optimized for low-end devices 
+## **Phase 8: Critical UI-Backend Integration** ❌ **HIGH PRIORITY**
+
+### **8.1 ViewModel Integration** ❌ **BLOCKED - NEEDS IMMEDIATE ATTENTION**
+- [ ] **8.1.1** Fix Hilt compilation issues on Windows
+- [ ] **8.1.2** Connect HomeViewModel to repository data
+- [ ] **8.1.3** Connect SearchViewModel to ExtensionManager
+- [ ] **8.1.4** Connect PlayerViewModel to PlaybackManager
+- [ ] **8.1.5** Connect LibraryViewModel to playlist repositories
+- [ ] **8.1.6** Connect SettingsViewModel to user preferences
+
+### **8.2 Real Data Integration** ❌ **CRITICAL FOR FUNCTIONALITY**
+- [ ] **8.2.1** Replace mock data with real extension loading
+- [ ] **8.2.2** Implement actual multi-extension search
+- [ ] **8.2.3** Connect search results to playback system
+- [ ] **8.2.4** Implement real playlist data persistence
+- [ ] **8.2.5** Connect extension management to actual ExtensionManager
+- [ ] **8.2.6** Implement real-time playback state updates
+
+### **8.3 Extension System Connection** ❌ **CRITICAL FOR CORE FUNCTIONALITY**
+- [ ] **8.3.1** Connect extension repository UI to remote sources
+- [ ] **8.3.2** Implement actual extension installation from APK files
+- [ ] **8.3.3** Connect extension settings to real extension configuration
+- [ ] **8.3.4** Implement extension enable/disable with real state management
+- [ ] **8.3.5** Add extension update checking and notification
+- [ ] **8.3.6** Connect search results to extension stream URLs
+
+---
+
+## **Phase 9: Advanced Features & Polish** ❌ **FUTURE ENHANCEMENTS**
+
+### **9.1 Search & Discovery Enhancement** ❌ **NOT STARTED**
+- [ ] **9.1.1** Voice search with Natural Language Understanding
+- [ ] **9.1.2** Smart, AI-driven recommendations
+- [ ] **9.1.3** Advanced search filters and sorting
+- [ ] **9.1.4** Trending/popular content discovery per extension
+- [ ] **9.1.5** Search history with smart suggestions
+
+### **9.2 Social & Collaboration Features** ❌ **PLANNED**
+- [ ] **9.2.1** Collaborative/social playlists with user invites
+- [ ] **9.2.2** Social integration (sharing options, activity feed)
+- [ ] **9.2.3** Playlist sharing functionality
+- [ ] **9.2.4** User authentication/authorization system
+- [ ] **9.2.5** Community features and user profiles
+
+### **9.3 Offline & Performance Features** ❌ **PLANNED**
+- [ ] **9.3.1** Track caching system for offline playback
+- [ ] **9.3.2** Offline mode indicator and management
+- [ ] **9.3.3** Smart caching based on usage patterns
+- [ ] **9.3.4** Cache management UI with storage optimization
+- [ ] **9.3.5** Background sync and data persistence
+
+### **9.4 Audio Enhancement Features** ❌ **PLANNED**
+- [ ] **9.4.1** Advanced audio equalizer with presets
+- [ ] **9.4.2** Audio effects and sound enhancement
+- [ ] **9.4.3** Crossfade and gapless playback implementation
+- [ ] **9.4.4** Sleep timer with fade-out functionality
+- [ ] **9.4.5** Playback statistics and analytics tracking
+
+---
+
+## **Phase 10: User Experience & Accessibility** ❌ **PLANNED**
+
+### **10.1 Visual & UX Enhancements** ❌ **NOT STARTED**
+- [ ] **10.1.1** Animated transitions for modal/player opening
+- [ ] **10.1.2** Card swipe animations and gestures
+- [ ] **10.1.3** Smooth zero-lag navigation optimization
+- [ ] **10.1.4** Responsive layouts for tablets and foldables
+- [ ] **10.1.5** Custom accent colors and theme variations
+
+### **10.2 Accessibility Implementation** ❌ **NOT STARTED**
+- [ ] **10.2.1** Screen reader support with proper content descriptions
+- [ ] **10.2.2** Large text support and font scaling
+- [ ] **10.2.3** High contrast theme support
+- [ ] **10.2.4** Keyboard navigation implementation
+- [ ] **10.2.5** Voice command integration
+
+### **10.3 Widget & System Integration** ❌ **PLANNED**
+- [ ] **10.3.1** Home screen widgets for playback control
+- [ ] **10.3.2** Android Auto integration enhancement
+- [ ] **10.3.3** Wear OS companion app
+- [ ] **10.3.4** System-wide media controls optimization
+- [ ] **10.3.5** Lock screen and notification enhancements
+
+---
+
+## **Phase 11: Quality Assurance & Testing** ❌ **NOT STARTED**
+
+### **11.1 Automated Testing** ❌ **NOT STARTED**
+- [ ] **11.1.1** Unit tests for use cases and business logic
+- [ ] **11.1.2** Repository and data layer tests
+- [ ] **11.1.3** UI tests for main user flows
+- [ ] **11.1.4** Extension loading and management tests
+- [ ] **11.1.5** Playback engine integration tests
+
+### **11.2 Performance Testing** ❌ **NOT STARTED**
+- [ ] **11.2.1** App load time optimization and testing
+- [ ] **11.2.2** Search speed and responsiveness testing
+- [ ] **11.2.3** Memory usage and leak detection
+- [ ] **11.2.4** Battery usage optimization
+- [ ] **11.2.5** Large catalog performance testing
+
+### **11.3 Security & Stability** ❌ **NOT STARTED**
+- [ ] **11.3.1** Extension sandbox security testing
+- [ ] **11.3.2** Crash reporting and error handling
+- [ ] **11.3.3** Extension vulnerability scanning
+- [ ] **11.3.4** Data privacy and security audit
+- [ ] **11.3.5** Comprehensive error state handling
+
+---
+
+## **Phase 12: Production Readiness** ❌ **NOT STARTED**
+
+### **12.1 Analytics & Monitoring** ❌ **NOT STARTED**
+- [ ] **12.1.1** Firebase/Sentry integration for crash tracking
+- [ ] **12.1.2** Usage analytics implementation (privacy-focused)
+- [ ] **12.1.3** Performance monitoring and optimization
+- [ ] **12.1.4** Extension usage and error tracking
+- [ ] **12.1.5** User behavior analytics for improvements
+
+### **12.2 App Store Preparation** ❌ **NOT STARTED**
+- [ ] **12.2.1** App icons and promotional assets creation
+- [ ] **12.2.2** Screenshots and store listing materials
+- [ ] **12.2.3** Privacy policy and terms of service
+- [ ] **12.2.4** App store optimization (ASO)
+- [ ] **12.2.5** Release build configuration and signing
+
+### **12.3 Documentation & Community** ❌ **NOT STARTED**
+- [ ] **12.3.1** User documentation and help guides
+- [ ] **12.3.2** Extension developer documentation
+- [ ] **12.3.3** API documentation and troubleshooting guides
+- [ ] **12.3.4** Community setup (GitHub, Discord)
+- [ ] **12.3.5** Extension marketplace/directory planning
+
+---
+
+## **🚨 IMMEDIATE PRIORITIES (Next 2 Weeks)**
+
+### **Critical Path Items:**
+1. **🔥 URGENT**: Fix Hilt compilation issues (Task 8.1.1)
+2. **🔥 URGENT**: Connect ViewModels to repositories (Tasks 8.1.2-8.1.6)
+3. **🔥 URGENT**: Replace mock data with real extension system (Task 8.2.1)
+4. **🔥 URGENT**: Implement actual search functionality (Task 8.2.2)
+5. **🔥 URGENT**: Connect player to playback service (Task 8.2.3)
+
+### **Secondary Priorities:**
+6. **⚡ HIGH**: Complete extension repository connection (Task 8.3.1)
+7. **⚡ HIGH**: Implement real extension installation (Task 8.3.2)
+8. **⚡ HIGH**: Add missing Home tab backend integration (Task 6.1.4)
+9. **⚡ HIGH**: Complete Search tab backend integration (Task 6.2.4)
+10. **⚡ HIGH**: Enhance Settings tab functionality (Tasks 6.4.3-6.4.10)
+
+---
+
+## **📊 Current Status Summary**
+
+- **✅ COMPLETED**: Phases 1-5 (Foundation, Extension System, Data Layer, Playback, UI System)
+- **🔄 IN PROGRESS**: Phase 6 (Tab Features) - UI complete, backend integration needed
+- **❌ BLOCKED**: Phase 8 (UI-Backend Integration) - Critical for app functionality
+- **📋 PLANNED**: Phases 9-12 (Advanced features, polish, production readiness)
+
+**BLOCKER**: The app has complete UI and backend systems but they are not connected. Users can see beautiful interfaces but cannot actually search for music, play tracks, or manage real playlists because ViewModels are not wired to the backend services.
+
+**NEXT MILESTONE**: Complete Phase 8 to create a fully functional music streaming app. 

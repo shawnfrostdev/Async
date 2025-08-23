@@ -164,4 +164,9 @@ class TrackMapper @Inject constructor() {
             null
         }
     }
+    
+    // Alias methods for repository compatibility
+    fun mapEntityToDomain(entity: TrackEntity): Track = toDomain(entity)
+    fun mapDomainToEntity(track: Track): TrackEntity = toEntity(track)
+    fun mapEntitiesToDomain(entities: List<TrackEntity>): List<Track> = entities.map { toDomain(it) }
 } 

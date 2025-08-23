@@ -52,8 +52,8 @@ dependencies {
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
     
-    // Timber for logging
-    implementation(libs.timber)
+    // Logcat for logging
+    implementation("com.squareup.logcat:logcat:0.1")
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import timber.log.Timber
+import logcat.logcat
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -68,7 +68,7 @@ class ExtensionManager @Inject constructor(
     ): ExtensionResult<ExtensionInfo> {
         return extensionMutex.withLock {
             try {
-                Timber.i("Installing extension from: ${extensionFile.name}")
+                logcat { "Installing extension from: ${extensionFile.name}" }
                 
                 // Update status to installing
                 val tempInfo = ExtensionInfo(
@@ -139,11 +139,11 @@ class ExtensionManager @Inject constructor(
                 // Update state
                 updateExtensionInfos()
                 
-                Timber.i("Successfully installed extension: ${extension.id}")
+                logcat { "Successfully installed extension: ${extension.id}" }
                 ExtensionResult.Success(extensionInfo)
                 
             } catch (e: Exception) {
-                Timber.e(e, "Failed to install extension")
+                logcat { "Failed to install extension - ${e.message}" }
                 ExtensionResult.Error(
                     ExtensionException.GenericError(
                         "Installation failed: ${e.message}",
@@ -163,7 +163,7 @@ class ExtensionManager @Inject constructor(
     suspend fun uninstallExtension(extensionId: String): ExtensionResult<Unit> {
         return extensionMutex.withLock {
             try {
-                Timber.i("Uninstalling extension: $extensionId")
+                logcat { "Uninstalling extension: $extensionId" }
                 
                 val extensionInfo = _extensionInfos.value[extensionId]
                     ?: return ExtensionResult.Error(
@@ -198,11 +198,11 @@ class ExtensionManager @Inject constructor(
                 // Update state
                 updateExtensionInfos()
                 
-                Timber.i("Successfully uninstalled extension: $extensionId")
+                logcat { "Successfully uninstalled extension: $extensionId" }
                 ExtensionResult.Success(Unit)
                 
             } catch (e: Exception) {
-                Timber.e(e, "Failed to uninstall extension: $extensionId")
+                logcat { "Failed to uninstall extension: $extensionId - ${e.message}" }
                 ExtensionResult.Error(
                     ExtensionException.GenericError(
                         "Uninstallation failed: ${e.message}",
@@ -254,11 +254,11 @@ class ExtensionManager @Inject constructor(
                 updateExtensionStatus(extensionId, ExtensionStatus.INSTALLED, isLoaded = true)
                 updateActiveExtensionIds()
                 
-                Timber.i("Enabled extension: $extensionId")
+                logcat { "Enabled extension: $extensionId" }
                 ExtensionResult.Success(Unit)
                 
             } catch (e: Exception) {
-                Timber.e(e, "Failed to enable extension: $extensionId")
+                logcat { "Failed to enable extension: $extensionId - ${e.message}" }
                 ExtensionResult.Error(
                     ExtensionException.GenericError(
                         "Failed to enable extension: ${e.message}",
@@ -284,11 +284,11 @@ class ExtensionManager @Inject constructor(
                 
                 updateExtensionStatus(extensionId, ExtensionStatus.DISABLED, isLoaded = false)
                 
-                Timber.i("Disabled extension: $extensionId")
+                logcat { "Disabled extension: $extensionId" }
                 ExtensionResult.Success(Unit)
                 
             } catch (e: Exception) {
-                Timber.e(e, "Failed to disable extension: $extensionId")
+                logcat { "Failed to disable extension: $extensionId - ${e.message}" }
                 ExtensionResult.Error(
                     ExtensionException.GenericError(
                         "Failed to disable extension: ${e.message}",
@@ -350,7 +350,7 @@ class ExtensionManager @Inject constructor(
                 extensionStorage.saveExtensionInfo(extensionId, updatedInfo)
                 updateExtensionInfos()
             } catch (e: Exception) {
-                Timber.e(e, "Failed to record usage for extension: $extensionId")
+                logcat { "Failed to record usage for extension: $extensionId - ${e.message}" }
             }
         }
     }
@@ -370,9 +370,9 @@ class ExtensionManager @Inject constructor(
                 }
             }
             
-            Timber.i("Loaded ${savedInfos.size} saved extensions")
+            logcat { "Loaded ${savedInfos.size} saved extensions" }
         } catch (e: Exception) {
-            Timber.e(e, "Failed to load saved extensions")
+            logcat { "Failed to load saved extensions - ${e.message}" }
         }
     }
     

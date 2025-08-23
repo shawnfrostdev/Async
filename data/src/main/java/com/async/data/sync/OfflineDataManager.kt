@@ -7,15 +7,12 @@ import com.async.data.database.dao.PlayHistoryDao
 import com.async.data.database.dao.UserSettingsDao
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import timber.log.Timber
-import javax.inject.Inject
-import javax.inject.Singleton
+import logcat.logcat
 
 /**
  * Manages offline data availability and functionality
  */
-@Singleton
-class OfflineDataManager @Inject constructor(
+class OfflineDataManager(
     private val trackDao: TrackDao,
     private val playlistDao: PlaylistDao,
     private val playHistoryDao: PlayHistoryDao,
@@ -38,7 +35,7 @@ class OfflineDataManager @Inject constructor(
      */
     suspend fun cacheEssentialData(): AsyncResult<OfflineCacheResult, OfflineError> {
         return try {
-            Timber.i("Caching essential data for offline use")
+            logcat { "Caching essential data for offline use" }
             
             val result = OfflineCacheResult()
             
@@ -57,11 +54,11 @@ class OfflineDataManager @Inject constructor(
             // Cache critical settings
             result.settingsCached = cacheCriticalSettings()
             
-            Timber.i("Essential data caching completed: $result")
+            logcat { "Essential data caching completed: $result" }
             AsyncResult.success(result)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error caching essential data")
+            logcat { "Error caching essential data" }
             AsyncResult.error(OfflineError.CachingError(e.message ?: "Essential data caching failed"))
         }
     }
@@ -71,7 +68,7 @@ class OfflineDataManager @Inject constructor(
      */
     suspend fun preloadRecentTracks(): AsyncResult<Int, OfflineError> {
         return try {
-            Timber.d("Preloading recent tracks")
+            logcat { "Preloading recent tracks" }
             
             val recentTracks = trackDao.getRecentlyPlayedTracks(PRELOAD_RECENT_TRACKS_COUNT).first()
             
@@ -85,11 +82,11 @@ class OfflineDataManager @Inject constructor(
                 }
             }
             
-            Timber.d("Preloaded $preloadedCount recent tracks")
+            logcat { "Preloaded $preloadedCount recent tracks" }
             AsyncResult.success(preloadedCount)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error preloading recent tracks")
+            logcat { "Error preloading recent tracks" }
             AsyncResult.error(OfflineError.PreloadError(e.message ?: "Recent tracks preload failed"))
         }
     }
@@ -99,7 +96,7 @@ class OfflineDataManager @Inject constructor(
      */
     suspend fun cacheFavoritePlaylists(): AsyncResult<Int, OfflineError> {
         return try {
-            Timber.d("Caching favorite playlists")
+            logcat { "Caching favorite playlists" }
             
             val userPlaylists = playlistDao.getUserPlaylists().first()
             val favoritePlaylists = userPlaylists.take(CACHE_FAVORITES_LIMIT)
@@ -110,14 +107,14 @@ class OfflineDataManager @Inject constructor(
                 val playlistTracks = playlistDao.getPlaylistTracksSync(playlist.id)
                 cachedPlaylistsCount++
                 
-                Timber.v("Cached playlist: ${playlist.name} with ${playlistTracks.size} tracks")
+                logcat { "Cached playlist: ${playlist.name} with ${playlistTracks.size} tracks" }
             }
             
-            Timber.d("Cached $cachedPlaylistsCount favorite playlists")
+            logcat { "Cached $cachedPlaylistsCount favorite playlists" }
             AsyncResult.success(cachedPlaylistsCount)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error caching favorite playlists")
+            logcat { "Error caching favorite playlists" }
             AsyncResult.error(OfflineError.CachingError(e.message ?: "Favorite playlists caching failed"))
         }
     }
@@ -140,11 +137,11 @@ class OfflineDataManager @Inject constructor(
             
             val isReady = hasEnoughTracks && hasEssentialPlaylists && hasCriticalSettings
             
-            Timber.d("Offline readiness check: tracks=$trackCount, favorites=$favoriteCount, playlists=$playlistCount, ready=$isReady")
+            logcat { "Offline readiness check: tracks=$trackCount, favorites=$favoriteCount, playlists=$playlistCount, ready=$isReady" }
             isReady
             
         } catch (e: Exception) {
-            Timber.e(e, "Error checking essential data availability")
+            logcat { "Error checking essential data availability" }
             false
         }
     }
@@ -176,7 +173,7 @@ class OfflineDataManager @Inject constructor(
                 estimatedOfflineHours = calculateOfflineHours(trackCount, favoriteCount)
             )
         } catch (e: Exception) {
-            Timber.e(e, "Error getting offline status")
+            logcat { "Error getting offline status" }
             OfflineStatus()
         }
     }
@@ -188,7 +185,7 @@ class OfflineDataManager @Inject constructor(
      */
     suspend fun prepareOfflineMode(): AsyncResult<OfflinePreparation, OfflineError> {
         return try {
-            Timber.i("Preparing app for offline mode")
+            logcat { "Preparing app for offline mode" }
             
             val preparation = OfflinePreparation()
             
@@ -204,11 +201,11 @@ class OfflineDataManager @Inject constructor(
             // Validate offline data integrity
             preparation.dataIntegrityValid = validateOfflineData()
             
-            Timber.i("Offline mode preparation completed: $preparation")
+            logcat { "Offline mode preparation completed: $preparation" }
             AsyncResult.success(preparation)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error preparing offline mode")
+            logcat { "Error preparing offline mode" }
             AsyncResult.error(OfflineError.PreparationError(e.message ?: "Offline preparation failed"))
         }
     }
@@ -218,12 +215,12 @@ class OfflineDataManager @Inject constructor(
      */
     suspend fun searchOffline(query: String, limit: Int = 50): List<com.async.data.database.entity.TrackEntity> {
         return try {
-            Timber.d("Performing offline search for: $query")
+            logcat { "Performing offline search for: $query" }
             val results = trackDao.searchTracks(query).first().take(limit)
-            Timber.d("Offline search returned ${results.size} results")
+            logcat { "Offline search returned ${results.size} results" }
             results
         } catch (e: Exception) {
-            Timber.e(e, "Error during offline search")
+            logcat { "Error during offline search" }
             emptyList()
         }
     }
@@ -233,7 +230,7 @@ class OfflineDataManager @Inject constructor(
      */
     suspend fun getOfflineRecommendations(limit: Int = 20): List<com.async.data.database.entity.TrackEntity> {
         return try {
-            Timber.d("Generating offline recommendations")
+            logcat { "Generating offline recommendations" }
             
             // Simple recommendation: most played + favorites + recent
             val mostPlayed = trackDao.getMostPlayedTracks(limit / 3).first()
@@ -244,11 +241,11 @@ class OfflineDataManager @Inject constructor(
                 .distinctBy { it.id }
                 .take(limit)
             
-            Timber.d("Generated ${recommendations.size} offline recommendations")
+            logcat { "Generated ${recommendations.size} offline recommendations" }
             recommendations
             
         } catch (e: Exception) {
-            Timber.e(e, "Error generating offline recommendations")
+            logcat { "Error generating offline recommendations" }
             emptyList()
         }
     }
@@ -258,10 +255,10 @@ class OfflineDataManager @Inject constructor(
     private suspend fun cacheFavoriteTracks(): Int {
         return try {
             val favorites = trackDao.getFavoriteTracks().first()
-            Timber.d("Cached ${favorites.size} favorite tracks")
+            logcat { "Cached ${favorites.size} favorite tracks" }
             favorites.size
         } catch (e: Exception) {
-            Timber.e(e, "Error caching favorite tracks")
+            logcat { "Error caching favorite tracks" }
             0
         }
     }
@@ -269,10 +266,10 @@ class OfflineDataManager @Inject constructor(
     private suspend fun cacheRecentTracks(): Int {
         return try {
             val recent = trackDao.getRecentlyPlayedTracks(PRELOAD_RECENT_TRACKS_COUNT).first()
-            Timber.d("Cached ${recent.size} recent tracks")
+            logcat { "Cached ${recent.size} recent tracks" }
             recent.size
         } catch (e: Exception) {
-            Timber.e(e, "Error caching recent tracks")
+            logcat { "Error caching recent tracks" }
             0
         }
     }
@@ -282,10 +279,10 @@ class OfflineDataManager @Inject constructor(
             val systemPlaylists = playlistDao.getSystemPlaylists().first()
             val userPlaylists = playlistDao.getUserPlaylists().first().take(5) // Top 5 user playlists
             val totalCached = systemPlaylists.size + userPlaylists.size
-            Timber.d("Cached $totalCached essential playlists")
+            logcat { "Cached $totalCached essential playlists" }
             totalCached
         } catch (e: Exception) {
-            Timber.e(e, "Error caching essential playlists")
+            logcat { "Error caching essential playlists" }
             0
         }
     }
@@ -293,10 +290,10 @@ class OfflineDataManager @Inject constructor(
     private suspend fun cachePlaybackHistory(): Int {
         return try {
             val recentHistory = playHistoryDao.getRecentPlayHistory(1000).first()
-            Timber.d("Cached ${recentHistory.size} history items")
+            logcat { "Cached ${recentHistory.size} history items" }
             recentHistory.size
         } catch (e: Exception) {
-            Timber.e(e, "Error caching playback history")
+            logcat { "Error caching playback history" }
             0
         }
     }
@@ -304,10 +301,10 @@ class OfflineDataManager @Inject constructor(
     private suspend fun cacheCriticalSettings(): Int {
         return try {
             val settings = userSettingsDao.getTotalSettingsCount()
-            Timber.d("Cached $settings critical settings")
+            logcat { "Cached $settings critical settings" }
             settings
         } catch (e: Exception) {
-            Timber.e(e, "Error caching critical settings")
+            logcat { "Error caching critical settings" }
             0
         }
     }

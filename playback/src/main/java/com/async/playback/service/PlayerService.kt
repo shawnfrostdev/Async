@@ -16,15 +16,13 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import timber.log.Timber
-import javax.inject.Inject
+import logcat.logcat
 
-@AndroidEntryPoint
+// @AndroidEntryPoint - Temporarily disabled
 class PlayerService : MediaBrowserServiceCompat() {
     
     companion object {
@@ -34,11 +32,8 @@ class PlayerService : MediaBrowserServiceCompat() {
         private const val QUEUE_ROOT_ID = "queue_root_id"
     }
     
-    @Inject
-    lateinit var playbackManager: PlaybackManager
-    
-    @Inject
-    lateinit var notificationManager: PlaybackNotificationManager
+    private lateinit var playbackManager: PlaybackManager
+    private lateinit var notificationManager: PlaybackNotificationManager
     
     private lateinit var mediaSession: MediaSessionCompat
     private lateinit var exoPlayer: ExoPlayer
@@ -59,7 +54,7 @@ class PlayerService : MediaBrowserServiceCompat() {
     
     override fun onCreate() {
         super.onCreate()
-        Timber.d("PlayerService created")
+        logcat { "PlayerService created" }
         
         initializePlayer()
         initializeMediaSession()
@@ -68,7 +63,7 @@ class PlayerService : MediaBrowserServiceCompat() {
     
     override fun onDestroy() {
         super.onDestroy()
-        Timber.d("PlayerService destroyed")
+        logcat { "PlayerService destroyed" }
         
         serviceScope.cancel()
         cleanupPlayer()
@@ -80,7 +75,7 @@ class PlayerService : MediaBrowserServiceCompat() {
         clientUid: Int,
         rootHints: Bundle?
     ): BrowserRoot? {
-        Timber.d("onGetRoot called by $clientPackageName")
+        logcat { "onGetRoot called by $clientPackageName" }
         
         // Verify the client is allowed to browse media
         return if (isClientAllowed(clientPackageName, clientUid)) {
@@ -95,7 +90,7 @@ class PlayerService : MediaBrowserServiceCompat() {
         parentId: String,
         result: Result<MutableList<MediaBrowserCompat.MediaItem>>
     ) {
-        Timber.d("onLoadChildren called with parentId: $parentId")
+        logcat { "onLoadChildren called with parentId: $parentId" }
         
         when (parentId) {
             MEDIA_ROOT_ID -> {
@@ -129,8 +124,8 @@ class PlayerService : MediaBrowserServiceCompat() {
             .setHandleAudioBecomingNoisy(true)
             .build()
         
-        // Connect ExoPlayer to PlaybackManager
-        playbackManager.setExoPlayer(exoPlayer)
+        // Initialize PlaybackManager 
+        playbackManager.initializeExoPlayer()
         
         exoPlayer.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
@@ -140,7 +135,7 @@ class PlayerService : MediaBrowserServiceCompat() {
             
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
                 super.onPlayerError(error)
-                Timber.e(error, "ExoPlayer error occurred")
+                logcat { "ExoPlayer error occurred" }
                 handlePlaybackError(error)
             }
             
@@ -162,7 +157,7 @@ class PlayerService : MediaBrowserServiceCompat() {
             }
         })
         
-        Timber.d("ExoPlayer initialized")
+        logcat { "ExoPlayer initialized" }
     }
     
     private fun initializeMediaSession() {
@@ -184,7 +179,7 @@ class PlayerService : MediaBrowserServiceCompat() {
         }
         
         sessionToken = mediaSession.sessionToken
-        Timber.d("MediaSession initialized")
+        logcat { "MediaSession initialized" }
     }
     
     private fun initializeNotificationManager() {
@@ -209,7 +204,7 @@ class PlayerService : MediaBrowserServiceCompat() {
             }
         )
         
-        Timber.d("Notification manager initialized")
+        logcat { "Notification manager initialized" }
     }
     
     private fun updatePlaybackState() {
@@ -229,7 +224,7 @@ class PlayerService : MediaBrowserServiceCompat() {
         _playbackState.value = playbackStateCompat
         mediaSession.setPlaybackState(playbackStateCompat)
         
-        Timber.v("Playback state updated: $state")
+        logcat { "Playback state updated: $state" }
     }
     
     private fun updateCurrentMedia(mediaItem: MediaItem?) {
@@ -246,7 +241,7 @@ class PlayerService : MediaBrowserServiceCompat() {
         _currentMedia.value = metadata
         mediaSession.setMetadata(metadata)
         
-        Timber.d("Current media updated: ${metadata?.getString(MediaMetadataCompat.METADATA_KEY_TITLE)}")
+        logcat { "Current media updated: ${metadata?.getString(MediaMetadataCompat.METADATA_KEY_TITLE)}" }
     }
     
     private fun getAvailableActions(): Long {
@@ -329,7 +324,7 @@ class PlayerService : MediaBrowserServiceCompat() {
                 val recentItems = mutableListOf<MediaBrowserCompat.MediaItem>()
                 result.sendResult(recentItems)
             } catch (e: Exception) {
-                Timber.e(e, "Error loading recent media")
+                logcat { "Error loading recent media" }
                 result.sendResult(mutableListOf())
             }
         }
@@ -355,7 +350,7 @@ class PlayerService : MediaBrowserServiceCompat() {
                 
                 result.sendResult(queueItems)
             } catch (e: Exception) {
-                Timber.e(e, "Error loading current queue")
+                logcat { "Error loading current queue" }
                 result.sendResult(mutableListOf())
             }
         }
@@ -379,57 +374,57 @@ class PlayerService : MediaBrowserServiceCompat() {
     private inner class MediaSessionCallback : MediaSessionCompat.Callback() {
         
         override fun onPlay() {
-            Timber.d("MediaSession: onPlay")
+            logcat { "MediaSession: onPlay" }
             playbackManager.play()
         }
         
         override fun onPause() {
-            Timber.d("MediaSession: onPause")
+            logcat { "MediaSession: onPause" }
             playbackManager.pause()
         }
         
         override fun onStop() {
-            Timber.d("MediaSession: onStop")
+            logcat { "MediaSession: onStop" }
             playbackManager.stop()
         }
         
         override fun onSkipToNext() {
-            Timber.d("MediaSession: onSkipToNext")
+            logcat { "MediaSession: onSkipToNext" }
             playbackManager.skipToNext()
         }
         
         override fun onSkipToPrevious() {
-            Timber.d("MediaSession: onSkipToPrevious")
+            logcat { "MediaSession: onSkipToPrevious" }
             playbackManager.skipToPrevious()
         }
         
         override fun onSeekTo(pos: Long) {
-            Timber.d("MediaSession: onSeekTo $pos")
+            logcat { "MediaSession: onSeekTo $pos" }
             playbackManager.seekTo(pos)
         }
         
         override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {
-            Timber.d("MediaSession: onPlayFromMediaId $mediaId")
-            mediaId?.let { playbackManager.playFromMediaId(it, extras) }
+            logcat { "MediaSession: onPlayFromMediaId $mediaId" }
+            mediaId?.let { playbackManager.playFromMediaId(it) }
         }
         
         override fun onPlayFromSearch(query: String?, extras: Bundle?) {
-            Timber.d("MediaSession: onPlayFromSearch $query")
-            playbackManager.playFromSearch(query, extras)
+            logcat { "MediaSession: onPlayFromSearch $query" }
+            query?.let { playbackManager.playFromSearch(it) }
         }
         
         override fun onAddQueueItem(description: MediaDescriptionCompat?) {
-            Timber.d("MediaSession: onAddQueueItem ${description?.title}")
+            logcat { "MediaSession: onAddQueueItem ${description?.title}" }
             description?.let { playbackManager.addToQueue(it) }
         }
         
         override fun onRemoveQueueItem(description: MediaDescriptionCompat?) {
-            Timber.d("MediaSession: onRemoveQueueItem ${description?.title}")
+            logcat { "MediaSession: onRemoveQueueItem ${description?.title}" }
             description?.let { playbackManager.removeFromQueue(it) }
         }
         
         override fun onSkipToQueueItem(id: Long) {
-            Timber.d("MediaSession: onSkipToQueueItem $id")
+            logcat { "MediaSession: onSkipToQueueItem $id" }
             playbackManager.skipToQueueItem(id.toInt())
         }
     }

@@ -62,4 +62,9 @@ class PlaylistMapper @Inject constructor() {
     fun toEntityList(playlists: List<Playlist>): List<PlaylistEntity> {
         return playlists.map { toEntity(it) }
     }
+    
+    // Alias methods for repository compatibility
+    fun mapEntityToDomain(entity: PlaylistEntity): Playlist = toDomain(entity)
+    fun mapDomainToEntity(playlist: Playlist): PlaylistEntity = toEntity(playlist)
+    fun mapEntitiesToDomain(entities: List<PlaylistEntity>): List<Playlist> = toDomainList(entities)
 } 

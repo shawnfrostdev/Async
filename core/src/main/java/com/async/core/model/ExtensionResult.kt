@@ -107,6 +107,13 @@ sealed class ExtensionException(
     ) : ExtensionException(message, "CONFIGURATION_ERROR")
     
     /**
+     * Extension not found errors
+     */
+    class ExtensionNotFound(
+        message: String
+    ) : ExtensionException(message, "EXTENSION_NOT_FOUND")
+    
+    /**
      * Generic extension errors
      */
     class GenericError(

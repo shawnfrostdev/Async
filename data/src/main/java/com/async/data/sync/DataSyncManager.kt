@@ -9,15 +9,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import timber.log.Timber
-import javax.inject.Inject
-import javax.inject.Singleton
+import logcat.logcat
 
 /**
  * Manages data synchronization, caching strategies, and offline functionality
  */
-@Singleton
-class DataSyncManager @Inject constructor(
+class DataSyncManager(
     private val trackDao: TrackDao,
     private val playlistDao: PlaylistDao,
     private val playHistoryDao: PlayHistoryDao,
@@ -40,7 +37,7 @@ class DataSyncManager @Inject constructor(
     suspend fun performFullSync(): AsyncResult<SyncResult, SyncError> {
         return try {
             _syncState.value = SyncState.SYNCING
-            Timber.i("Starting full data synchronization")
+            logcat { "Starting full data synchronization" }
             
             val syncResult = SyncResult()
             
@@ -64,12 +61,12 @@ class DataSyncManager @Inject constructor(
             _lastSyncTime.value = System.currentTimeMillis()
             
             _syncState.value = SyncState.SUCCESS
-            Timber.i("Full sync completed successfully: $syncResult")
+            logcat { "Full sync completed successfully: $syncResult" }
             AsyncResult.success(syncResult)
             
         } catch (e: Exception) {
             _syncState.value = SyncState.ERROR
-            Timber.e(e, "Error during full sync")
+            logcat { "Error during full sync" }
             AsyncResult.error(SyncError.GeneralError(e.message ?: "Unknown error"))
         }
     }
@@ -80,7 +77,7 @@ class DataSyncManager @Inject constructor(
     suspend fun performIncrementalSync(since: Long): AsyncResult<SyncResult, SyncError> {
         return try {
             _syncState.value = SyncState.SYNCING
-            Timber.i("Starting incremental sync since $since")
+            logcat { "Starting incremental sync since $since" }
             
             val syncResult = SyncResult()
             
@@ -97,12 +94,12 @@ class DataSyncManager @Inject constructor(
             _lastSyncTime.value = System.currentTimeMillis()
             _syncState.value = SyncState.SUCCESS
             
-            Timber.i("Incremental sync completed: $syncResult")
+            logcat { "Incremental sync completed: $syncResult" }
             AsyncResult.success(syncResult)
             
         } catch (e: Exception) {
             _syncState.value = SyncState.ERROR
-            Timber.e(e, "Error during incremental sync")
+            logcat { "Error during incremental sync" }
             AsyncResult.error(SyncError.GeneralError(e.message ?: "Unknown error"))
         }
     }
@@ -111,7 +108,7 @@ class DataSyncManager @Inject constructor(
     
     private suspend fun syncTracks(): AsyncResult<Int, SyncError> {
         return try {
-            Timber.d("Syncing tracks...")
+            logcat { "Syncing tracks..." }
             
             // Apply cache strategy
             val cleanupResult = cacheStrategy.cleanupOldTracks()
@@ -124,14 +121,14 @@ class DataSyncManager @Inject constructor(
             AsyncResult.success(totalTracks)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error syncing tracks")
+            logcat { "Error syncing tracks" }
             AsyncResult.error(SyncError.TrackSyncError(e.message ?: "Track sync failed"))
         }
     }
     
     private suspend fun syncPlaylists(): AsyncResult<Int, SyncError> {
         return try {
-            Timber.d("Syncing playlists...")
+            logcat { "Syncing playlists..." }
             
             // Refresh playlist statistics (would need specific implementation)
             // For now, just log this operation
@@ -143,14 +140,14 @@ class DataSyncManager @Inject constructor(
             AsyncResult.success(totalPlaylists)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error syncing playlists")
+            logcat { "Error syncing playlists" }
             AsyncResult.error(SyncError.PlaylistSyncError(e.message ?: "Playlist sync failed"))
         }
     }
     
     private suspend fun syncPlayHistory(): AsyncResult<Int, SyncError> {
         return try {
-            Timber.d("Syncing play history...")
+            logcat { "Syncing play history..." }
             
             // Cleanup old incomplete plays
             playHistoryDao.cleanupIncompleteOldPlays(
@@ -165,14 +162,14 @@ class DataSyncManager @Inject constructor(
             AsyncResult.success(totalHistory)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error syncing play history")
+            logcat { "Error syncing play history" }
             AsyncResult.error(SyncError.HistorySyncError(e.message ?: "History sync failed"))
         }
     }
     
     private suspend fun syncSettings(): AsyncResult<Int, SyncError> {
         return try {
-            Timber.d("Syncing settings...")
+            logcat { "Syncing settings..." }
             
             // Cleanup orphaned settings
             userSettingsDao.cleanupOldNonCriticalSettings(
@@ -186,7 +183,7 @@ class DataSyncManager @Inject constructor(
             AsyncResult.success(totalSettings)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error syncing settings")
+            logcat { "Error syncing settings" }
             AsyncResult.error(SyncError.SettingsSyncError(e.message ?: "Settings sync failed"))
         }
     }
@@ -197,7 +194,7 @@ class DataSyncManager @Inject constructor(
         return try {
             // Only sync tracks modified since timestamp
             // This would integrate with extension system for fresh data
-            Timber.d("Incremental track sync since $since")
+            logcat { "Incremental track sync since $since" }
             AsyncResult.success(0) // Placeholder
         } catch (e: Exception) {
             AsyncResult.error(SyncError.TrackSyncError(e.message ?: "Incremental track sync failed"))
@@ -207,7 +204,7 @@ class DataSyncManager @Inject constructor(
     private suspend fun syncPlaylistsIncremental(since: Long): AsyncResult<Int, SyncError> {
         return try {
             // Only sync playlists modified since timestamp
-            Timber.d("Incremental playlist sync since $since")
+            logcat { "Incremental playlist sync since $since" }
             AsyncResult.success(0) // Placeholder
         } catch (e: Exception) {
             AsyncResult.error(SyncError.PlaylistSyncError(e.message ?: "Incremental playlist sync failed"))
@@ -217,7 +214,7 @@ class DataSyncManager @Inject constructor(
     private suspend fun syncPlayHistoryIncremental(since: Long): AsyncResult<Int, SyncError> {
         return try {
             // Only sync history since timestamp
-            Timber.d("Incremental history sync since $since")
+            logcat { "Incremental history sync since $since" }
             AsyncResult.success(0) // Placeholder
         } catch (e: Exception) {
             AsyncResult.error(SyncError.HistorySyncError(e.message ?: "Incremental history sync failed"))
@@ -231,7 +228,7 @@ class DataSyncManager @Inject constructor(
      */
     suspend fun clearAllCache(): AsyncResult<Unit, SyncError> {
         return try {
-            Timber.w("Clearing all cached data")
+            logcat { "Clearing all cached data" }
             
             // Clear tracks but keep favorites and recently played
             trackDao.deleteAllTracks()
@@ -244,7 +241,7 @@ class DataSyncManager @Inject constructor(
             
             AsyncResult.success(Unit)
         } catch (e: Exception) {
-            Timber.e(e, "Error clearing cache")
+            logcat { "Error clearing cache" }
             AsyncResult.error(SyncError.CacheError(e.message ?: "Cache clear failed"))
         }
     }
@@ -268,7 +265,7 @@ class DataSyncManager @Inject constructor(
                 lastCleanup = _lastSyncTime.value
             )
         } catch (e: Exception) {
-            Timber.e(e, "Error getting cache stats")
+            logcat { "Error getting cache stats" }
             CacheStats()
         }
     }
@@ -280,7 +277,7 @@ class DataSyncManager @Inject constructor(
      */
     suspend fun prepareForOffline(): AsyncResult<Unit, SyncError> {
         return try {
-            Timber.i("Preparing data for offline use")
+            logcat { "Preparing data for offline use" }
             
             // Ensure critical data is cached
             offlineManager.cacheEssentialData()
@@ -293,7 +290,7 @@ class DataSyncManager @Inject constructor(
             
             AsyncResult.success(Unit)
         } catch (e: Exception) {
-            Timber.e(e, "Error preparing for offline")
+            logcat { "Error preparing for offline" }
             AsyncResult.error(SyncError.OfflineError(e.message ?: "Offline preparation failed"))
         }
     }
@@ -307,7 +304,7 @@ class DataSyncManager @Inject constructor(
             trackDao.getTotalTrackCount() > 0 &&
             playlistDao.getTotalPlaylistCount() > 0
         } catch (e: Exception) {
-            Timber.e(e, "Error checking offline readiness")
+            logcat { "Error checking offline readiness" }
             false
         }
     }
@@ -319,7 +316,7 @@ class DataSyncManager @Inject constructor(
      */
     suspend fun resolveConflicts(): AsyncResult<ConflictResolution, SyncError> {
         return try {
-            Timber.d("Resolving data conflicts")
+            logcat { "Resolving data conflicts" }
             
             // Future implementation for cloud sync conflict resolution
             // For now, local data always wins
@@ -332,7 +329,7 @@ class DataSyncManager @Inject constructor(
             
             AsyncResult.success(resolution)
         } catch (e: Exception) {
-            Timber.e(e, "Error resolving conflicts")
+            logcat { "Error resolving conflicts" }
             AsyncResult.error(SyncError.ConflictError(e.message ?: "Conflict resolution failed"))
         }
     }

@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
-import timber.log.Timber
+import logcat.logcat
 
 class NotificationActionReceiver : BroadcastReceiver() {
     
@@ -21,7 +21,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         if (context == null || intent == null) return
         
         val action = intent.action ?: return
-        Timber.d("Notification action received: $action")
+        logcat { "Notification action received: $action" }
         
         try {
             // Get the media controller from the PlayerService
@@ -31,37 +31,37 @@ class NotificationActionReceiver : BroadcastReceiver() {
             when (action) {
                 ACTION_PLAY -> {
                     mediaController?.transportControls?.play()
-                    Timber.d("Play action executed")
+                    logcat { "Play action executed" }
                 }
                 
                 ACTION_PAUSE -> {
                     mediaController?.transportControls?.pause()
-                    Timber.d("Pause action executed")
+                    logcat { "Pause action executed" }
                 }
                 
                 ACTION_NEXT -> {
                     mediaController?.transportControls?.skipToNext()
-                    Timber.d("Next action executed")
+                    logcat { "Next action executed" }
                 }
                 
                 ACTION_PREVIOUS -> {
                     mediaController?.transportControls?.skipToPrevious()
-                    Timber.d("Previous action executed")
+                    logcat { "Previous action executed" }
                 }
                 
                 ACTION_STOP -> {
                     mediaController?.transportControls?.stop()
                     // Also stop the service
                     context.stopService(serviceIntent)
-                    Timber.d("Stop action executed")
+                    logcat { "Stop action executed" }
                 }
                 
                 else -> {
-                    Timber.w("Unknown notification action: $action")
+                    logcat { "Unknown notification action: $action" }
                 }
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error handling notification action: $action")
+            logcat { "Error handling notification action: $action" }
         }
     }
     
@@ -73,7 +73,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
             // to access the MediaSession token.
             null
         } catch (e: Exception) {
-            Timber.e(e, "Failed to get MediaController")
+            logcat { "Failed to get MediaController" }
             null
         }
     }

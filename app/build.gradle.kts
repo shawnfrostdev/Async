@@ -63,8 +63,10 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     
-    // Navigation
-    implementation(libs.androidx.navigation.compose)
+    // Navigation - Voyager
+    implementation("cafe.adriel.voyager:voyager-navigator:1.0.0")
+    implementation("cafe.adriel.voyager:voyager-tab-navigator:1.0.0")
+    implementation("cafe.adriel.voyager:voyager-transitions:1.0.0")
     
     // ViewModel
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -76,6 +78,10 @@ dependencies {
     // Serialization
     implementation(libs.kotlinx.serialization.json)
     
+    // Room Database
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    
     // Hilt
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
@@ -85,7 +91,7 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     
     // Logging
-    implementation(libs.timber)
+    implementation("com.squareup.logcat:logcat:0.1")
     
     // Testing
     testImplementation(libs.junit)

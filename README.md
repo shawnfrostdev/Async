@@ -23,23 +23,23 @@
 - **Kotlin** - 100% Kotlin codebase
 - **Jetpack Compose** - Modern declarative UI toolkit
 - **Material3** - Latest Material Design with dynamic colors
-- **Navigation Compose** - Type-safe navigation
+- **Voyager Navigation** - Type-safe navigation with tab support
 
 ### **Architecture**
 - **Clean Architecture** - Multi-module separation of concerns
 - **MVVM Pattern** - ViewModel with Compose integration
-- **Dependency Injection** - Hilt for DI
+- **Manual Dependency Injection** - Custom AppModule service locator
 - **Reactive Programming** - Coroutines & Flow
 
 ### **Data & Storage**
 - **Room Database** - Local data persistence
-- **DataStore** - Preferences management
+- **SharedPreferences** - Simple key-value storage
 - **Kotlin Serialization** - JSON serialization
 
 ### **Media & Networking**
 - **ExoPlayer (Media3)** - Advanced media playback
 - **MediaSession** - System media controls integration
-- **Ktor Client** - HTTP networking
+- **Logcat** - Enhanced logging for development
 
 ### **Extension System**
 - **DexClassLoader** - Dynamic code loading

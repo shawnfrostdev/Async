@@ -7,15 +7,12 @@ import com.async.data.database.dao.PlayHistoryDao
 import com.async.data.database.dao.UserSettingsDao
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import timber.log.Timber
-import javax.inject.Inject
-import javax.inject.Singleton
+import logcat.logcat
 
 /**
  * Manages intelligent caching strategies and storage optimization
  */
-@Singleton
-class CacheStrategy @Inject constructor(
+class CacheStrategy(
     private val trackDao: TrackDao,
     private val playlistDao: PlaylistDao,
     private val playHistoryDao: PlayHistoryDao,
@@ -47,7 +44,7 @@ class CacheStrategy @Inject constructor(
      */
     suspend fun cleanupOldTracks(): AsyncResult<Int, CacheError> {
         return try {
-            Timber.i("Starting track cleanup strategy")
+            logcat { "Starting track cleanup strategy" }
             
             val cutoffTime = System.currentTimeMillis() - (TRACK_CLEANUP_DAYS * 24 * 60 * 60 * 1000L)
             var cleanedCount = 0
@@ -66,11 +63,11 @@ class CacheStrategy @Inject constructor(
                 cleanedCount += cleanupExcessTracks(excessTracks)
             }
             
-            Timber.i("Track cleanup completed: $cleanedCount tracks cleaned")
+            logcat { "Track cleanup completed: $cleanedCount tracks cleaned" }
             AsyncResult.success(cleanedCount)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error during track cleanup")
+            logcat { "Error during track cleanup" }
             AsyncResult.error(CacheError.CleanupError(e.message ?: "Track cleanup failed"))
         }
     }
@@ -80,7 +77,7 @@ class CacheStrategy @Inject constructor(
      */
     private suspend fun cleanupExcessTracks(excessCount: Int): Int {
         try {
-            Timber.d("Cleaning up $excessCount excess tracks")
+            logcat { "Cleaning up $excessCount excess tracks" }
             
             // Get all tracks and calculate priority scores
             val allTracks = trackDao.getAllTracks().first()
@@ -93,12 +90,12 @@ class CacheStrategy @Inject constructor(
             // Remove tracks with lowest priority
             val tracksToRemove = tracksWithPriority.take(excessCount)
             tracksToRemove.forEach { trackPriority ->
-                trackDao.deleteTrackById(trackPriority.trackId)
+                trackDao.deleteTrack(trackPriority.trackId)
             }
             
             return tracksToRemove.size
         } catch (e: Exception) {
-            Timber.e(e, "Error cleaning up excess tracks")
+            logcat { "Error cleaning up excess tracks" }
             return 0
         }
     }
@@ -136,7 +133,7 @@ class CacheStrategy @Inject constructor(
      */
     suspend fun optimizeTrackStorage(): AsyncResult<Int, CacheError> {
         return try {
-            Timber.i("Optimizing track storage")
+            logcat { "Optimizing track storage" }
             
             var optimizedCount = 0
             
@@ -146,11 +143,11 @@ class CacheStrategy @Inject constructor(
             // Clean up orphaned data
             optimizedCount += cleanupOrphanedData()
             
-            Timber.i("Track storage optimization completed: $optimizedCount items optimized")
+            logcat { "Track storage optimization completed: $optimizedCount items optimized" }
             AsyncResult.success(optimizedCount)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error optimizing track storage")
+            logcat { "Error optimizing track storage" }
             AsyncResult.error(CacheError.OptimizationError(e.message ?: "Storage optimization failed"))
         }
     }
@@ -162,7 +159,7 @@ class CacheStrategy @Inject constructor(
      */
     suspend fun cleanupPlaylists(): AsyncResult<Int, CacheError> {
         return try {
-            Timber.i("Cleaning up playlists")
+            logcat { "Cleaning up playlists" }
             
             val cutoffTime = System.currentTimeMillis() - (30 * 24 * 60 * 60 * 1000L) // 30 days
             
@@ -171,7 +168,7 @@ class CacheStrategy @Inject constructor(
             
             AsyncResult.success(1) // Placeholder count
         } catch (e: Exception) {
-            Timber.e(e, "Error cleaning up playlists")
+            logcat { "Error cleaning up playlists" }
             AsyncResult.error(CacheError.CleanupError(e.message ?: "Playlist cleanup failed"))
         }
     }
@@ -183,7 +180,7 @@ class CacheStrategy @Inject constructor(
      */
     suspend fun cleanupPlayHistory(): AsyncResult<Int, CacheError> {
         return try {
-            Timber.i("Cleaning up play history")
+            logcat { "Cleaning up play history" }
             
             var cleanedCount = 0
             
@@ -199,11 +196,11 @@ class CacheStrategy @Inject constructor(
                 cleanedCount += totalHistory - MAX_HISTORY_ITEMS
             }
             
-            Timber.i("Play history cleanup completed: $cleanedCount items cleaned")
+            logcat { "Play history cleanup completed: $cleanedCount items cleaned" }
             AsyncResult.success(cleanedCount)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error cleaning up play history")
+            logcat { "Error cleaning up play history" }
             AsyncResult.error(CacheError.CleanupError(e.message ?: "History cleanup failed"))
         }
     }
@@ -215,7 +212,7 @@ class CacheStrategy @Inject constructor(
      */
     suspend fun cleanupSettings(): AsyncResult<Int, CacheError> {
         return try {
-            Timber.i("Cleaning up settings")
+            logcat { "Cleaning up settings" }
             
             // Clean up old non-critical settings
             val cutoffTime = System.currentTimeMillis() - (90 * 24 * 60 * 60 * 1000L) // 90 days
@@ -223,7 +220,7 @@ class CacheStrategy @Inject constructor(
             
             AsyncResult.success(1) // Placeholder count
         } catch (e: Exception) {
-            Timber.e(e, "Error cleaning up settings")
+            logcat { "Error cleaning up settings" }
             AsyncResult.error(CacheError.CleanupError(e.message ?: "Settings cleanup failed"))
         }
     }
@@ -235,7 +232,7 @@ class CacheStrategy @Inject constructor(
      */
     suspend fun performFullCacheOptimization(): AsyncResult<CacheOptimizationResult, CacheError> {
         return try {
-            Timber.i("Starting full cache optimization")
+            logcat { "Starting full cache optimization" }
             
             val result = CacheOptimizationResult()
             
@@ -258,11 +255,11 @@ class CacheStrategy @Inject constructor(
             // Clean up orphaned data
             result.orphanedDataCleaned = cleanupOrphanedData()
             
-            Timber.i("Full cache optimization completed: $result")
+            logcat { "Full cache optimization completed: $result" }
             AsyncResult.success(result)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error during full cache optimization")
+            logcat { "Error during full cache optimization" }
             AsyncResult.error(CacheError.OptimizationError(e.message ?: "Full optimization failed"))
         }
     }
@@ -291,7 +288,7 @@ class CacheStrategy @Inject constructor(
                 recommendedCleanup = shouldRecommendCleanup()
             )
         } catch (e: Exception) {
-            Timber.e(e, "Error calculating cache efficiency")
+            logcat { "Error calculating cache efficiency" }
             CacheEfficiency()
         }
     }
@@ -305,7 +302,7 @@ class CacheStrategy @Inject constructor(
             // This would need specific database operations
             return 0 // Placeholder
         } catch (e: Exception) {
-            Timber.e(e, "Error cleaning up orphaned data")
+            logcat { "Error cleaning up orphaned data" }
             return 0
         }
     }

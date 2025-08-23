@@ -10,15 +10,12 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import timber.log.Timber
-import javax.inject.Inject
-import javax.inject.Singleton
+import logcat.logcat
 
 /**
  * Handles data export and import for backup and migration purposes
  */
-@Singleton
-class DataExportImport @Inject constructor(
+class DataExportImport(
     private val trackDao: TrackDao,
     private val playlistDao: PlaylistDao,
     private val playHistoryDao: PlayHistoryDao,
@@ -38,7 +35,7 @@ class DataExportImport @Inject constructor(
      */
     suspend fun exportAllData(): AsyncResult<String, ExportImportError> {
         return try {
-            Timber.i("Starting full data export")
+            logcat { "Starting full data export" }
             
             val exportData = AppDataExport(
                 metadata = ExportMetadata(
@@ -53,11 +50,11 @@ class DataExportImport @Inject constructor(
             )
             
             val jsonString = json.encodeToString(exportData)
-            Timber.i("Data export completed: ${jsonString.length} characters")
+            logcat { "Data export completed: ${jsonString.length} characters" }
             AsyncResult.success(jsonString)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error during data export")
+            logcat { "Error during data export" }
             AsyncResult.error(ExportImportError.ExportError(e.message ?: "Export failed"))
         }
     }
@@ -67,7 +64,7 @@ class DataExportImport @Inject constructor(
      */
     suspend fun exportPlaylists(): AsyncResult<String, ExportImportError> {
         return try {
-            Timber.i("Exporting playlists")
+            logcat { "Exporting playlists" }
             
             val playlistsData = exportPlaylistsData()
             val exportData = PlaylistExport(
@@ -80,11 +77,11 @@ class DataExportImport @Inject constructor(
             )
             
             val jsonString = json.encodeToString(exportData)
-            Timber.i("Playlist export completed: ${playlistsData.size} playlists")
+            logcat { "Playlist export completed: ${playlistsData.size} playlists" }
             AsyncResult.success(jsonString)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error exporting playlists")
+            logcat { "Error exporting playlists" }
             AsyncResult.error(ExportImportError.ExportError(e.message ?: "Playlist export failed"))
         }
     }
@@ -94,7 +91,7 @@ class DataExportImport @Inject constructor(
      */
     suspend fun exportSettings(): AsyncResult<String, ExportImportError> {
         return try {
-            Timber.i("Exporting settings")
+            logcat { "Exporting settings" }
             
             val settingsData = exportSettingsData()
             val exportData = SettingsExport(
@@ -107,11 +104,11 @@ class DataExportImport @Inject constructor(
             )
             
             val jsonString = json.encodeToString(exportData)
-            Timber.i("Settings export completed: ${settingsData.size} settings")
+            logcat { "Settings export completed: ${settingsData.size} settings" }
             AsyncResult.success(jsonString)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error exporting settings")
+            logcat { "Error exporting settings" }
             AsyncResult.error(ExportImportError.ExportError(e.message ?: "Settings export failed"))
         }
     }
@@ -123,7 +120,7 @@ class DataExportImport @Inject constructor(
      */
     suspend fun importAllData(jsonData: String, replaceExisting: Boolean = false): AsyncResult<ImportResult, ExportImportError> {
         return try {
-            Timber.i("Starting full data import (replace: $replaceExisting)")
+            logcat { "Starting full data import (replace: $replaceExisting)" }
             
             val exportData = json.decodeFromString<AppDataExport>(jsonData)
             val result = ImportResult()
@@ -151,11 +148,11 @@ class DataExportImport @Inject constructor(
             // Import settings
             result.settingsImported = importSettingsData(exportData.settings)
             
-            Timber.i("Data import completed: $result")
+            logcat { "Data import completed: $result" }
             AsyncResult.success(result)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error during data import")
+            logcat { "Error during data import" }
             AsyncResult.error(ExportImportError.ImportError(e.message ?: "Import failed"))
         }
     }
@@ -165,7 +162,7 @@ class DataExportImport @Inject constructor(
      */
     suspend fun importPlaylists(jsonData: String, mergeMode: ImportMergeMode = ImportMergeMode.MERGE): AsyncResult<Int, ExportImportError> {
         return try {
-            Timber.i("Importing playlists (mode: $mergeMode)")
+            logcat { "Importing playlists (mode: $mergeMode)" }
             
             val playlistExport = json.decodeFromString<PlaylistExport>(jsonData)
             
@@ -177,11 +174,11 @@ class DataExportImport @Inject constructor(
             
             val importedCount = importPlaylistsData(playlistExport.playlists, mergeMode)
             
-            Timber.i("Playlist import completed: $importedCount playlists")
+            logcat { "Playlist import completed: $importedCount playlists" }
             AsyncResult.success(importedCount)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error importing playlists")
+            logcat { "Error importing playlists" }
             AsyncResult.error(ExportImportError.ImportError(e.message ?: "Playlist import failed"))
         }
     }
@@ -191,7 +188,7 @@ class DataExportImport @Inject constructor(
      */
     suspend fun importSettings(jsonData: String, mergeMode: ImportMergeMode = ImportMergeMode.MERGE): AsyncResult<Int, ExportImportError> {
         return try {
-            Timber.i("Importing settings (mode: $mergeMode)")
+            logcat { "Importing settings (mode: $mergeMode)" }
             
             val settingsExport = json.decodeFromString<SettingsExport>(jsonData)
             
@@ -203,11 +200,11 @@ class DataExportImport @Inject constructor(
             
             val importedCount = importSettingsData(settingsExport.settings, mergeMode)
             
-            Timber.i("Settings import completed: $importedCount settings")
+            logcat { "Settings import completed: $importedCount settings" }
             AsyncResult.success(importedCount)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error importing settings")
+            logcat { "Error importing settings" }
             AsyncResult.error(ExportImportError.ImportError(e.message ?: "Settings import failed"))
         }
     }
@@ -308,7 +305,7 @@ class DataExportImport @Inject constructor(
                     importedCount++
                 }
             } catch (e: Exception) {
-                Timber.w(e, "Failed to import track: ${trackData.title}")
+                logcat { "Failed to import track: ${trackData.title}" }
             }
         }
         
@@ -350,7 +347,7 @@ class DataExportImport @Inject constructor(
                     importedCount++
                 }
             } catch (e: Exception) {
-                Timber.w(e, "Failed to import playlist: ${playlistData.name}")
+                logcat { "Failed to import playlist: ${playlistData.name}" }
             }
         }
         
@@ -378,7 +375,7 @@ class DataExportImport @Inject constructor(
                     importedCount++
                 }
             } catch (e: Exception) {
-                Timber.w(e, "Failed to import history item")
+                logcat { "Failed to import history item" }
             }
         }
         
@@ -406,7 +403,7 @@ class DataExportImport @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                Timber.w(e, "Failed to import setting: ${settingData.category}:${settingData.key}")
+                logcat { "Failed to import setting: ${settingData.category}:${settingData.key}" }
             }
         }
         
@@ -425,7 +422,7 @@ class DataExportImport @Inject constructor(
             // Check export age (warn if older than 30 days)
             val ageHours = (System.currentTimeMillis() - metadata.exportTime) / (1000 * 60 * 60)
             if (ageHours > 24 * 30) {
-                Timber.w("Import data is ${ageHours / 24} days old")
+                logcat { "Import data is ${ageHours / 24} days old" }
             }
             
             AsyncResult.success(Unit)
@@ -436,7 +433,7 @@ class DataExportImport @Inject constructor(
     
     private suspend fun clearAllData() {
         try {
-            Timber.w("Clearing all existing data for import")
+            logcat { "Clearing all existing data for import" }
             
             // Clear in reverse dependency order
             playHistoryDao.deleteAllPlayHistory()
@@ -446,7 +443,7 @@ class DataExportImport @Inject constructor(
             // Keep settings for now - they'll be overwritten during import
             
         } catch (e: Exception) {
-            Timber.e(e, "Error clearing existing data")
+            logcat { "Error clearing existing data" }
         }
     }
     
@@ -464,7 +461,7 @@ class DataExportImport @Inject constructor(
                 userPlaylists = playlistDao.getUserPlaylistCount()
             )
         } catch (e: Exception) {
-            Timber.e(e, "Error getting export stats")
+            logcat { "Error getting export stats" }
             ExportStats()
         }
     }

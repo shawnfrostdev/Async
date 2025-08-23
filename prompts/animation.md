@@ -1,469 +1,157 @@
-# Android Animation System Implementation Prompt
+# 🎬 Async Music Player – Animation Production Guide
 
-Create a comprehensive, production-ready animation system for my Android app based on the Mihon manga reader architecture. Implement the following components:
+## 1. **Animation Principles & Best Practices**
 
-## 1. Core Animation Architecture
+- **Purposeful**: All animations must guide, inform, or delight users—never distract or slow down the experience.[1]
+- **Fast & Smooth**: Target transitions between 200ms and 400ms for most UI actions. Avoid laggy or excessive delays.
+- **Consistent**: Use consistent timing, curves, and styles (Material 3’s recommended easings: LinearOutSlowIn, FastOutSlowIn).[2]
+- **Accessible**: Support reduced-motion settings if possible (respect OS-level user preferences).
 
-**Create these files:**
+***
 
-### AnimationConfig.kt
+## 2. **Core Animation Types in the App**
+
+### **a) Screen Transitions (Tab/Navigation)**
+- Use `slideInHorizontally` and `fadeIn` for route changes.
+- Home, Search, Library, and Settings tabs should smoothly animate when navigated.
+- Material 3’s `AnimatedVisibility` handles fade and scale transitions.
+
+#### Example (Jetpack Compose):
 ```kotlin
-// System-wide animation configuration that respects user preferences and system settings
-// Include: duration multipliers, transition toggles, performance modes, accessibility support
-// Must read from Android's ANIMATOR_DURATION_SCALE setting
-```
-
-### AppAnimationSpecs.kt
-```kotlin
-// Centralized animation specifications with Material Design 3 compliant timing and easing
-// Include: micro (100ms), short (200ms), medium (300ms), long (500ms) durations
-// Include: emphasized, standard, decelerate, accelerate easing curves
-// Make all specs configurable through AnimationConfig
-```
-
-### NavigationTransitions.kt
-```kotlin
-// Flexible navigation transition system using Voyager + Compose
-// Support: SharedAxisX, SharedAxisY, FadeThrough, ContainerTransform, Slide
-// Direction-aware animations (forward/backward)
-// Configurable transition types per screen
-```
-
-## 2. UI Component Animations
-
-### AnimatedFAB.kt
-```kotlin
-// Extended FAB with smooth expand/collapse animations
-// Features: width animation, text fade in/out, staggered timing
-// Custom easing curves for Material 3 feel
-```
-
-### AnimatedProgressIndicator.kt
-```kotlin
-// Combined determinate/indeterminate progress indicator
-// Smooth progress animations, infinite rotation for indeterminate
-// Respect system animation scale
-```
-
-### AnimatedSheet.kt
-```kotlin
-// Bottom sheet with smooth slide animations
-// Drag gesture integration, settle animations
-// Support for different sheet sizes and behaviors
-```
-
-### AnimatedVisibilityComponents.kt
-```kotlin
-// Reusable components for enter/exit animations
-// Slide, fade, scale, expand/shrink variants
-// Composable modifiers for easy application
-```
-
-## 3. Advanced Animation Features
-
-### ChapterTransitionAnimation.kt
-```kotlin
-// Page-to-page transition animations for reader-like apps
-// Smooth page turning effects, chapter boundary indicators
-// User-configurable transition styles
-```
-
-### ListItemAnimations.kt
-```kotlin
-// Smooth list animations: add, remove, reorder
-// Shared element transitions between list and detail views
-// Staggered animations for list updates
-```
-
-### LoadingAnimations.kt
-```kotlin
-// Various loading states with animations
-// Skeleton loading, shimmer effects, progressive loading
-// Smooth state transitions between loading/content/error
-```
-
-## 4. Animation Utilities
-
-### AnimationExtensions.kt
-```kotlin
-// Extension functions for common animation patterns
-// System animation scale integration
-// Conditional animations based on user preferences
-```
-
-### AnimationPreviewHelpers.kt
-```kotlin
-// Preview composables for testing animations
-// Animation state management helpers
-// Debug tools for animation timing
-```
-
-## 5. Requirements & Constraints
-
-**Performance:**
-- Target 60fps on mid-range devices
-- Respect system animation preferences
-- Graceful degradation for low-end devices
-- Efficient memory usage during animations
-
-**Accessibility:**
-- Support reduced motion preferences
-- High contrast mode compatibility
-- Screen reader friendly animations
-- Configurable animation speeds
-
-**Customization:**
-- User settings for animation preferences
-- Per-screen transition overrides
-- Performance mode selection
-- Easy theme integration
-
-**Technical:**
-- Use Jetpack Compose Animation APIs
-- Support for legacy View animations where needed
-- Proper lifecycle management
-- State restoration after configuration changes
-
-## 6. Integration Points
-
-Create the animation system to integrate with:
-- Navigation component/Voyager
-- Material 3 theming
-- Preference management system  
-- Performance monitoring
-- Accessibility services
-
-## 7. Implementation Guidelines
-
-- Follow Material Design 3 motion principles
-- Use composition over inheritance
-- Make animations interruptible and reversible  
-- Provide sensible defaults with easy customization
-- Include comprehensive documentation and examples
-- Add unit tests for animation logic
-- Implement proper error handling
-
-## 8. Detailed Implementation Requirements
-
-### Core Animation System
-
-**AnimationConfig.kt** - Create a comprehensive animation configuration system:
-```kotlin
-@Stable
-data class AnimationConfig(
-    val durationMultiplier: Float = 1f,
-    val enableTransitions: Boolean = true,
-    val enableMicroInteractions: Boolean = true,
-    val enableLargeMotions: Boolean = true,
-    val reducedMotion: Boolean = false,
-    val performanceMode: PerformanceMode = PerformanceMode.BALANCED
+AnimatedVisibility(
+    visible = isTabVisible,
+    enter = slideInHorizontally() + fadeIn(),
+    exit = slideOutHorizontally() + fadeOut()
 ) {
-    companion object {
-        fun fromSystemSettings(context: Context): AnimationConfig
-        fun disabled(): AnimationConfig
-        fun highPerformance(): AnimationConfig
-    }
-}
-
-enum class PerformanceMode {
-    HIGH_PERFORMANCE,  // 60fps+, full animations
-    BALANCED,          // Standard animations
-    BATTERY_SAVER     // Reduced animations
-}
-
-class AnimationConfigProvider {
-    val config: StateFlow<AnimationConfig>
-    fun updateConfig(newConfig: AnimationConfig)
-    fun observeSystemSettings(context: Context)
+    // Tab content
 }
 ```
 
-**AppAnimationSpecs.kt** - Material Design 3 compliant specifications:
+***
+
+### **b) Mini Player Expansion**
+- Animation from bottom bar to full-screen uses **scale up**, **fade in**, and **slide up**.
+- Keep duration short (~250ms) for snappy feel.
+
+#### Example:
 ```kotlin
-object AppAnimationSpecs {
-    object Duration {
-        const val MICRO = 100      // Button press, ripple
-        const val SHORT = 200      // Small state changes
-        const val MEDIUM = 300     // Screen transitions
-        const val LONG = 500       // Complex animations
-        const val EXTRA_LONG = 1000 // Dramatic effects
-    }
-    
-    object Easing {
-        val Linear: Easing
-        val FastOutSlowIn: Easing
-        val EmphasizedDecelerate: Easing
-        val EmphasizedAccelerate: Easing
-        val Emphasized: Easing
-    }
-    
-    fun microInteraction(config: AnimationConfig): AnimationSpec<Float>
-    fun contentTransition(config: AnimationConfig): AnimationSpec<Float>
-    fun largeMotion(config: AnimationConfig): AnimationSpec<Float>
-    fun enter(config: AnimationConfig): EnterTransition
-    fun exit(config: AnimationConfig): ExitTransition
-}
-```
-
-### Navigation System
-
-**NavigationTransitions.kt** - Flexible navigation animations:
-```kotlin
-@Composable
-fun AppNavigationTransitions(
-    navigator: Navigator,
-    modifier: Modifier = Modifier,
-    transitionType: TransitionType = TransitionType.SHARED_AXIS_X
-)
-
-enum class TransitionType {
-    SHARED_AXIS_X, SHARED_AXIS_Y, FADE_THROUGH, 
-    CONTAINER_TRANSFORM, SLIDE, NONE
-}
-
-@Composable
-fun ScreenTransition(
-    navigator: Navigator,
-    transition: AnimatedContentTransitionScope<Screen>.() -> ContentTransform,
-    modifier: Modifier = Modifier,
-    content: ScreenTransitionContent = { it.Content() }
-)
-```
-
-### UI Components
-
-**AnimatedFAB.kt** - Extended floating action button:
-```kotlin
-@Composable
-fun AnimatedExtendedFAB(
-    onClick: () -> Unit,
-    expanded: Boolean,
-    modifier: Modifier = Modifier,
-    text: @Composable () -> Unit,
-    icon: @Composable () -> Unit,
-    animationConfig: AnimationConfig = LocalAnimationConfig.current
-)
-
-@Composable
-fun AnimatedFAB(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    visible: Boolean = true,
-    icon: @Composable () -> Unit,
-    animationConfig: AnimationConfig = LocalAnimationConfig.current
-)
-```
-
-**AnimatedProgressIndicator.kt** - Smart progress indicators:
-```kotlin
-@Composable
-fun AnimatedCircularProgressIndicator(
-    progress: () -> Float,
-    modifier: Modifier = Modifier,
-    indeterminate: Boolean = false,
-    animationConfig: AnimationConfig = LocalAnimationConfig.current
-)
-
-@Composable
-fun AnimatedLinearProgressIndicator(
-    progress: () -> Float,
-    modifier: Modifier = Modifier,
-    indeterminate: Boolean = false,
-    animationConfig: AnimationConfig = LocalAnimationConfig.current
-)
-```
-
-**AnimatedSheet.kt** - Bottom sheet animations:
-```kotlin
-@Composable
-fun AnimatedBottomSheet(
-    state: SheetState,
-    modifier: Modifier = Modifier,
-    animationConfig: AnimationConfig = LocalAnimationConfig.current,
-    content: @Composable ColumnScope.() -> Unit
-)
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun rememberAnimatedSheetState(
-    skipPartiallyExpanded: Boolean = false,
-    animationConfig: AnimationConfig = LocalAnimationConfig.current
-): SheetState
-```
-
-### Advanced Features
-
-**LoadingAnimations.kt** - Loading state animations:
-```kotlin
-@Composable
-fun ShimmerLoading(
-    modifier: Modifier = Modifier,
-    animationConfig: AnimationConfig = LocalAnimationConfig.current
-)
-
-@Composable
-fun SkeletonLoader(
-    modifier: Modifier = Modifier,
-    shape: Shape = RectangleShape,
-    animationConfig: AnimationConfig = LocalAnimationConfig.current
-)
-
-@Composable
-fun PulsingDot(
-    modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.primary,
-    animationConfig: AnimationConfig = LocalAnimationConfig.current
-)
-```
-
-**ListItemAnimations.kt** - List animation utilities:
-```kotlin
-@Composable
-fun AnimatedLazyColumn(
-    modifier: Modifier = Modifier,
-    state: LazyListState = rememberLazyListState(),
-    contentPadding: PaddingValues = PaddingValues(0.dp),
-    animationConfig: AnimationConfig = LocalAnimationConfig.current,
-    content: LazyListScope.() -> Unit
-)
-
-fun LazyListScope.animatedItem(
-    key: Any? = null,
-    contentType: Any? = null,
-    animationConfig: AnimationConfig = LocalAnimationConfig.current,
-    content: @Composable LazyItemScope.() -> Unit
-)
-
-@Composable
-fun SharedElementTransition(
-    key: Any,
-    modifier: Modifier = Modifier,
-    animationConfig: AnimationConfig = LocalAnimationConfig.current,
-    content: @Composable () -> Unit
-)
-```
-
-### Utilities
-
-**AnimationExtensions.kt** - Helper extensions:
-```kotlin
-// Extension for conditional animations
-fun Modifier.animateIf(
-    condition: Boolean,
-    animationSpec: AnimationSpec<Float>,
-    targetValue: Float
-): Modifier
-
-// System animation scale integration
-val Context.animatorDurationScale: Float
-
-// Animation state helpers
-@Composable
-fun rememberAnimationState(): AnimationState
-
-// Gesture animation integration
-fun Modifier.animateOnGesture(
-    onGesture: (Offset) -> Unit,
-    animationConfig: AnimationConfig = LocalAnimationConfig.current
-): Modifier
-```
-
-**AnimationPreviewHelpers.kt** - Development tools:
-```kotlin
-@Preview
-@Composable
-fun AnimationPreview(
-    content: @Composable () -> Unit
-)
-
-@Composable
-fun AnimationDebugOverlay(
-    showTimings: Boolean = false,
-    showBounds: Boolean = false,
-    content: @Composable () -> Unit
-)
-
-// Animation testing utilities
-class AnimationTestRule : TestRule
-```
-
-## 9. Integration Setup
-
-### CompositionLocal Setup
-```kotlin
-val LocalAnimationConfig = compositionLocalOf { AnimationConfig() }
-
-@Composable
-fun ProvideAnimationConfig(
-    config: AnimationConfig,
-    content: @Composable () -> Unit
+AnimatedVisibility(
+    visible = isFullPlayerVisible,
+    enter = fadeIn() + scaleIn(initialScale = 0.9f),
+    exit = fadeOut() + scaleOut(targetScale = 0.9f)
 ) {
-    CompositionLocalProvider(
-        LocalAnimationConfig provides config,
-        content = content
-    )
+    // Full player UI
 }
 ```
 
-### Theme Integration
+***
+
+### **c) Content Changes (Playlists, Cards, Search Results)**
+- Use `animateContentSize()` for smooth resizing when items are added/removed.
+- Add subtle **fade** + **slide** transitions for cards/lists as they load or update.
+
+#### Example:
 ```kotlin
-// Add to your app theme
-@Composable
-fun AppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
-    animationConfig: AnimationConfig = AnimationConfig.fromSystemSettings(LocalContext.current),
-    content: @Composable () -> Unit
-) {
-    MaterialTheme(
-        // ... your theme setup
-    ) {
-        ProvideAnimationConfig(animationConfig) {
-            content()
-        }
-    }
+Box(modifier = Modifier.animateContentSize()) {
+    // Playlist or track card changes
 }
 ```
 
-### Usage Examples
+***
 
-Include practical examples for:
-1. Screen transitions setup
-2. List item animations
-3. Loading state management
-4. User preference integration
-5. Performance optimization
-6. Accessibility compliance
+### **d) Playback Controls**
+- Animate play/pause button using scale, rotate, or morph for instant feedback.
+- Progress bar should update smoothly using animated float state.
 
-**Deliverable:** Complete, copy-paste ready Kotlin files that I can directly add to my Android project with minimal configuration required. Include usage examples, integration instructions, and comprehensive documentation.
-
-## 10. File Structure
-
-Organize the animation system in this structure:
-```
-app/src/main/java/
-├── ui/
-│   ├── animation/
-│   │   ├── config/
-│   │   │   ├── AnimationConfig.kt
-│   │   │   ├── AppAnimationSpecs.kt
-│   │   │   └── AnimationConfigProvider.kt
-│   │   ├── navigation/
-│   │   │   ├── NavigationTransitions.kt
-│   │   │   └── TransitionTypes.kt
-│   │   ├── components/
-│   │   │   ├── AnimatedFAB.kt
-│   │   │   ├── AnimatedProgressIndicator.kt
-│   │   │   ├── AnimatedSheet.kt
-│   │   │   └── AnimatedVisibilityComponents.kt
-│   │   ├── advanced/
-│   │   │   ├── ChapterTransitionAnimation.kt
-│   │   │   ├── ListItemAnimations.kt
-│   │   │   └── LoadingAnimations.kt
-│   │   ├── utils/
-│   │   │   ├── AnimationExtensions.kt
-│   │   │   └── AnimationPreviewHelpers.kt
-│   │   └── AnimationModule.kt (DI setup)
+#### Example:
+```kotlin
+val animatedProgress by animateFloatAsState(targetValue = progress)
+LinearProgressIndicator(progress = animatedProgress)
 ```
 
-Create all files with proper package declarations, imports, and documentation. Make the system modular so components can be used independently or together. 
+***
+
+### **e) Extension Actions**
+- Installing/removing extensions: use fade-in-out for list updates, confirmation dialogs slide in from bottom.
+- Show animated loading spinner during network/API actions.
+
+***
+
+### **f) Notification & Background Playback**
+- Animate notification controls (when track changes) with subtle fade or scale.
+- For visual playback progress, ensure the transition is fluid and matches music tempo.
+
+***
+
+## 3. **Animation Implementation Steps**
+
+### **Step 1: Plan Animation States**
+- For each screen/component, define:  
+  - Initial state  
+  - Enter/exit transitions  
+  - User-triggered changes (tap, swipe, select)
+
+### **Step 2: Use Material 3 and Compose Animation APIs**
+- Prefer `AnimatedVisibility`, `animateContentSize`, and `Animatable` for Compose screens.[4][2]
+- For advanced control, use `updateTransition` for multi-property animations.
+
+### **Step 3: Test for Performance & Usability**
+- Profiling: Use Android Studio’s tools to ensure animations don’t drop frames.
+- Respect “Reduce Motion” accessibility option—offer opt-out.
+
+### **Step 4: Document and Standardize**
+- Create an animation spec sheet:
+  - Entrance/exit durations
+  - Easing curves used (e.g., FastOutSlowIn)
+  - Which components animate and why
+- Apply consistently across all tabs/components.
+
+***
+
+## 4. **Tab-Specific Animation Suggestions**
+
+| Tab         | Transition                  | Actions/Feedback             | Example Animations               |
+|-------------|----------------------------|------------------------------|----------------------------------|
+| Home        | Slide+Fade tab switch      | Trending/fav load: Fade+Slide| Cards animate in, trending rows  |
+| Search      | Slide+Fade tab switch      | Search results: Fade+Grow    | Enter, exit with smooth fade     |
+| Library     | Slide+Fade tab switch      | Playlists: AnimateContent    | CRUD actions: fade/slide list    |
+| Settings    | Slide+Fade tab switch      | Toggle switches: Scale/Bounce| Extension changes fade in/out    |
+
+***
+
+## 5. **Production Optimization Tips**
+
+- **Keep all animations hardware-accelerated:** Leverage Compose’s default GPU rendering.
+- **Test across devices:** Validate smoothness on low-end phones.
+- **Minimal and meaningful:** Only animate essential actions for responsiveness.
+
+***
+
+## 6. **User Experience Do's & Don'ts**
+
+- **Do:** Use fast fade/slide for navigation, gentle scale for UI feedback, responsive visual cues for playback.
+- **Don’t:** Use conflicting animations, long delays, or distracting bounces.
+- **Do:** Show progress bars, spinners for loading—never keep users guessing.
+- **Don’t:** Over-animate—animations are for guidance, not decoration.
+
+***
+
+## 7. **Further Resources**
+
+- [Material 3 Animation Docs for Compose]
+- Jetpack Compose Animation API Reference[2]
+- Developer guides on mobile animation UX[3][1]
+
+***
+
+
+[1](https://www.justinmind.com/ui-design/mobile-app-animations)
+[2](https://dev.to/jimmymcbride/jetpack-compose-material-3-animations-unleashed-get-your-android-apps-moving-2dk5)
+[3](https://eicta.iitk.ac.in/knowledge-hub/app-development-with-android/creating-custom-animation-in-your-android-app/)
+[4](https://m3.material.io/develop/android/jetpack-compose)
+[5](https://explainvisually.co/en/best-animation-apps/)
+[6](https://yalantis.com/blog/seven-types-of-animations-for-mobile-apps/)
+[7](https://fuselabcreative.com/mobile-app-design-trends-for-2025/)
+[8](https://www.reddit.com/r/animation/comments/104fhnd/what_is_the_best_free_app_you_used_for_android/)
+[9](https://www.promaticsindia.com/blog/how-adding-animation-in-your-apps-can-make-them-lively-and-attractive-2)
+[10](https://developer.android.com/develop/ui/views/animations/overview)

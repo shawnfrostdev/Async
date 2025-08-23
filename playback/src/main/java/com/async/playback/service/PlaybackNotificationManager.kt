@@ -15,18 +15,15 @@ import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.media.app.NotificationCompat as MediaNotificationCompat
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.CustomTarget
-import com.bumptech.glide.request.transition.Transition
-import dagger.hilt.android.qualifiers.ApplicationContext
+// Glide imports temporarily disabled
+// import com.bumptech.glide.Glide
+// import com.bumptech.glide.request.target.CustomTarget
+// import com.bumptech.glide.request.transition.Transition
 import kotlinx.coroutines.*
-import timber.log.Timber
-import javax.inject.Inject
-import javax.inject.Singleton
+import logcat.logcat
 
-@Singleton
-class PlaybackNotificationManager @Inject constructor(
-    @ApplicationContext private val context: Context
+class PlaybackNotificationManager(
+    private val context: Context
 ) {
     
     companion object {
@@ -58,7 +55,7 @@ class PlaybackNotificationManager @Inject constructor(
         this.notificationListener = notificationListener
         
         createNotificationChannel()
-        Timber.d("PlaybackNotificationManager initialized")
+        logcat { "PlaybackNotificationManager initialized" }
     }
     
     fun updateNotification(
@@ -66,7 +63,7 @@ class PlaybackNotificationManager @Inject constructor(
         playbackState: PlaybackStateCompat?
     ) {
         if (mediaSession == null) {
-            Timber.w("MediaSession not initialized")
+            logcat { "MediaSession not initialized" }
             return
         }
         
@@ -87,7 +84,7 @@ class PlaybackNotificationManager @Inject constructor(
                 isForegroundService = isPlaying
                 
             } catch (e: Exception) {
-                Timber.e(e, "Error updating notification")
+                logcat { "Error updating notification" }
             }
         }
     }
@@ -97,7 +94,7 @@ class PlaybackNotificationManager @Inject constructor(
         NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID)
         notificationListener?.onNotificationCancelled(NOTIFICATION_ID, false)
         isForegroundService = false
-        Timber.d("Notification cancelled")
+        logcat { "Notification cancelled" }
     }
     
     private fun createNotificationChannel() {
@@ -115,7 +112,7 @@ class PlaybackNotificationManager @Inject constructor(
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
             
-            Timber.d("Notification channel created")
+            logcat { "Notification channel created" }
         }
     }
     
@@ -257,24 +254,11 @@ class PlaybackNotificationManager @Inject constructor(
         }
         
         try {
-            Glide.with(context)
-                .asBitmap()
-                .load(albumArtUri)
-                .into(object : CustomTarget<Bitmap>() {
-                    override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                        callback(resource)
-                    }
-                    
-                    override fun onLoadCleared(placeholder: Drawable?) {
-                        callback(null)
-                    }
-                    
-                    override fun onLoadFailed(errorDrawable: Drawable?) {
-                        callback(null)
-                    }
-                })
+            // Glide functionality temporarily disabled
+            // TODO: Implement album art loading with Coil or another image loader
+            callback(null)
         } catch (e: Exception) {
-            Timber.w(e, "Failed to load album art")
+            logcat { "Failed to load album art" }
             callback(null)
         }
     }

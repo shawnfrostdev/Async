@@ -32,6 +32,9 @@ interface TrackDao {
     @Query("UPDATE tracks SET play_count = play_count + 1, last_played = :timestamp WHERE id = :trackId")
     suspend fun incrementPlayCount(trackId: Long, timestamp: Long = System.currentTimeMillis())
     
+    @Query("UPDATE tracks SET last_played = :timestamp WHERE id = :trackId")
+    suspend fun updateLastPlayed(trackId: Long, timestamp: Long)
+    
     @Query("UPDATE tracks SET is_favorite = :isFavorite WHERE id = :trackId")
     suspend fun updateFavoriteStatus(trackId: Long, isFavorite: Boolean)
     
@@ -44,10 +47,16 @@ interface TrackDao {
     suspend fun deleteTrack(track: TrackEntity)
     
     @Query("DELETE FROM tracks WHERE id = :trackId")
-    suspend fun deleteTrackById(trackId: Long)
+    suspend fun deleteTrack(trackId: Long)
+    
+    @Query("DELETE FROM tracks WHERE id IN (:trackIds)")
+    suspend fun deleteTracks(trackIds: List<Long>): Int
     
     @Query("DELETE FROM tracks WHERE extension_id = :extensionId")
-    suspend fun deleteTracksByExtension(extensionId: String)
+    suspend fun deleteTracksByExtension(extensionId: String): Int
+    
+    @Query("DELETE FROM tracks WHERE date_added < :cutoffTime")
+    suspend fun deleteOldTracks(cutoffTime: Long)
     
     @Query("DELETE FROM tracks")
     suspend fun deleteAllTracks()
@@ -59,6 +68,9 @@ interface TrackDao {
     
     @Query("SELECT * FROM tracks WHERE id = :trackId")
     fun getTrackByIdFlow(trackId: Long): Flow<TrackEntity?>
+    
+    @Query("SELECT * FROM tracks WHERE id IN (:trackIds)")
+    suspend fun getTracksByIds(trackIds: List<Long>): List<TrackEntity>
     
     @Query("SELECT * FROM tracks WHERE extension_id = :extensionId AND external_id = :externalId")
     suspend fun getTrackByExternalId(extensionId: String, externalId: String): TrackEntity?
@@ -76,10 +88,19 @@ interface TrackDao {
     fun getFavoriteTracks(): Flow<List<TrackEntity>>
     
     @Query("SELECT * FROM tracks WHERE last_played IS NOT NULL ORDER BY last_played DESC LIMIT :limit")
+    fun getRecentTracks(limit: Int = 50): Flow<List<TrackEntity>>
+    
+    @Query("SELECT * FROM tracks WHERE last_played IS NOT NULL ORDER BY last_played DESC LIMIT :limit")
     fun getRecentlyPlayedTracks(limit: Int = 50): Flow<List<TrackEntity>>
     
     @Query("SELECT * FROM tracks ORDER BY play_count DESC LIMIT :limit")
     fun getMostPlayedTracks(limit: Int = 50): Flow<List<TrackEntity>>
+    
+    @Query("SELECT * FROM tracks ORDER BY play_count DESC, date_added DESC LIMIT :limit")
+    fun getTrendingTracks(limit: Int = 50): Flow<List<TrackEntity>>
+    
+    @Query("SELECT is_favorite FROM tracks WHERE id = :trackId")
+    suspend fun isFavorite(trackId: Long): Boolean
     
     // ======== SEARCH OPERATIONS ========
     
@@ -129,6 +150,9 @@ interface TrackDao {
     
     @Query("SELECT AVG(play_count) FROM tracks WHERE play_count > 0")
     suspend fun getAveragePlayCount(): Double
+    
+    @Query("SELECT COUNT(DISTINCT extension_id) FROM tracks")
+    suspend fun getUniqueExtensionCount(): Int
     
     // ======== MAINTENANCE OPERATIONS ========
     

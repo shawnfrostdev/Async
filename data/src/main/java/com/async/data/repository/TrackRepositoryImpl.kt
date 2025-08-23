@@ -12,16 +12,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import timber.log.Timber
-import javax.inject.Inject
-import javax.inject.Singleton
+import logcat.logcat
 
 /**
  * Implementation of TrackRepository
  * Coordinates between local database and extension system
  */
-@Singleton
-class TrackRepositoryImpl @Inject constructor(
+class TrackRepositoryImpl(
     private val trackDao: TrackDao,
     private val trackMapper: TrackMapper
 ) : TrackRepository {
@@ -29,206 +26,213 @@ class TrackRepositoryImpl @Inject constructor(
     // ======== SEARCH OPERATIONS ========
     
     override suspend fun searchTracks(query: String): Flow<List<Track>> {
-        return try {
-            // Search local database for now
-            // Extension search will be added when extension system is integrated
-            trackDao.searchTracks(query).map { entities ->
-                entities.map { trackMapper.toDomain(it) }
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "Error searching tracks for query: $query")
-            flowOf(emptyList())
-        }
+        logcat { "Searching tracks with query: $query" }
+        return trackDao.searchTracks("%$query%")
+            .map { entities -> trackMapper.mapEntitiesToDomain(entities) }
     }
     
     override suspend fun searchTracksFromExtension(query: String, extensionId: String): Flow<List<Track>> {
-        return try {
-            // Extension search will be implemented when extension system is integrated
-            Timber.d("Extension search not yet implemented for $extensionId")
-            flowOf(emptyList())
-        } catch (e: Exception) {
-            Timber.e(e, "Error searching extension $extensionId")
-            flowOf(emptyList())
-        }
+        logcat { "Searching tracks from extension: $extensionId with query: $query" }
+        return trackDao.searchTracksByExtension("%$query%", extensionId)
+            .map { entities -> trackMapper.mapEntitiesToDomain(entities) }
     }
     
     override suspend fun getTrendingTracks(limit: Int): Flow<List<Track>> {
-        return try {
-            // For now, return most played tracks as trending
-            // In the future, this could integrate with extension trending APIs
-            getMostPlayedTracks(limit)
-        } catch (e: Exception) {
-            Timber.e(e, "Error getting trending tracks")
-            flowOf(emptyList())
-        }
+        logcat { "Getting trending tracks with limit: $limit" }
+        return trackDao.getTrendingTracks(limit)
+            .map { entities -> trackMapper.mapEntitiesToDomain(entities) }
     }
     
     // ======== TRACK OPERATIONS ========
     
     override suspend fun getTrackById(trackId: Long): Track? {
+        logcat { "Getting track with ID: $trackId" }
         return try {
-            trackDao.getTrackById(trackId)?.let { trackMapper.toDomain(it) }
+            val entity = trackDao.getTrackById(trackId)
+            entity?.let { trackMapper.mapEntityToDomain(it) }
         } catch (e: Exception) {
-            Timber.e(e, "Error getting track by ID: $trackId")
+            logcat { "Error getting track: ${e.message}" }
             null
         }
     }
     
     override suspend fun getTrackByExternalId(extensionId: String, externalId: String): Track? {
+        logcat { "Getting track by external ID: $extensionId:$externalId" }
         return try {
-            trackDao.getTrackByExternalId(extensionId, externalId)?.let { 
-                trackMapper.toDomain(it) 
-            }
+            val entity = trackDao.getTrackByExternalId(extensionId, externalId)
+            entity?.let { trackMapper.mapEntityToDomain(it) }
         } catch (e: Exception) {
-            Timber.e(e, "Error getting track by external ID: $extensionId:$externalId")
+            logcat { "Error getting track by external ID: ${e.message}" }
             null
         }
     }
     
     override fun getTrackByIdFlow(trackId: Long): Flow<Track?> {
-        return trackDao.getTrackByIdFlow(trackId).map { entity ->
-            entity?.let { trackMapper.toDomain(it) }
-        }
+        logcat { "Getting track flow for ID: $trackId" }
+        return trackDao.getTrackByIdFlow(trackId)
+            .map { entity -> entity?.let { trackMapper.mapEntityToDomain(it) } }
     }
     
     override fun getAllTracks(): Flow<List<Track>> {
-        return trackDao.getAllTracks().map { entities ->
-            entities.map { trackMapper.toDomain(it) }
-        }
+        logcat { "Getting all tracks" }
+        return trackDao.getAllTracks()
+            .map { entities -> trackMapper.mapEntitiesToDomain(entities) }
     }
     
     override fun getTracksByExtension(extensionId: String): Flow<List<Track>> {
-        return trackDao.getTracksByExtension(extensionId).map { entities ->
-            entities.map { trackMapper.toDomain(it) }
-        }
+        logcat { "Getting tracks by extension: $extensionId" }
+        return trackDao.getTracksByExtension(extensionId)
+            .map { entities -> trackMapper.mapEntitiesToDomain(entities) }
     }
     
     // ======== FAVORITES OPERATIONS ========
     
     override suspend fun addToFavorites(trackId: Long) {
         try {
+            logcat { "Adding track to favorites: $trackId" }
             trackDao.updateFavoriteStatus(trackId, true)
-            Timber.d("Added track $trackId to favorites")
         } catch (e: Exception) {
-            Timber.e(e, "Error adding track $trackId to favorites")
+            logcat { "Error adding to favorites: ${e.message}" }
+            throw e
         }
     }
     
     override suspend fun removeFromFavorites(trackId: Long) {
         try {
+            logcat { "Removing track from favorites: $trackId" }
             trackDao.updateFavoriteStatus(trackId, false)
-            Timber.d("Removed track $trackId from favorites")
         } catch (e: Exception) {
-            Timber.e(e, "Error removing track $trackId from favorites")
+            logcat { "Error removing from favorites: ${e.message}" }
+            throw e
         }
     }
     
     override suspend fun isFavorite(trackId: Long): Boolean {
         return try {
-            getTrackById(trackId)?.isFavorite ?: false
+            logcat { "Checking if track is favorite: $trackId" }
+            trackDao.isFavorite(trackId)
         } catch (e: Exception) {
-            Timber.e(e, "Error checking favorite status for track $trackId")
+            logcat { "Error checking favorite status: ${e.message}" }
             false
         }
     }
     
     override fun getFavoriteTracks(): Flow<List<Track>> {
-        return trackDao.getFavoriteTracks().map { entities ->
-            entities.map { trackMapper.toDomain(it) }
-        }
+        logcat { "Getting favorite tracks" }
+        return trackDao.getFavoriteTracks()
+            .map { entities -> trackMapper.mapEntitiesToDomain(entities) }
     }
     
     // ======== PLAYBACK OPERATIONS ========
     
     override suspend fun getStreamUrl(track: Track): AsyncResult<String, TrackError> {
         return try {
-            // If we have a cached stream URL, return it
+            logcat { "Getting stream URL for track: ${track.title}" }
             if (!track.streamUrl.isNullOrBlank()) {
-                return AsyncResult.success(track.streamUrl!!)
+                AsyncResult.success(track.streamUrl!!)
+            } else {
+                AsyncResult.error(TrackError.InvalidUrl("Stream URL is empty"))
             }
-            
-            // Extension integration will be added later
-            // For now, return error if no cached URL
-            Timber.w("No cached stream URL for track ${track.id}, extension integration pending")
-            AsyncResult.error(TrackError.ExtensionNotAvailable(track.extensionId))
         } catch (e: Exception) {
-            Timber.e(e, "Error getting stream URL for track ${track.id}")
-            AsyncResult.error(TrackError.ExtensionError)
+            logcat { "Error getting stream URL: ${e.message}" }
+            AsyncResult.error(TrackError.NetworkError)
         }
     }
     
     override suspend fun recordPlayback(trackId: Long) {
         try {
+            logcat { "Recording playback for track: $trackId" }
             trackDao.incrementPlayCount(trackId)
-            Timber.d("Recorded playback for track $trackId")
+            trackDao.updateLastPlayed(trackId, System.currentTimeMillis())
         } catch (e: Exception) {
-            Timber.e(e, "Error recording playback for track $trackId")
+            logcat { "Error recording playback: ${e.message}" }
+            throw e
         }
     }
     
     override fun getRecentlyPlayedTracks(limit: Int): Flow<List<Track>> {
-        return trackDao.getRecentlyPlayedTracks(limit).map { entities ->
-            entities.map { trackMapper.toDomain(it) }
-        }
+        logcat { "Getting recently played tracks with limit: $limit" }
+        return trackDao.getRecentTracks(limit)
+            .map { entities -> trackMapper.mapEntitiesToDomain(entities) }
     }
     
     override fun getMostPlayedTracks(limit: Int): Flow<List<Track>> {
-        return trackDao.getMostPlayedTracks(limit).map { entities ->
-            entities.map { trackMapper.toDomain(it) }
-        }
+        logcat { "Getting most played tracks with limit: $limit" }
+        return trackDao.getMostPlayedTracks(limit)
+            .map { entities -> trackMapper.mapEntitiesToDomain(entities) }
     }
     
     // ======== CACHE OPERATIONS ========
     
     override suspend fun cacheTrack(searchResult: SearchResult): Track {
-        return try {
-            val existingTrack = trackDao.getTrackByExternalId(
-                searchResult.extensionId, 
-                searchResult.id
+        try {
+            logcat { "Caching track: ${searchResult.title}" }
+            
+            // Convert SearchResult to Track
+            val track = Track(
+                id = 0, // Will be assigned by database
+                externalId = searchResult.id,
+                extensionId = searchResult.extensionId,
+                title = searchResult.title,
+                artist = searchResult.artist,
+                album = searchResult.album,
+                duration = searchResult.duration,
+                thumbnailUrl = searchResult.thumbnailUrl,
+                streamUrl = null, // Will be fetched when needed
+                metadata = searchResult.metadata.map { it.key to it.value as Any }.toMap(),
+                dateAdded = System.currentTimeMillis(),
+                lastPlayed = null,
+                playCount = 0,
+                isFavorite = false,
+                isDownloaded = false,
+                downloadPath = null
             )
             
+            // Check if track already exists
+            val existingTrack = getTrackByExternalId(searchResult.extensionId, searchResult.id)
             if (existingTrack != null) {
-                // Update existing track
-                val updatedEntity = trackMapper.updateFromSearchResult(existingTrack, searchResult)
-                trackDao.updateTrack(updatedEntity)
-                trackMapper.toDomain(updatedEntity)
-            } else {
-                // Create new track
-                val newEntity = trackMapper.fromSearchResult(searchResult)
-                val id = trackDao.insertTrack(newEntity)
-                trackMapper.toDomain(newEntity.copy(id = id))
+                return existingTrack
             }
+            
+            val entity = trackMapper.mapDomainToEntity(track)
+            val trackId = trackDao.insertTrack(entity)
+            
+            val insertedEntity = trackDao.getTrackById(trackId)
+            return trackMapper.mapEntityToDomain(insertedEntity!!)
         } catch (e: Exception) {
-            Timber.e(e, "Error caching track: ${searchResult.id}")
+            logcat { "Error caching track: ${e.message}" }
             throw e
         }
     }
     
     override suspend fun cacheTracks(searchResults: List<SearchResult>): List<Track> {
         return try {
+            logcat { "Caching ${searchResults.size} tracks" }
             searchResults.map { cacheTrack(it) }
         } catch (e: Exception) {
-            Timber.e(e, "Error caching multiple tracks")
-            emptyList()
+            logcat { "Error caching tracks: ${e.message}" }
+            throw e
         }
     }
     
     override suspend fun updateTrack(track: Track) {
         try {
-            val entity = trackMapper.toEntity(track)
+            logcat { "Updating track with ID: ${track.id}" }
+            val entity = trackMapper.mapDomainToEntity(track)
             trackDao.updateTrack(entity)
-            Timber.d("Updated track ${track.id}")
         } catch (e: Exception) {
-            Timber.e(e, "Error updating track ${track.id}")
+            logcat { "Error updating track: ${e.message}" }
+            throw e
         }
     }
     
     override suspend fun removeTrack(trackId: Long) {
         try {
-            trackDao.deleteTrackById(trackId)
-            Timber.d("Removed track $trackId")
+            logcat { "Removing track with ID: $trackId" }
+            trackDao.deleteTrack(trackId)
         } catch (e: Exception) {
-            Timber.e(e, "Error removing track $trackId")
+            logcat { "Error removing track: ${e.message}" }
+            throw e
         }
     }
     
@@ -236,30 +240,33 @@ class TrackRepositoryImpl @Inject constructor(
     
     override suspend fun getTotalTrackCount(): Int {
         return try {
+            logcat { "Getting total track count" }
             trackDao.getTotalTrackCount()
         } catch (e: Exception) {
-            Timber.e(e, "Error getting total track count")
+            logcat { "Error getting total track count: ${e.message}" }
             0
         }
     }
     
     override suspend fun getTrackStats(): TrackStats {
         return try {
+            logcat { "Getting track statistics" }
+            
             val totalTracks = trackDao.getTotalTrackCount()
-            val totalFavorites = trackDao.getFavoriteTrackCount()
-            val totalPlayTime = trackDao.getTotalDuration()
-            val averagePlayCount = trackDao.getAveragePlayCount()
-            val uniqueExtensions = trackDao.getUsedExtensionIds().size
+            val favoriteTracks = trackDao.getFavoriteTrackCount()
+            val totalPlayCount = trackDao.getTotalPlayCount()
+            val totalDuration = trackDao.getTotalDuration()
+            val uniqueExtensions = trackDao.getUniqueExtensionCount()
             
             TrackStats(
                 totalTracks = totalTracks,
-                totalFavorites = totalFavorites,
-                totalPlayTime = totalPlayTime,
-                averagePlayCount = averagePlayCount,
+                totalFavorites = favoriteTracks,
+                totalPlayTime = totalDuration,
+                averagePlayCount = if (totalTracks > 0) totalPlayCount.toDouble() / totalTracks else 0.0,
                 uniqueExtensions = uniqueExtensions
             )
         } catch (e: Exception) {
-            Timber.e(e, "Error getting track stats")
+            logcat { "Error getting track statistics: ${e.message}" }
             TrackStats(0, 0, 0, 0.0, 0)
         }
     }
@@ -268,26 +275,28 @@ class TrackRepositoryImpl @Inject constructor(
     
     override suspend fun cleanupOldTracks(olderThanDays: Int) {
         try {
+            logcat { "Cleaning up tracks older than $olderThanDays days" }
             val cutoffTime = System.currentTimeMillis() - (olderThanDays * 24 * 60 * 60 * 1000L)
-            trackDao.cleanupOldUnplayedTracks(cutoffTime)
-            trackDao.clearOldStreamUrls(cutoffTime)
-            Timber.d("Cleaned up tracks older than $olderThanDays days")
+            trackDao.deleteOldTracks(cutoffTime)
         } catch (e: Exception) {
-            Timber.e(e, "Error cleaning up old tracks")
+            logcat { "Error cleaning up old tracks: ${e.message}" }
+            throw e
         }
     }
     
     override suspend fun refreshTrackMetadata(trackId: Long): AsyncResult<Track, TrackError> {
         return try {
-            val track = getTrackById(trackId) ?: return AsyncResult.error(TrackError.NotFound)
-            
-            // Extension integration will be added later
-            // For now, just return the existing track
-            Timber.d("Track metadata refresh not yet implemented, returning cached data")
-            AsyncResult.success(track)
+            logcat { "Refreshing metadata for track: $trackId" }
+            val track = getTrackById(trackId)
+            if (track != null) {
+                // In a real implementation, this would fetch fresh metadata from the extension
+                AsyncResult.success(track)
+            } else {
+                AsyncResult.error(TrackError.NotFound)
+            }
         } catch (e: Exception) {
-            Timber.e(e, "Error refreshing track metadata for $trackId")
-            AsyncResult.error(TrackError.ExtensionError)
+            logcat { "Error refreshing track metadata: ${e.message}" }
+            AsyncResult.error(TrackError.DatabaseError)
         }
     }
 } 

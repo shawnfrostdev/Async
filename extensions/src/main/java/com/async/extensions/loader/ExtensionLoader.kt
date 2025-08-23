@@ -6,7 +6,7 @@ import com.async.core.extension.MusicExtension
 import com.async.core.model.ExtensionException
 import com.async.core.model.ExtensionResult
 import dalvik.system.DexClassLoader
-import timber.log.Timber
+import logcat.logcat
 import java.io.File
 import java.io.FileInputStream
 import java.security.MessageDigest
@@ -46,7 +46,7 @@ class ExtensionLoader @Inject constructor(
         expectedClassName: String? = null
     ): ExtensionResult<MusicExtension> {
         return try {
-            Timber.d("Loading extension from: ${extensionFile.absolutePath}")
+            logcat { "Loading extension from: ${extensionFile.absolutePath}" }
             
             // Validate file
             val validationResult = validateExtensionFile(extensionFile)
@@ -57,7 +57,7 @@ class ExtensionLoader @Inject constructor(
             // Check cache first
             val fileHash = calculateFileHash(extensionFile)
             extensionCache[fileHash]?.let { cachedExtension ->
-                Timber.d("Returning cached extension: ${cachedExtension.id}")
+                logcat { "Returning cached extension: ${cachedExtension.id}" }
                 return ExtensionResult.Success(cachedExtension)
             }
             
@@ -85,11 +85,11 @@ class ExtensionLoader @Inject constructor(
             extensionCache[fileHash] = extension
             loadedClassLoaders[fileHash] = classLoader
             
-            Timber.i("Successfully loaded extension: ${extension.id} v${extension.version}")
+            logcat { "Successfully loaded extension: ${extension.id} v${extension.version}" }
             ExtensionResult.Success(extension)
             
         } catch (e: Exception) {
-            Timber.e(e, "Failed to load extension from ${extensionFile.name}")
+            logcat { "Failed to load extension from ${extensionFile.name} - ${e.message}" }
             ExtensionResult.Error(
                 ExtensionException.GenericError(
                     "Failed to load extension: ${e.message}",
@@ -113,10 +113,10 @@ class ExtensionLoader @Inject constructor(
             if (fileHash != null) {
                 extensionCache.remove(fileHash)
                 loadedClassLoaders.remove(fileHash)
-                Timber.i("Unloaded extension: $extensionId")
+                logcat { "Unloaded extension: $extensionId" }
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error unloading extension: $extensionId")
+            logcat { "Error unloading extension: $extensionId - ${e.message}" }
         }
     }
     
@@ -133,7 +133,7 @@ class ExtensionLoader @Inject constructor(
     fun clearAll() {
         extensionCache.clear()
         loadedClassLoaders.clear()
-        Timber.i("Cleared all loaded extensions")
+        logcat { "Cleared all loaded extensions" }
     }
     
     /**
@@ -205,7 +205,7 @@ class ExtensionLoader @Inject constructor(
                     val clazz = classLoader.loadClass(className)
                     if (isMusicExtension(clazz)) clazz else null
                 } catch (e: ClassNotFoundException) {
-                    Timber.w("Expected class not found: $className")
+                    logcat { "Expected class not found: $className" }
                     null
                 }
             }
@@ -214,7 +214,7 @@ class ExtensionLoader @Inject constructor(
             return findExtensionClassInJar(classLoader, extensionFile)
             
         } catch (e: Exception) {
-            Timber.e(e, "Error finding extension class")
+            logcat { "Error finding extension class - ${e.message}" }
             return null
         }
     }
@@ -242,7 +242,7 @@ class ExtensionLoader @Inject constructor(
                         try {
                             val clazz = classLoader.loadClass(className)
                             if (isMusicExtension(clazz)) {
-                                Timber.d("Found MusicExtension implementation: $className")
+                                logcat { "Found MusicExtension implementation: $className" }
                                 return clazz
                             }
                         } catch (e: Exception) {
@@ -253,7 +253,7 @@ class ExtensionLoader @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-            Timber.e(e, "Error searching for extension class in JAR")
+            logcat { "Error searching for extension class in JAR - ${e.message}" }
         }
         
         return null
@@ -337,7 +337,7 @@ class ExtensionLoader @Inject constructor(
             }
             digest.digest().joinToString("") { "%02x".format(it) }
         } catch (e: Exception) {
-            Timber.e(e, "Error calculating file hash")
+            logcat { "Error calculating file hash - ${e.message}" }
             file.absolutePath.hashCode().toString()
         }
     }
