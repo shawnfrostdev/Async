@@ -20,11 +20,13 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import com.async.app.di.AppModule
+import com.async.extensions.service.RemoteExtensionInfo
+import com.async.extensions.service.InstallationStatus
 import kotlinx.coroutines.launch
 import logcat.logcat
 
 /**
- * Extension management screen - completely rebuilt
+ * Extension management screen - simplified version
  */
 class ExtensionManagementScreen : Screen {
     
@@ -40,6 +42,11 @@ class ExtensionManagementScreen : Screen {
         LaunchedEffect(Unit) {
             logcat { "ExtensionManagementScreen: Mounting screen" }
             logcat { "ExtensionManagementScreen: isInitialized = $isInitialized" }
+        }
+        
+        // Track initialization state changes
+        LaunchedEffect(isInitialized) {
+            logcat { "ExtensionManagementScreen: isInitialized changed to $isInitialized" }
         }
         
         Scaffold(
@@ -107,9 +114,18 @@ class ExtensionManagementScreen : Screen {
                     
                     // Tab content
                     when (selectedTab) {
-                        0 -> InstalledExtensionsContent()
-                        1 -> BrowseExtensionsContent()
-                        2 -> RepositoriesContent()
+                        0 -> {
+                            logcat { "ExtensionManagementScreen: Showing InstalledExtensionsContent" }
+                            InstalledExtensionsContent()
+                        }
+                        1 -> {
+                            logcat { "ExtensionManagementScreen: Showing BrowseExtensionsContent" }
+                            BrowseExtensionsContent()
+                        }
+                        2 -> {
+                            logcat { "ExtensionManagementScreen: Showing RepositoriesContent" }
+                            RepositoriesContent()
+                        }
                     }
                 }
             }
@@ -125,6 +141,17 @@ private fun InstalledExtensionsContent() {
     
     LaunchedEffect(Unit) {
         logcat { "InstalledExtensionsContent: Loading ${installedExtensions.size} extensions" }
+        installedExtensions.forEach { (id, extension) ->
+            logcat { "InstalledExtensionsContent: Extension $id = ${extension.metadata.name}" }
+        }
+    }
+    
+    // Add debug logging for state changes
+    LaunchedEffect(installedExtensions) {
+        logcat { "InstalledExtensionsContent: State changed - ${installedExtensions.size} extensions" }
+        installedExtensions.forEach { (id, extension) ->
+            logcat { "InstalledExtensionsContent: Extension $id = ${extension.metadata.name}, status = ${extension.status}" }
+        }
     }
     
     LazyColumn(
@@ -132,7 +159,10 @@ private fun InstalledExtensionsContent() {
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        logcat { "InstalledExtensionsContent: Rendering LazyColumn with ${installedExtensions.size} items" }
+        
         if (installedExtensions.isEmpty()) {
+            logcat { "InstalledExtensionsContent: Showing empty state" }
             item {
                 EmptyStateCard(
                     icon = Icons.Outlined.Extension,
@@ -143,7 +173,9 @@ private fun InstalledExtensionsContent() {
                 )
             }
         } else {
+            logcat { "InstalledExtensionsContent: Showing ${installedExtensions.size} extension items" }
             items(installedExtensions.values.toList()) { extension ->
+                logcat { "InstalledExtensionsContent: Rendering extension ${extension.metadata.name}" }
                 ExtensionCard(
                     title = extension.metadata.name,
                     subtitle = "v${extension.metadata.version} • ${extension.metadata.description}",
@@ -207,7 +239,7 @@ private fun BrowseExtensionsContent() {
                         title = extension.name,
                         subtitle = "v${extension.version} • ${extension.description}",
                         icon = Icons.Outlined.Download,
-                        isInstalling = installationState[extension.id] == com.async.extensions.service.InstallationStatus.INSTALLING,
+                        isInstalling = installationState[extension.id] == InstallationStatus.INSTALLING,
                         onInstall = {
                             scope.launch {
                                 extensionService.installExtensionFromRepository(repoUrl, extension)
@@ -585,7 +617,7 @@ private fun AddRepositoryDialog(
                         error = null
                     },
                     label = { Text("Repository URL") },
-                    placeholder = { Text("https://example.com/extensions/manifest.json") },
+                    placeholder = { Text("https://example.com/extensions") },
                     singleLine = true,
                     isError = error != null,
                     supportingText = error?.let { { Text(it) } },

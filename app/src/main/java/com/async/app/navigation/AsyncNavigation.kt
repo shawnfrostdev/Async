@@ -111,7 +111,7 @@ object PlayerScreen : Screen {
 object ExtensionManagementScreenNav : Screen {
     @Composable
     override fun Content() {
-        ExtensionManagementScreen()
+        ExtensionManagementScreen().Content()
     }
 }
 
