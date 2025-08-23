@@ -1,0 +1,33 @@
+{
+  "name": "Async Extensions Repository",
+  "version": "1.0.0",
+  "extensions": [
+    {
+      "id": "com.example.music.youtube",
+      "name": "YouTube Music Extension",
+      "version": "1.0.0",
+      "developer": "Community Developer",
+      "description": "Stream music from YouTube with high quality audio",
+      "downloadUrl": "https://github.com/yourusername/async-extensions/releases/download/v1.0.0/youtube-extension.apk",
+      "iconUrl": "https://github.com/yourusername/async-extensions/raw/main/icons/youtube.png"
+    },
+    {
+      "id": "com.example.music.spotify",
+      "name": "Spotify Web Extension",
+      "version": "2.1.0",
+      "developer": "Community Developer", 
+      "description": "Access Spotify Web Player content",
+      "downloadUrl": "https://github.com/yourusername/async-extensions/releases/download/v2.1.0/spotify-extension.apk",
+      "iconUrl": "https://github.com/yourusername/async-extensions/raw/main/icons/spotify.png"
+    },
+    {
+      "id": "com.example.music.soundcloud",
+      "name": "SoundCloud Extension",
+      "version": "1.5.0",
+      "developer": "Community Developer",
+      "description": "Stream tracks and playlists from SoundCloud",
+      "downloadUrl": "https://github.com/yourusername/async-extensions/releases/download/v1.5.0/soundcloud-extension.apk",
+      "iconUrl": "https://github.com/yourusername/async-extensions/raw/main/icons/soundcloud.png"
+    }
+  ]
+} 
