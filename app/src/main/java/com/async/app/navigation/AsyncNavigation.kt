@@ -110,10 +110,10 @@ object SettingsMainScreen : Screen {
 /**
  * Individual screens that can be navigated to
  */
-object PlayerScreen : Screen {
+object PlayerScreenNav : Screen {
     @Composable
     override fun Content() {
-        PlayerScreen()
+        com.async.app.ui.screens.player.PlayerScreenContent()
     }
 }
 
