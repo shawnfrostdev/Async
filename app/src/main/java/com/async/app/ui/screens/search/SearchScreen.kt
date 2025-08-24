@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
@@ -27,6 +28,7 @@ import com.async.app.ui.vm.SearchViewModel
 import com.async.app.ui.vm.SearchFilters
 import com.async.app.ui.vm.SortOption
 import com.async.app.ui.components.AppText
+import logcat.logcat
 import com.async.app.ui.components.AppCards
 import kotlinx.coroutines.launch
 
@@ -46,7 +48,6 @@ fun SearchScreen(
     
     var showFilters by remember { mutableStateOf(false) }
     var showHistory by remember { mutableStateOf(false) }
-    var selectedTab by remember { mutableIntStateOf(0) }
     
     Column(
         modifier = Modifier
@@ -122,8 +123,6 @@ fun SearchScreen(
         // Search Results Section
         SearchResultsSection(
             uiState = uiState,
-            selectedTab = selectedTab,
-            onTabChange = { selectedTab = it },
             onTrackClick = onTrackClick,
             onPlayTrack = onPlayTrack,
             onRetrySearch = { searchViewModel.search(uiState.lastSearchQuery, forceRefresh = true) }
@@ -195,7 +194,7 @@ private fun SearchInputSection(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Icon(Icons.Outlined.Search, contentDescription = "Search")
+                Icon(Icons.Outlined.Search, contentDescription = "Search")
                 }
             },
             trailingIcon = {
@@ -319,9 +318,9 @@ private fun SearchFiltersCard(
                     Icon(Icons.Outlined.Close, contentDescription = "Close")
                 }
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
             // Extension Selection
             if (availableExtensions.isNotEmpty()) {
                 Text(
@@ -440,13 +439,11 @@ private fun SearchFiltersCard(
 @Composable
 private fun SearchResultsSection(
     uiState: com.async.app.ui.vm.SearchUiState,
-    selectedTab: Int,
-    onTabChange: (Int) -> Unit,
     onTrackClick: (SearchResult) -> Unit,
     onPlayTrack: (SearchResult) -> Unit,
     onRetrySearch: () -> Unit
 ) {
-    if (uiState.isLoading) {
+        if (uiState.isLoading) {
         LoadingContent()
     } else if (uiState.error != null) {
         ErrorContent(
@@ -454,7 +451,7 @@ private fun SearchResultsSection(
             onRetry = onRetrySearch
         )
     } else if (uiState.results.isNotEmpty()) {
-        // Results with tabs
+        // Results grouped by extension (standard layout)
         Column {
             // Results header
             Row(
@@ -486,33 +483,12 @@ private fun SearchResultsSection(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Tab Row for different views
-            val tabTitles = listOf("All Results", "By Extension")
-            TabRow(selectedTabIndex = selectedTab) {
-                tabTitles.forEachIndexed { index, title ->
-                    Tab(
-                        selected = selectedTab == index,
-                        onClick = { onTabChange(index) },
-                        text = { Text(title) }
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Results content based on selected tab
-            when (selectedTab) {
-                0 -> AllResultsList(
-                    results = uiState.results,
-                    onTrackClick = onTrackClick,
-                    onPlayTrack = onPlayTrack
-                )
-                1 -> ResultsByExtension(
-                    resultsByExtension = uiState.resultsByExtension,
-                    onTrackClick = onTrackClick,
-                    onPlayTrack = onPlayTrack
-                )
-            }
+            // Results grouped by extension - standard music platform layout
+            ResultsByExtensionStandard(
+                resultsByExtension = uiState.resultsByExtension,
+                onTrackClick = onTrackClick,
+                onPlayTrack = onPlayTrack
+            )
         }
     } else if (uiState.lastSearchQuery.isNotEmpty()) {
         NoResultsContent(query = uiState.lastSearchQuery)
@@ -525,22 +501,22 @@ private fun SearchResultsSection(
 
 @Composable
 private fun LoadingContent() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CircularProgressIndicator()
-            Spacer(modifier = Modifier.height(16.dp))
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Searching across extensions...",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-            )
-        }
-    }
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+            }
 }
 
 @Composable
@@ -548,15 +524,15 @@ private fun ErrorContent(
     error: String,
     onRetry: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -567,7 +543,7 @@ private fun ErrorContent(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Search Error",
+                        text = "Search Error",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     fontWeight = FontWeight.Medium
@@ -579,57 +555,37 @@ private fun ErrorContent(
             Text(
                 text = error,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
-            )
+                        color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+                    )
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            Button(
+                    Button(
                 onClick = onRetry,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error
-                )
-            ) {
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
                 Icon(Icons.Outlined.Refresh, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Retry Search")
+                        Text("Retry Search")
+                    }
+                }
             }
-        }
-    }
 }
 
 @Composable
-private fun AllResultsList(
-    results: List<SearchResult>,
-    onTrackClick: (SearchResult) -> Unit,
-    onPlayTrack: (SearchResult) -> Unit
-) {
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(results) { track ->
-            EnhancedSearchResultItem(
-                track = track,
-                onTrackClick = onTrackClick,
-                onPlayClick = onPlayTrack,
-                showExtensionBadge = true
-            )
-        }
-    }
-}
-
-@Composable
-private fun ResultsByExtension(
+private fun ResultsByExtensionStandard(
     resultsByExtension: Map<String, List<SearchResult>>,
     onTrackClick: (SearchResult) -> Unit,
     onPlayTrack: (SearchResult) -> Unit
 ) {
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+            LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
         resultsByExtension.forEach { (extensionId, results) ->
-            item {
-                ExtensionResultsSection(
+                item {
+                ExtensionResultsSectionStandard(
                     extensionId = extensionId,
                     results = results,
                     onTrackClick = onTrackClick,
@@ -641,57 +597,178 @@ private fun ResultsByExtension(
 }
 
 @Composable
-private fun ExtensionResultsSection(
+private fun ExtensionResultsSectionStandard(
     extensionId: String,
     results: List<SearchResult>,
     onTrackClick: (SearchResult) -> Unit,
     onPlayTrack: (SearchResult) -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // Extension header
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.Outlined.Extension,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = extensionId.substringAfterLast('.'),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Badge {
-                    Text(
-                        text = "${results.size}",
-                        style = MaterialTheme.typography.labelSmall
+    Column {
+        // Extension header - clean, standard style
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+            Text(
+                text = getExtensionDisplayName(extensionId),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = "${results.size} results",
+                style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                    }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+                
+        // Results for this extension - clean list
+        results.forEach { track ->
+            StandardSearchResultItem(
+                        track = track,
+                        onTrackClick = onTrackClick,
+                        onPlayClick = onPlayTrack
                     )
+            if (track != results.last()) {
+                Spacer(modifier = Modifier.height(1.dp))
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+                Spacer(modifier = Modifier.height(1.dp))
+            }
+        }
+    }
+}
+
+// Helper function to get display name for extensions
+private fun getExtensionDisplayName(extensionId: String): String {
+    return when {
+        extensionId.contains("dabyeet", ignoreCase = true) -> "DabYeet"
+        extensionId.contains("spotify", ignoreCase = true) -> "Spotify"
+        extensionId.contains("youtube", ignoreCase = true) -> "YouTube Music"
+        extensionId.contains("soundcloud", ignoreCase = true) -> "SoundCloud"
+        else -> extensionId.substringAfterLast('.').replaceFirstChar { it.uppercase() }
+    }
+}
+
+@Composable
+private fun StandardSearchResultItem(
+    track: SearchResult,
+    onTrackClick: (SearchResult) -> Unit,
+    onPlayClick: (SearchResult) -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = { 
+            logcat("SearchScreen") { "Song card clicked: ${track.title}" }
+            onPlayClick(track)
+        }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Track artwork - sized to match both text lines
+            Card(
+                modifier = Modifier.size(56.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+            ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                    if (track.thumbnailUrl != null) {
+                        AsyncImage(
+                            model = track.thumbnailUrl,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(
+                            Icons.Outlined.MusicNote,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
             
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.width(12.dp))
             
-            // Results for this extension
-            results.forEach { track ->
-                EnhancedSearchResultItem(
-                    track = track,
-                    onTrackClick = onTrackClick,
-                    onPlayClick = onPlayTrack,
-                    showExtensionBadge = false
+            // Track info
+                Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Song name - larger and prominent
+                Text(
+                    text = track.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-                if (track != results.last()) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                
+                // Artist name and type - smaller, secondary color
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Type indicator (Song/Album)
+                    val trackType = track.metadata["type"] ?: "Song"
+                    Text(
+                        text = trackType,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        fontWeight = FontWeight.Medium
+                    )
+                    
+                    if (track.artist != null) {
+                        Text(
+                            text = " • ${track.artist}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    
+                    // Duration
+                    if (track.duration != null) {
+                        Text(
+                            text = " • ${formatDuration(track.duration!!)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                    }
                 }
+            }
+            
+            // Add to playlist button
+            IconButton(
+                onClick = { 
+                    // TODO: Show playlist selection dialog
+                    logcat("SearchScreen") { "Add to playlist clicked for: ${track.title}" }
+                },
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    Icons.Outlined.Add,
+                    contentDescription = "Add to playlist",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }
@@ -732,12 +809,12 @@ private fun EnhancedSearchResultItem(
                             modifier = Modifier.fillMaxSize()
                         )
                     } else {
-                        Icon(
-                            Icons.Outlined.MusicNote,
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    Icon(
+                        Icons.Outlined.MusicNote,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     }
                 }
             }
@@ -933,34 +1010,7 @@ private fun EmptySearchContent() {
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
             
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Sample searches
-            Text(
-                text = "Try searching for:",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Medium
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            val sampleQueries = listOf("Daft Punk", "Bohemian Rhapsody", "Chill Music", "Jazz")
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(sampleQueries) { query ->
-                    AssistChip(
-                        onClick = { /* TODO: Handle sample search */ },
-                        label = { Text(query) },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Outlined.Search,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    )
-                }
-            }
+
         }
     }
 }

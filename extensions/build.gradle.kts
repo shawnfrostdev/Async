@@ -48,6 +48,9 @@ dependencies {
     // Serialization
     implementation(libs.kotlinx.serialization.json)
     
+    // Kotlin reflection for calling suspend functions
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.24")
+    
     // Hilt
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)

@@ -18,7 +18,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.async.app.di.AppModule
+import com.async.core.extension.ExtensionStatus
 import com.async.extensions.service.InstallationStatus
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import logcat.logcat
 
@@ -90,6 +92,22 @@ class ExtensionManagementScreen {
                                             leadingIcon = {
                                                 Icon(
                                                     imageVector = Icons.Default.Update,
+                                                    contentDescription = null
+                                                )
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text("Clear Extension Cache") },
+                                            onClick = {
+                                                showDropdownMenu = false
+                                                scope.launch {
+                                                    extensionService.clearExtensionCache()
+                                                    snackbarHostState.showSnackbar("Extension cache cleared - extensions will reload on next use")
+                                                }
+                                            },
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = Icons.Default.Refresh,
                                                     contentDescription = null
                                                 )
                                             }
@@ -196,28 +214,49 @@ private fun InstalledExtensionsContent(snackbarHostState: SnackbarHostState) {
                     ExtensionCard(
                     title = extension.metadata.name,
                     subtitle = if (hasUpdate && availableVersion != null) {
-                            "v${extension.metadata.version} → v$availableVersion"
+                            "v${extension.metadata.versionString ?: extension.metadata.version} → v$availableVersion"
                         } else {
-                            "v${extension.metadata.version}"
+                            "v${extension.metadata.versionString ?: extension.metadata.version}"
                         },
                     icon = Icons.Default.Extension,
                     iconUrl = remoteExtension?.iconUrl,
                     packageName = extension.metadata.id,
                     hasUpdate = hasUpdate,
-                    isEnabled = true, // Simplified for now
+                    isEnabled = extension.status == ExtensionStatus.INSTALLED,
                         onToggle = { enabled ->
                         logcat { "Toggle extension ${extension.metadata.name}: $enabled" }
+                        scope.launch {
+                            if (enabled) {
+                                extensionService.enableExtension(extension.metadata.id)
+                            } else {
+                                extensionService.disableExtension(extension.metadata.id)
+                            }
+                        }
                         },
                         onUninstall = {
                         logcat { "Uninstall extension ${extension.metadata.name}" }
+                        scope.launch {
+                            extensionService.uninstallExtension(extension.metadata.id)
+                            // Trigger a sync to refresh the UI
+                            extensionService.syncInstalledExtensions()
+                        }
                         },
                         onUpdate = if (hasUpdate) {
                             {
                                 scope.launch {
                                     extensionService.updateExtension(extension.metadata.id)
+                                    // Trigger a sync after update to refresh the UI
+                                    delay(2000)
+                                    extensionService.syncInstalledExtensions()
                                 }
                             }
-                        } else null
+                        } else null,
+                        onForceReload = {
+                            scope.launch {
+                                extensionService.forceReloadExtension(extension.metadata.id)
+                                snackbarHostState.showSnackbar("Extension ${extension.metadata.name} force reloaded")
+                            }
+                        }
                     )
                 }
             }
@@ -499,7 +538,8 @@ private fun ExtensionCard(
     isEnabled: Boolean,
     onToggle: (Boolean) -> Unit,
     onUninstall: () -> Unit,
-    onUpdate: (() -> Unit)? = null
+    onUpdate: (() -> Unit)? = null,
+    onForceReload: (() -> Unit)? = null
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -554,6 +594,22 @@ private fun ExtensionCard(
                         Icon(
                             imageVector = Icons.Outlined.Update,
                             contentDescription = "Update",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                
+                // Force reload button (debug option)
+                if (onForceReload != null) {
+                    IconButton(
+                        onClick = onForceReload,
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = MaterialTheme.colorScheme.secondary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Refresh,
+                            contentDescription = "Force Reload",
                             modifier = Modifier.size(20.dp)
                         )
                     }

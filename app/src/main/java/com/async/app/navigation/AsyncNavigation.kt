@@ -13,6 +13,9 @@ import cafe.adriel.voyager.navigator.tab.TabOptions
 import cafe.adriel.voyager.transitions.SlideTransition
 import com.async.app.ui.screens.home.HomeScreen
 import com.async.app.ui.screens.search.SearchScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.async.app.ui.vm.PlayerViewModel
+import logcat.logcat
 import com.async.app.ui.screens.library.LibraryScreen
 import com.async.app.ui.screens.player.PlayerScreen
 import com.async.app.ui.screens.playlists.PlaylistsScreen
@@ -57,7 +60,13 @@ object SearchTab : Tab {
 
     @Composable
     override fun Content() {
-        SearchScreen()
+        val playerViewModel: PlayerViewModel = viewModel()
+        SearchScreen(
+            onPlayTrack = { track -> 
+                logcat("Navigation") { "onPlayTrack called for: ${track.title}" }
+                playerViewModel.playTrack(track) 
+            }
+        )
     }
 }
 

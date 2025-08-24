@@ -28,44 +28,17 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             uiState = uiState.copy(isLoading = true)
             
-            // Simulate loading delay
-            delay(1000)
-            
-            // Create simple mock data that compiles
-            val trendingTracks = createMockTracks("Trending")
-            val recentlyPlayed = createMockTracks("Recent")
-            val recommendations = createMockTracks("Recommended")
+            // TODO: Load real data from extensions
+            // For now, just show empty state
             
             uiState = uiState.copy(
                 isLoading = false,
-                trendingTracks = trendingTracks,
-                recentlyPlayed = recentlyPlayed,
-                recommendations = recommendations
+                trendingTracks = emptyList(),
+                recentlyPlayed = emptyList(),
+                recommendations = emptyList(),
+                error = "Home screen data not yet connected to extensions. Install and enable music extensions to see content."
             )
         }
-    }
-    
-    private fun createMockTracks(prefix: String): List<SearchResult> {
-        return listOf(
-            SearchResult(
-                id = "${prefix.lowercase()}_1",
-                extensionId = "mock_extension",
-                title = "$prefix Track 1",
-                artist = "Mock Artist 1",
-                album = "Mock Album",
-                duration = 180000,
-                thumbnailUrl = null
-            ),
-            SearchResult(
-                id = "${prefix.lowercase()}_2",
-                extensionId = "mock_extension",
-                title = "$prefix Track 2",
-                artist = "Mock Artist 2",
-                album = "Mock Album",
-                duration = 210000,
-                thumbnailUrl = null
-            )
-        )
     }
     
     fun onTrackClick(track: SearchResult) {

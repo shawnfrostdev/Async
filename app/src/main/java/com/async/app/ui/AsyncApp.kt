@@ -10,6 +10,9 @@ import com.async.app.di.AppModule
 import com.async.app.navigation.*
 import com.async.app.ui.components.AsyncBottomNavigation
 import com.async.app.ui.components.PermissionManager
+import com.async.app.ui.components.MiniPlayer
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.async.app.ui.vm.PlayerViewModel
 import com.async.app.ui.theme.AsyncTheme
 
 @Composable
@@ -36,11 +39,27 @@ fun AsyncApp() {
                 )
             } else {
                 // Show main app content
+                val playerViewModel: PlayerViewModel = viewModel()
+                val playerUiState = playerViewModel.uiState
+                
                 TabNavigator(HomeTab) { tabNavigator ->
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
                         bottomBar = {
-                            AsyncBottomNavigation(tabNavigator = tabNavigator)
+                            Column {
+                                // MiniPlayer above navigation
+                                if (playerUiState.currentTrack != null) {
+                                    MiniPlayer(
+                                        currentTrack = playerUiState.currentTrack,
+                                        isPlaying = playerUiState.isPlaying,
+                                        onPlayPause = { playerViewModel.playPause() },
+                                        onExpandPlayer = { 
+                                            // TODO: Navigate to full player screen
+                                        }
+                                    )
+                                }
+                                AsyncBottomNavigation(tabNavigator = tabNavigator)
+                            }
                         },
                         containerColor = MaterialTheme.colorScheme.background
                     ) { paddingValues ->

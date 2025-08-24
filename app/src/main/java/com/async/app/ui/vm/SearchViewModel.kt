@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.async.app.di.AppModule
+import com.async.core.extension.ExtensionStatus
 import com.async.core.model.ExtensionResult
 import com.async.core.model.SearchResult
 import com.async.extensions.service.ExtensionService
@@ -37,15 +38,21 @@ class SearchViewModel : ViewModel() {
     val searchFilters: StateFlow<SearchFilters> = _searchFilters.asStateFlow()
     
     init {
+        // Clear old cache since we switched to real search (no more mock data)
+        clearSearchCache()
         loadSearchHistory()
         loadSearchCache()
         
         // Monitor extension changes
         viewModelScope.launch {
             extensionService.getInstalledExtensions().collect { extensions ->
+                val enabledExtensions = extensions.filter { (_, extension) -> 
+                    extension.status == ExtensionStatus.INSTALLED 
+                }.keys.toList()
+                
                 uiState = uiState.copy(
-                    availableExtensions = extensions.keys.toList(),
-                    hasExtensions = extensions.isNotEmpty()
+                    availableExtensions = enabledExtensions,
+                    hasExtensions = enabledExtensions.isNotEmpty()
                 )
             }
         }
@@ -71,22 +78,9 @@ class SearchViewModel : ViewModel() {
         // Cancel previous search
         searchJob?.cancel()
         
-        // Check cache first
+        // Skip cache temporarily - always do fresh search for real extensions
+        logcat("SearchViewModel") { "Forcing fresh search for: '$query' (bypassing cache)" }
         val cacheKey = createCacheKey(query, _searchFilters.value)
-        val cachedResult = searchCache[cacheKey]
-        
-        if (!forceRefresh && cachedResult != null && !cachedResult.isExpired()) {
-            logcat("SearchViewModel") { "Using cached results for: '$query'" }
-            uiState = uiState.copy(
-                isLoading = false,
-                results = cachedResult.results,
-                resultsByExtension = cachedResult.resultsByExtension,
-                error = null,
-                lastSearchQuery = query,
-                searchSource = "Cache"
-            )
-            return
-        }
         
         searchJob = viewModelScope.launch {
             uiState = uiState.copy(
@@ -101,6 +95,8 @@ class SearchViewModel : ViewModel() {
                 delay(500)
                 
                 val installedExtensions = extensionService.getInstalledExtensions().value
+                logcat("SearchViewModel") { "Found ${installedExtensions.size} installed extensions: ${installedExtensions.keys}" }
+                
                 if (installedExtensions.isEmpty()) {
                     uiState = uiState.copy(
                         isLoading = false,
@@ -110,12 +106,18 @@ class SearchViewModel : ViewModel() {
                     return@launch
                 }
                 
-                // Filter extensions based on user selection
+                // Filter extensions based on user selection and enabled status
                 val filters = _searchFilters.value
+                val enabledExtensions = installedExtensions.filter { (_, extension) -> 
+                    extension.status == ExtensionStatus.INSTALLED 
+                }.keys.toList()
+                
+                logcat("SearchViewModel") { "Enabled extensions: $enabledExtensions" }
+                
                 val extensionsToSearch = if (filters.selectedExtensions.isEmpty()) {
-                    installedExtensions.keys.toList()
+                    enabledExtensions
                 } else {
-                    filters.selectedExtensions.filter { it in installedExtensions.keys }
+                    filters.selectedExtensions.filter { it in enabledExtensions }
                 }
                 
                 if (extensionsToSearch.isEmpty()) {
@@ -141,14 +143,21 @@ class SearchViewModel : ViewModel() {
                             val extension = installedExtensions[extensionId]
                             
                             if (extension != null) {
-                                // Note: For now we'll simulate search since we don't have real extension loading
-                                // In a real implementation, this would load the extension and call its search method
-                                val mockResults = createMockSearchResults(query, extensionId, filters)
+                                // Call real extension search
+                                logcat("SearchViewModel") { "Found extension $extensionId, calling ExtensionService.searchInExtension for query: '$query'" }
+                                val searchResults = extensionService.searchInExtension(extensionId, query, filters.maxResultsPerExtension)
                                 
-                                resultsByExtension[extensionId] = mockResults
-                                allResults.addAll(mockResults)
+                                logcat("SearchViewModel") { "ExtensionService.searchInExtension returned ${searchResults.size} results for $extensionId" }
                                 
-                                logcat("SearchViewModel") { "Extension $extensionId returned ${mockResults.size} results" }
+                                if (searchResults.isNotEmpty()) {
+                                    resultsByExtension[extensionId] = searchResults
+                                    allResults.addAll(searchResults)
+                                    logcat("SearchViewModel") { "Successfully added ${searchResults.size} results from $extensionId" }
+                                } else {
+                                    logcat("SearchViewModel") { "No results from extension $extensionId" }
+                                }
+                            } else {
+                                logcat("SearchViewModel") { "Extension $extensionId not found in installedExtensions map" }
                             }
                         } catch (e: Exception) {
                             logcat("SearchViewModel") { "Error searching extension $extensionId: ${e.message}" }
@@ -192,45 +201,7 @@ class SearchViewModel : ViewModel() {
         }
     }
     
-    /**
-     * Create mock search results (to be replaced with real extension loading)
-     */
-    private fun createMockSearchResults(query: String, extensionId: String, filters: SearchFilters): List<SearchResult> {
-        val baseResults = listOf(
-            SearchResult(
-                id = "${extensionId}_${query}_1",
-                extensionId = extensionId,
-                title = "$query - Track 1",
-                artist = "Artist from $extensionId",
-                album = "Album 1",
-                duration = (180000..300000).random().toLong(),
-                thumbnailUrl = null,
-                metadata = mapOf("source" to extensionId, "quality" to "320kbps")
-            ),
-            SearchResult(
-                id = "${extensionId}_${query}_2",
-                extensionId = extensionId,
-                title = "$query - Track 2",
-                artist = "Artist from $extensionId",
-                album = "Album 2",
-                duration = (180000..300000).random().toLong(),
-                thumbnailUrl = null,
-                metadata = mapOf("source" to extensionId, "quality" to "256kbps")
-            ),
-            SearchResult(
-                id = "${extensionId}_${query}_3",
-                extensionId = extensionId,
-                title = "Another $query Song",
-                artist = "Different Artist",
-                album = "Various Album",
-                duration = (180000..300000).random().toLong(),
-                thumbnailUrl = null,
-                metadata = mapOf("source" to extensionId, "quality" to "192kbps")
-            )
-        )
-        
-        return baseResults.take(filters.maxResultsPerExtension)
-    }
+
     
     /**
      * Apply advanced filters to search results
@@ -406,6 +377,14 @@ class SearchViewModel : ViewModel() {
     
     private fun loadSearchCache() {
         // TODO: Load cached results from storage if needed
+    }
+    
+    /**
+     * Clear all cached search results
+     */
+    private fun clearSearchCache() {
+        searchCache.clear()
+        logcat("SearchViewModel") { "Search cache cleared" }
     }
 }
 

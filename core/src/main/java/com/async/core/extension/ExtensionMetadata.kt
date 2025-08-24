@@ -18,7 +18,8 @@ data class ExtensionMetadata(
     val installDate: Long = System.currentTimeMillis(),
     val lastUpdated: Long = System.currentTimeMillis(),
     val fileSize: Long = 0,
-    val checksum: String? = null
+    val checksum: String? = null,
+    val versionString: String? = null
 ) {
     companion object {
         /**

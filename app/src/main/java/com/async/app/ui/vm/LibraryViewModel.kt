@@ -27,69 +27,16 @@ class LibraryViewModel : ViewModel() {
         viewModelScope.launch {
             uiState = uiState.copy(isLoading = true)
             
-            // Simulate loading delay
-            delay(1000)
-            
-            // Create simple mock data
-            val playlists = createMockPlaylists()
-            val likedTracks = createMockTracks()
+            // TODO: Load real library data from database
+            // For now, just show empty state
             
             uiState = uiState.copy(
                 isLoading = false,
-                playlists = playlists,
-                likedTracks = likedTracks
+                playlists = emptyList(),
+                likedTracks = emptyList(),
+                error = "Library data not yet implemented. This will show your saved playlists and liked tracks."
             )
         }
-    }
-    
-    private fun createMockPlaylists(): List<Playlist> {
-        return listOf(
-            Playlist(
-                id = 1L,
-                name = "Liked Songs",
-                description = "Your favorite tracks",
-                trackCount = 42,
-                totalDuration = 10800000L,
-                dateCreated = System.currentTimeMillis() - 7776000000L,
-                lastModified = System.currentTimeMillis()
-            ),
-            Playlist(
-                id = 2L,
-                name = "Chill Vibes",
-                description = "Relaxing music",
-                trackCount = 28,
-                totalDuration = 6720000L,
-                dateCreated = System.currentTimeMillis() - 2592000000L,
-                lastModified = System.currentTimeMillis() - 86400000L
-            )
-        )
-    }
-    
-    private fun createMockTracks(): List<Track> {
-        return listOf(
-            Track(
-                id = 1L,
-                externalId = "track_1",
-                extensionId = "mock_extension",
-                title = "Library Track 1",
-                artist = "Mock Artist 1",
-                album = "Mock Album 1",
-                duration = 180000L,
-                thumbnailUrl = null,
-                streamUrl = "https://example.com/track1.mp3"
-            ),
-            Track(
-                id = 2L,
-                externalId = "track_2",
-                extensionId = "mock_extension",
-                title = "Library Track 2",
-                artist = "Mock Artist 2",
-                album = "Mock Album 2",
-                duration = 210000L,
-                thumbnailUrl = null,
-                streamUrl = "https://example.com/track2.mp3"
-            )
-        )
     }
     
     fun onPlaylistClick(playlist: Playlist) {

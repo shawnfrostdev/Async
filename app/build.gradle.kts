@@ -50,6 +50,9 @@ dependencies {
     implementation(project(":data"))
     implementation(project(":playback"))
     implementation(project(":extensions"))
+    
+    // Media3 for ExoPlayer annotations
+    implementation(libs.androidx.media3.common)
 
     // Android Core
     implementation(libs.androidx.core.ktx)
