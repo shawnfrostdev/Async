@@ -16,10 +16,10 @@ import logcat.logcat
  * Simplified media browser service
  */
 class PlayerService : MediaBrowserServiceCompat() {
-
+    
     private lateinit var mediaSession: MediaSessionCompat
     private lateinit var playbackManager: PlaybackManager
-
+    
     override fun onCreate() {
         super.onCreate()
         
@@ -38,13 +38,13 @@ class PlayerService : MediaBrowserServiceCompat() {
         
         logcat { "PlayerService: Initialized successfully" }
     }
-
+    
     override fun onDestroy() {
         super.onDestroy()
         mediaSession.release()
         logcat { "PlayerService: Destroyed" }
     }
-
+    
     override fun onGetRoot(
         clientPackageName: String,
         clientUid: Int,
@@ -53,7 +53,7 @@ class PlayerService : MediaBrowserServiceCompat() {
         logcat { "PlayerService: onGetRoot called by $clientPackageName" }
         return BrowserRoot("__ROOT__", null)
     }
-
+    
     override fun onLoadChildren(
         parentId: String,
         result: Result<MutableList<MediaBrowserCompat.MediaItem>>
@@ -64,7 +64,7 @@ class PlayerService : MediaBrowserServiceCompat() {
         val mediaItems = mutableListOf<MediaBrowserCompat.MediaItem>()
         result.sendResult(mediaItems)
     }
-
+    
     private inner class MediaSessionCallback : MediaSessionCompat.Callback() {
         
         override fun onPlay() {
@@ -72,29 +72,29 @@ class PlayerService : MediaBrowserServiceCompat() {
             playbackManager.resume()
             updatePlaybackState(PlaybackStateCompat.STATE_PLAYING)
         }
-
+        
         override fun onPause() {
             logcat { "PlayerService: onPause" }
             playbackManager.pause()
             updatePlaybackState(PlaybackStateCompat.STATE_PAUSED)
         }
-
+        
         override fun onStop() {
             logcat { "PlayerService: onStop" }
             playbackManager.stop()
             updatePlaybackState(PlaybackStateCompat.STATE_STOPPED)
         }
-
+        
         override fun onSkipToNext() {
             logcat { "PlayerService: onSkipToNext" }
             // TODO: Implement skip to next
         }
-
+        
         override fun onSkipToPrevious() {
             logcat { "PlayerService: onSkipToPrevious" }
             // TODO: Implement skip to previous
         }
-
+        
         override fun onSeekTo(pos: Long) {
             logcat { "PlayerService: onSeekTo $pos" }
             playbackManager.seekTo(pos)

@@ -90,6 +90,9 @@ dependencies {
     // Material Icons Extended
     implementation(libs.androidx.material.icons.extended)
     
+    // Image Loading
+    implementation("io.coil-kt:coil-compose:2.6.0")
+    
     // Logging
     implementation("com.squareup.logcat:logcat:0.1")
     

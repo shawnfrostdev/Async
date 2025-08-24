@@ -25,7 +25,7 @@ fun AsyncBottomNavigation(
             NavigationBarItem(
                 selected = isSelected,
                 onClick = { tabNavigator.current = tab },
-                icon = { 
+                icon = {
                     Icon(
                         imageVector = when (tab) {
                             HomeTab -> Icons.Default.Home

@@ -141,3 +141,68 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# =============================================================================
+# CRITICAL PROJECT FILES TO EXCLUDE FROM REPOSITORY
+# =============================================================================
+
+# Documentation and development notes (keep private)
+docs/
+prompts/
+
+# Development and debugging files
+*.debug
+*.trace
+
+# Temporary development files
+temp/
+tmp/
+scratch/
+
+# Environment and configuration files
+.env
+.env.local
+.env.production
+config.local.*
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache directories
+.cache/
+cache/
+.temp/
+
+# Kotlin/Gradle build artifacts
+.kotlin/
+kotlin-js-store/
+
+# Extension development files
+extensions/debug/
+extensions/temp/
+
+# Test data and mock files
+test-data/
+mock-data/
+
+# Personal development notes
+notes.txt
+notes.md
+TODO.txt
+personal/
+
+# IDE specific files
+.fleet/
+.vscode/settings.json
+.vscode/launch.json
+
+# OS generated files
+.DS_Store?
+ehthumbs_vista.db
+
+# Backup files
+*.backup
+*.bak
+*.orig

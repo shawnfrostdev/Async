@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -15,7 +16,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.async.app.di.AppModule
+import com.async.extensions.service.InstallationStatus
 import kotlinx.coroutines.launch
 import logcat.logcat
 
@@ -29,11 +32,107 @@ class ExtensionManagementScreen {
     fun Content() {
         var selectedTab by remember { mutableIntStateOf(0) }
         val tabTitles = listOf("Installed", "Browse", "Repositories")
+        var showDropdownMenu by remember { mutableStateOf(false) }
+        val extensionService = AppModule.getExtensionService()
+        val updateStatus by extensionService.updateStatus.collectAsState()
+        val scope = rememberCoroutineScope()
+        val snackbarHostState = remember { SnackbarHostState() }
+        
+        val updateCount = updateStatus.size
 
         Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 TopAppBar(
-                    title = { Text("Extensions") }
+                    title = { Text("Extensions") },
+                    actions = {
+                        // Show dropdown menu in Browse and Repositories tabs
+                        if (selectedTab == 1 || selectedTab == 2) {
+                            Box {
+                                IconButton(onClick = { showDropdownMenu = true }) {
+                                    Box {
+                                        Icon(
+                                            imageVector = Icons.Default.MoreVert,
+                                            contentDescription = "More options"
+                                        )
+                                        if (updateCount > 0 && selectedTab == 1) {
+                                            Badge(
+                                                modifier = Modifier.offset(x = 8.dp, y = (-8).dp)
+                                            ) {
+                                                Text(
+                                                    text = updateCount.toString(),
+                                                    style = MaterialTheme.typography.labelSmall
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                DropdownMenu(
+                                    expanded = showDropdownMenu,
+                                    onDismissRequest = { showDropdownMenu = false }
+                                ) {
+                                    // Browse tab menu items
+                                    if (selectedTab == 1) {
+                                        DropdownMenuItem(
+                                            text = { Text("Check for Updates") },
+                                            onClick = {
+                                                showDropdownMenu = false
+                                                scope.launch {
+                                                    val updateCount = extensionService.checkForUpdates(force = true)
+                                                    val message = if (updateCount > 0) {
+                                                        "$updateCount Updates found"
+                                                    } else {
+                                                        "No Updates found"
+                                                    }
+                                                    snackbarHostState.showSnackbar(message)
+                                                }
+                                            },
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = Icons.Default.Update,
+                                                    contentDescription = null
+                                                )
+                                            }
+                                        )
+                                    }
+                                    
+                                    // Repositories tab menu items
+                                    if (selectedTab == 2) {
+                                        DropdownMenuItem(
+                                            text = { Text("Refresh All Repositories") },
+                                            onClick = {
+                                                showDropdownMenu = false
+                                                scope.launch {
+                                                    extensionService.refreshAllRepositories()
+                                                }
+                                            },
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = Icons.Default.Refresh,
+                                                    contentDescription = null
+                                                )
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text("Sync Installed Extensions") },
+                                            onClick = {
+                                                showDropdownMenu = false
+                                                scope.launch {
+                                                    extensionService.syncInstalledExtensions()
+                                                }
+                                            },
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = Icons.Default.Sync,
+                                                    contentDescription = null
+                                                )
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 )
             }
         ) { paddingValues ->
@@ -56,79 +155,150 @@ class ExtensionManagementScreen {
                 }
 
                 when (selectedTab) {
-                    0 -> InstalledExtensionsContent()
-                    1 -> BrowseExtensionsContent()
-                    2 -> RepositoriesContent()
+                    0 -> InstalledExtensionsContent(snackbarHostState)
+                    1 -> BrowseExtensionsContent(snackbarHostState)
+                    2 -> RepositoriesContent(snackbarHostState)
                 }
             }
         }
     }
 }
 
-@Composable
-private fun InstalledExtensionsContent() {
-    val extensionService = AppModule.getExtensionService()
-    val installedExtensions by extensionService.getInstalledExtensions().collectAsState()
-
-    LazyColumn(
+        @Composable
+private fun InstalledExtensionsContent(snackbarHostState: SnackbarHostState) {
+        val extensionService = AppModule.getExtensionService()
+        val installedExtensions by extensionService.getInstalledExtensions().collectAsState()
+        val remoteExtensions by extensionService.remoteExtensions.collectAsState()
+        val updateStatus by extensionService.updateStatus.collectAsState()
+        val scope = rememberCoroutineScope()
+        
+        LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        if (installedExtensions.isEmpty()) {
-            item {
+        ) {
+            if (installedExtensions.isEmpty()) {
+                item {
                 EmptyStateCard(
                     title = "No Extensions Installed",
                     description = "Install extensions from repositories to get started",
                     icon = Icons.Default.Extension
                 )
-            }
-        } else {
-            items(installedExtensions.values.toList()) { extension ->
-                ExtensionCard(
+                }
+            } else {
+                items(installedExtensions.values.toList()) { extension ->
+                    // Find the corresponding remote extension to get icon URL
+                    val remoteExtension = remoteExtensions.values.flatten()
+                        .find { it.extension.id == extension.metadata.id }?.extension
+                    val hasUpdate = updateStatus[extension.metadata.id]?.hasUpdate == true
+                    val availableVersion = updateStatus[extension.metadata.id]?.availableVersion
+                    
+                    ExtensionCard(
                     title = extension.metadata.name,
-                    subtitle = "v${extension.metadata.version} • ${extension.metadata.description}",
+                    subtitle = if (hasUpdate && availableVersion != null) {
+                            "v${extension.metadata.version} → v$availableVersion"
+                        } else {
+                            "v${extension.metadata.version}"
+                        },
                     icon = Icons.Default.Extension,
+                    iconUrl = remoteExtension?.iconUrl,
+                    packageName = extension.metadata.id,
+                    hasUpdate = hasUpdate,
                     isEnabled = true, // Simplified for now
-                    onToggle = { enabled ->
+                        onToggle = { enabled ->
                         logcat { "Toggle extension ${extension.metadata.name}: $enabled" }
-                    },
-                    onUninstall = {
+                        },
+                        onUninstall = {
                         logcat { "Uninstall extension ${extension.metadata.name}" }
-                    }
-                )
+                        },
+                        onUpdate = if (hasUpdate) {
+                            {
+                                scope.launch {
+                                    extensionService.updateExtension(extension.metadata.id)
+                                }
+                            }
+                        } else null
+                    )
+                }
             }
         }
     }
-}
 
-@Composable
-private fun BrowseExtensionsContent() {
-    val extensionService = AppModule.getExtensionService()
-    val remoteExtensions by extensionService.remoteExtensions.collectAsState()
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        if (remoteExtensions.isEmpty()) {
-            item {
+    @Composable
+private fun BrowseExtensionsContent(snackbarHostState: SnackbarHostState) {
+        val extensionService = AppModule.getExtensionService()
+        val remoteExtensions by extensionService.remoteExtensions.collectAsState()
+    val installationStates by extensionService.installationState.collectAsState()
+    val installedExtensions by extensionService.getInstalledExtensions().collectAsState()
+    val downloadedApks by extensionService.downloadedApks.collectAsState()
+    val updateStatus by extensionService.updateStatus.collectAsState()
+        val scope = rememberCoroutineScope()
+        
+        val updateCount = updateStatus.size
+        
+        // Trigger sync when entering this screen to ensure accurate installation states
+        LaunchedEffect(Unit) {
+            extensionService.syncInstalledExtensions()
+        }
+        
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Header with Update All button
+            if (updateCount > 0) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                extensionService.updateAllExtensions()
+                            }
+                        },
+                        modifier = Modifier.height(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SystemUpdate,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Update All")
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Badge {
+                            Text(
+                                text = updateCount.toString(),
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
+                }
+            }
+            
+            LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+            if (remoteExtensions.isEmpty()) {
+                item {
                 EmptyStateCard(
                     title = "No Extensions Available",
                     description = "Add a repository to browse extensions",
                     icon = Icons.Default.Extension
                 )
-            }
-        } else {
-            remoteExtensions.forEach { (repoUrl, extensions) ->
+                }
+            } else {
+                remoteExtensions.forEach { (repoUrl, extensions) ->
                 if (extensions.isNotEmpty()) {
                     val repoName = extensions.first().repositoryName
                     logcat { "BrowseExtensionsContent: Repository $repoUrl -> displaying name: '$repoName'" }
                     
                     // Repository header
                     item {
-                        Text(
+                                            Text(
                             text = repoName,
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.primary,
@@ -138,28 +308,75 @@ private fun BrowseExtensionsContent() {
                     
                     // Extensions in this repository
                     items(extensions) { extensionWithRepo ->
+                        val installationStatus = installationStates[extensionWithRepo.extension.id]
+                        val isInstalled = installedExtensions.containsKey(extensionWithRepo.extension.id)
+                        val hasDownloadedApk = downloadedApks[extensionWithRepo.extension.id]?.exists() == true
+                        val hasUpdate = updateStatus[extensionWithRepo.extension.id]?.hasUpdate == true
+                        
                         RemoteExtensionCard(
                             title = extensionWithRepo.extension.name,
-                            subtitle = "v${extensionWithRepo.extension.version} • ${extensionWithRepo.extension.description}",
+                            subtitle = "v${extensionWithRepo.extension.version}",
                             developer = extensionWithRepo.extension.developer,
+                            iconUrl = extensionWithRepo.extension.iconUrl,
+                            installationStatus = installationStatus,
+                            isInstalled = isInstalled,
+                            hasDownloadedApk = hasDownloadedApk,
+                            hasUpdate = hasUpdate,
                             onDownloadClick = { 
                                 logcat { "Download clicked for ${extensionWithRepo.extension.name}" }
+                                scope.launch {
+                                    try {
+                                        extensionService.downloadExtension(repoUrl, extensionWithRepo.extension)
+                                        logcat { "Successfully started download for ${extensionWithRepo.extension.name}" }
+                                    } catch (e: Exception) {
+                                        logcat { "Failed to download ${extensionWithRepo.extension.name}: ${e.message}" }
+                                    }
+                                }
+                            },
+                            onInstallClick = {
+                                logcat { "Install clicked for ${extensionWithRepo.extension.name}" }
+                                scope.launch {
+                                    try {
+                                        extensionService.installDownloadedExtension(extensionWithRepo.extension.id)
+                                        logcat { "Successfully started installation for ${extensionWithRepo.extension.name}" }
+                                    } catch (e: Exception) {
+                                        logcat { "Failed to install ${extensionWithRepo.extension.name}: ${e.message}" }
+                                    }
+                                }
+                            },
+                            onUninstallClick = {
+                                scope.launch {
+                                    extensionService.uninstallExtension(extensionWithRepo.extension.id)
+                                    logcat { "Uninstalled ${extensionWithRepo.extension.name}" }
+                                }
+                            },
+                            onUpdateClick = {
+                                logcat { "Update clicked for ${extensionWithRepo.extension.name}" }
+                                scope.launch {
+                                    try {
+                                        extensionService.updateExtension(extensionWithRepo.extension.id)
+                                        logcat { "Successfully started update for ${extensionWithRepo.extension.name}" }
+                                    } catch (e: Exception) {
+                                        logcat { "Failed to update ${extensionWithRepo.extension.name}: ${e.message}" }
+                                    }
+                                }
                             }
                         )
                     }
                 }
             }
+            }
         }
     }
 }
 
-@Composable
-private fun RepositoriesContent() {
-    val extensionService = AppModule.getExtensionService()
-    val repositories by extensionService.repositories.collectAsState()
+        @Composable
+private fun RepositoriesContent(snackbarHostState: SnackbarHostState) {
+        val extensionService = AppModule.getExtensionService()
+        val repositories by extensionService.repositories.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
     var newRepoUrl by remember { mutableStateOf("") }
-    val scope = rememberCoroutineScope()
+        val scope = rememberCoroutineScope()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -195,38 +412,7 @@ private fun RepositoriesContent() {
             }
         }
         
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                ),
-                onClick = { 
-                    scope.launch {
-                        extensionService.refreshAllRepositories()
-                    }
-                }
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Refresh All Repositories",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                }
-            }
-        }
+
 
         if (repositories.isEmpty()) {
             item {
@@ -244,7 +430,7 @@ private fun RepositoriesContent() {
                     onRemove = {
                         scope.launch {
                             extensionService.removeRepository(repoUrl)
-                        }
+                    }
                     }
                 )
             }
@@ -254,7 +440,7 @@ private fun RepositoriesContent() {
     if (showAddDialog) {
         AlertDialog(
             onDismissRequest = { 
-                showAddDialog = false
+                    showAddDialog = false
                 newRepoUrl = ""
             },
             title = { Text("Add Repository") },
@@ -307,21 +493,35 @@ private fun ExtensionCard(
     title: String,
     subtitle: String,
     icon: ImageVector,
+    iconUrl: String? = null,
+    packageName: String? = null,
+    hasUpdate: Boolean = false,
     isEnabled: Boolean,
     onToggle: (Boolean) -> Unit,
-    onUninstall: () -> Unit
+    onUninstall: () -> Unit,
+    onUpdate: (() -> Unit)? = null
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                // Extension icon
+                if (!iconUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = iconUrl,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                } else {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
                 Spacer(modifier = Modifier.width(12.dp))
                 
+                // Extension name and version
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = title,
@@ -331,23 +531,53 @@ private fun ExtensionCard(
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (hasUpdate) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (hasUpdate) {
+                        Text(
+                            text = "Update available",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+                
+                // Update button (if update available)
+                if (hasUpdate && onUpdate != null) {
+                    IconButton(
+                        onClick = onUpdate,
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Update,
+                            contentDescription = "Update",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                
+                // Uninstall icon button
+                IconButton(
+                    onClick = onUninstall,
+                    colors = IconButtonDefaults.iconButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Delete,
+                        contentDescription = "Uninstall",
+                        modifier = Modifier.size(20.dp)
                     )
                 }
                 
+                // Enable/disable toggle
                 Switch(
                     checked = isEnabled,
                     onCheckedChange = onToggle
                 )
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Row {
-                Spacer(modifier = Modifier.weight(1f))
-                TextButton(onClick = onUninstall) {
-                    Text("Uninstall")
-                }
             }
         }
     }
@@ -358,19 +588,40 @@ private fun RemoteExtensionCard(
     title: String,
     subtitle: String,
     developer: String,
-    onDownloadClick: () -> Unit
+    iconUrl: String? = null,
+    installationStatus: InstallationStatus? = null,
+    isInstalled: Boolean = false,
+    hasDownloadedApk: Boolean = false,
+    hasUpdate: Boolean = false,
+    onDownloadClick: () -> Unit,
+    onInstallClick: () -> Unit = {},
+    onUninstallClick: () -> Unit = {},
+    onUpdateClick: () -> Unit = {}
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Outlined.Extension,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Extension icon
+                if (!iconUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = iconUrl,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Outlined.Extension,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
                 Spacer(modifier = Modifier.width(12.dp))
                 
+                // Extension info
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = title,
@@ -388,21 +639,98 @@ private fun RemoteExtensionCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Button(
-                onClick = onDownloadClick,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Download,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Download")
+                
+                // Action button/icon
+                when {
+                    isInstalled && hasUpdate -> {
+                        IconButton(
+                            onClick = onUpdateClick,
+                            colors = IconButtonDefaults.iconButtonColors(
+                                contentColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Update,
+                                contentDescription = "Update",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    isInstalled -> {
+                        IconButton(
+                            onClick = onUninstallClick,
+                            colors = IconButtonDefaults.iconButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Delete,
+                                contentDescription = "Uninstall",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    installationStatus == InstallationStatus.DOWNLOADING -> {
+                        Box(
+                            modifier = Modifier.size(48.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    }
+                    installationStatus == InstallationStatus.DOWNLOADED || hasDownloadedApk -> {
+                        IconButton(
+                            onClick = onInstallClick,
+                            colors = IconButtonDefaults.iconButtonColors(
+                                contentColor = MaterialTheme.colorScheme.secondary
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.InstallMobile,
+                                contentDescription = "Install",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    installationStatus == InstallationStatus.INSTALLING -> {
+                        Box(
+                            modifier = Modifier.size(48.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    }
+                    installationStatus == InstallationStatus.COMPLETED -> {
+                        IconButton(
+                            onClick = { },
+                            enabled = false,
+                            colors = IconButtonDefaults.iconButtonColors(
+                                contentColor = MaterialTheme.colorScheme.tertiary
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.CheckCircle,
+                                contentDescription = "Installed",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    else -> {
+                        IconButton(onClick = onDownloadClick) {
+                            Icon(
+                                imageVector = Icons.Outlined.Download,
+                                contentDescription = "Download",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -419,8 +747,8 @@ private fun RepositoryCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+                verticalAlignment = Alignment.CenterVertically
+            ) {
             Icon(
                 imageVector = Icons.Default.Folder,
                 contentDescription = null,
@@ -429,28 +757,28 @@ private fun RepositoryCard(
             )
             Spacer(modifier = Modifier.width(12.dp))
             
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
                     text = repositoryName,
-                    style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
+                    )
+                    Text(
                     text = repositoryUrl,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
-                )
-            }
-            
-            IconButton(onClick = onRemove) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
+                    )
+                }
+                
+                IconButton(onClick = onRemove) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
                     contentDescription = "Remove repository",
                     tint = MaterialTheme.colorScheme.error
-                )
+                    )
             }
         }
     }
@@ -468,35 +796,35 @@ private fun EmptyStateCard(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
                 .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
                 imageVector = icon,
-                contentDescription = null,
+            contentDescription = null,
                 modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
                 text = description,
-                style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
-            )
-        }
+        )
     }
+}
 }
 
 // Helper function to extract repo name from GitHub URL
@@ -515,5 +843,5 @@ private fun extractRepoName(repositoryUrl: String): String {
         repositoryUrl.substringAfterLast("/").substringBefore(".")
     } catch (e: Exception) {
         repositoryUrl.substringAfterLast("/").substringBefore(".")
-    }
+            }
 } 
