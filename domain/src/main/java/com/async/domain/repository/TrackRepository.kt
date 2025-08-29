@@ -76,6 +76,50 @@ interface TrackRepository {
      */
     fun getFavoriteTracks(): Flow<List<Track>>
     
+    // ======== LIKED TRACKS OPERATIONS ========
+    
+    /**
+     * Add track to liked collection
+     */
+    suspend fun addLikedTrack(track: Track)
+    
+    /**
+     * Remove track from liked collection
+     */
+    suspend fun removeLikedTrack(trackId: Long)
+    
+    /**
+     * Check if track is liked
+     */
+    suspend fun isLiked(trackId: Long): Boolean
+    
+    /**
+     * Get all liked tracks
+     */
+    fun getLikedTracks(): Flow<List<Track>>
+    
+    // ======== DOWNLOADS OPERATIONS ========
+    
+    /**
+     * Add track to downloads
+     */
+    suspend fun addDownloadedTrack(track: Track, filePath: String)
+    
+    /**
+     * Remove downloaded track
+     */
+    suspend fun deleteDownloadedTrack(trackId: Long)
+    
+    /**
+     * Check if track is downloaded
+     */
+    suspend fun isDownloaded(trackId: Long): Boolean
+    
+    /**
+     * Get all downloaded tracks
+     */
+    fun getDownloadedTracks(): Flow<List<Track>>
+    
     // ======== PLAYBACK OPERATIONS ========
     
     /**

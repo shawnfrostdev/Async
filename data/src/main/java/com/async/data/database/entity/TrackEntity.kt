@@ -60,6 +60,9 @@ data class TrackEntity(
     @ColumnInfo(name = "is_favorite")
     val isFavorite: Boolean = false,
     
+    @ColumnInfo(name = "is_liked")
+    val isLiked: Boolean = false,
+    
     @ColumnInfo(name = "is_downloaded")
     val isDownloaded: Boolean = false,
     

@@ -20,7 +20,7 @@ import com.async.data.database.entity.*
         PlayHistoryEntity::class,
         UserSettingsEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class AsyncDatabase : RoomDatabase() {
@@ -60,9 +60,15 @@ abstract class AsyncDatabase : RoomDatabase() {
          */
         private fun getAllMigrations(): Array<Migration> {
             return arrayOf(
-                // Add migrations here as the database evolves
-                // Example: MIGRATION_1_2, MIGRATION_2_3, etc.
+                MIGRATION_1_2
             )
+        }
+        
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Add is_liked column to tracks table
+                database.execSQL("ALTER TABLE tracks ADD COLUMN is_liked INTEGER NOT NULL DEFAULT 0")
+            }
         }
         
         /**

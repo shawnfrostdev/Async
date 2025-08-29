@@ -95,21 +95,224 @@ fun PlayerScreenContent(
             // No track playing state
             EmptyPlayerContent(onNavigateBack = onNavigateBack)
         } else {
-            // Player content with new layout
-            Column(
+            // Player content with scrollable layout
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+                
                 // Album Art (centered)
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Card(
+                            modifier = Modifier
+                                .size(320.dp)
+                                .clip(MaterialTheme.shapes.large),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (uiState.currentTrack?.thumbnailUrl != null) {
+                                    AsyncImage(
+                                        model = uiState.currentTrack.thumbnailUrl,
+                                        contentDescription = "Album Art",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Icon(
+                                        Icons.Outlined.MusicNote,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(80.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Track Info (left aligned) with Add to Playlist and Queue Icons
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            // Song name (reduced size)
+                            Text(
+                                text = uiState.currentTrack?.title ?: "Unknown Title",
+                                style = MaterialTheme.typography.titleLarge, // Changed from headlineSmall
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            
+                            Spacer(modifier = Modifier.height(4.dp))
+                            
+                            // Artist - Album
+                            val artistAlbum = buildString {
+                                append(uiState.currentTrack?.artist ?: "Unknown Artist")
+                                uiState.currentTrack?.album?.let { album ->
+                                    append(" - ")
+                                    append(album)
+                                }
+                            }
+                            Text(
+                                text = artistAlbum,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        
+                        // Add to Playlist Icon
+                        IconButton(
+                            onClick = { /* TODO: Add to playlist */ }
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Outlined.PlaylistAdd,
+                                contentDescription = "Add to playlist",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        
+                        // Queue Icon (moved next to add to playlist)
+                        IconButton(onClick = { /* TODO: Queue */ }) {
+                            Icon(
+                                Icons.Outlined.QueueMusic,
+                                contentDescription = "Queue",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                
+                // Progress Bar
+                item {
+                    Column {
+                        Slider(
+                            value = if (uiState.duration > 0) {
+                                uiState.currentPosition.toFloat() / uiState.duration.toFloat()
+                            } else 0f,
+                            onValueChange = { progress ->
+                                if (uiState.duration > 0) {
+                                    val newPosition = (progress * uiState.duration).toLong()
+                                    playerViewModel.seekTo(newPosition)
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        
+                        // Time labels
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = formatTime(uiState.currentPosition),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = formatTime(uiState.duration),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                
+                // Control Buttons Row
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Shuffle
+                        IconButton(
+                            onClick = { playerViewModel.toggleShuffle() }
+                        ) {
+                            Icon(
+                                Icons.Outlined.Shuffle,
+                                contentDescription = "Shuffle",
+                                tint = if (uiState.isShuffleEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        
+                        // Previous
+                        IconButton(
+                            onClick = { playerViewModel.skipPrevious() }
+                        ) {
+                            Icon(
+                                Icons.Outlined.SkipPrevious,
+                                contentDescription = "Previous",
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                        
+                        // Play/Pause (larger)
+                        IconButton(
+                            onClick = { playerViewModel.playPause() },
+                            modifier = Modifier.size(64.dp)
+                        ) {
+                            Icon(
+                                if (uiState.isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
+                                contentDescription = if (uiState.isPlaying) "Pause" else "Play",
+                                modifier = Modifier.size(40.dp)
+                            )
+                        }
+                        
+                        // Next
+                        IconButton(
+                            onClick = { playerViewModel.skipNext() }
+                        ) {
+                            Icon(
+                                Icons.Outlined.SkipNext,
+                                contentDescription = "Next",
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                        
+                        // Repeat
+                        IconButton(
+                            onClick = { playerViewModel.toggleRepeat() }
+                        ) {
+                            Icon(
+                                when (uiState.repeatMode) {
+                                    RepeatMode.ALL -> Icons.Outlined.Repeat
+                                    RepeatMode.ONE -> Icons.Outlined.RepeatOne
+                                    else -> Icons.Outlined.Repeat
+                                },
+                                contentDescription = "Repeat",
+                                tint = if (uiState.repeatMode != RepeatMode.OFF) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                
+                // Lyrics Card (placeholder) - now scrollable
+                item {
                     Card(
                         modifier = Modifier
-                            .size(320.dp)
-                            .clip(MaterialTheme.shapes.large),
+                            .fillMaxWidth()
+                            .height(200.dp), // Increased height for better scrolling experience
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant
                         )
@@ -118,235 +321,77 @@ fun PlayerScreenContent(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (uiState.currentTrack?.thumbnailUrl != null) {
-                                AsyncImage(
-                                    model = uiState.currentTrack.thumbnailUrl,
-                                    contentDescription = "Album Art",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
                                 Icon(
                                     Icons.Outlined.MusicNote,
                                     contentDescription = null,
-                                    modifier = Modifier.size(80.dp),
+                                    modifier = Modifier.size(32.dp),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Lyrics",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Scroll to see more content below",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                    textAlign = TextAlign.Center
                                 )
                             }
                         }
                     }
                 }
                 
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                // Track Info (left aligned) with Add to Playlist Icon
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f)
+                // Additional content to demonstrate scrolling
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        )
                     ) {
-                        // Song name
-                        Text(
-                            text = uiState.currentTrack?.title ?: "Unknown Title",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        
-                        Spacer(modifier = Modifier.height(4.dp))
-                        
-                        // Artist - Album
-                        val artistAlbum = buildString {
-                            append(uiState.currentTrack?.artist ?: "Unknown Artist")
-                            uiState.currentTrack?.album?.let { album ->
-                                append(" - ")
-                                append(album)
-                            }
-                        }
-                        Text(
-                            text = artistAlbum,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    
-                    // Add to Playlist Icon
-                    IconButton(
-                        onClick = { /* TODO: Add to playlist */ }
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Outlined.PlaylistAdd,
-                            contentDescription = "Add to playlist",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                // Progress Bar
-                Column {
-                    Slider(
-                        value = if (uiState.duration > 0) {
-                            uiState.currentPosition.toFloat() / uiState.duration.toFloat()
-                        } else 0f,
-                        onValueChange = { progress ->
-                            if (uiState.duration > 0) {
-                                val newPosition = (progress * uiState.duration).toLong()
-                                playerViewModel.seekTo(newPosition)
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    
-                    // Time labels
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = formatTime(uiState.currentPosition),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = formatTime(uiState.duration),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                // Control Buttons Row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Shuffle
-                    IconButton(
-                        onClick = { playerViewModel.toggleShuffle() }
-                    ) {
-                        Icon(
-                            Icons.Outlined.Shuffle,
-                            contentDescription = "Shuffle",
-                            tint = if (uiState.isShuffleEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    
-                    // Previous
-                    IconButton(
-                        onClick = { playerViewModel.skipPrevious() }
-                    ) {
-                        Icon(
-                            Icons.Outlined.SkipPrevious,
-                            contentDescription = "Previous",
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-                    
-                    // Play/Pause (larger)
-                    IconButton(
-                        onClick = { playerViewModel.playPause() },
-                        modifier = Modifier.size(64.dp)
-                    ) {
-                        Icon(
-                            if (uiState.isPlaying) Icons.Outlined.Pause else Icons.Outlined.PlayArrow,
-                            contentDescription = if (uiState.isPlaying) "Pause" else "Play",
-                            modifier = Modifier.size(40.dp)
-                        )
-                    }
-                    
-                    // Next
-                    IconButton(
-                        onClick = { playerViewModel.skipNext() }
-                    ) {
-                        Icon(
-                            Icons.Outlined.SkipNext,
-                            contentDescription = "Next",
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-                    
-                    // Repeat
-                    IconButton(
-                        onClick = { playerViewModel.toggleRepeat() }
-                    ) {
-                        Icon(
-                            when (uiState.repeatMode) {
-                                RepeatMode.ALL -> Icons.Outlined.Repeat
-                                RepeatMode.ONE -> Icons.Outlined.RepeatOne
-                                else -> Icons.Outlined.Repeat
-                            },
-                            contentDescription = "Repeat",
-                            tint = if (uiState.repeatMode != RepeatMode.OFF) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                // Share and Queue Icons (right aligned)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    IconButton(onClick = { /* TODO: Share */ }) {
-                        Icon(
-                            Icons.Outlined.Share,
-                            contentDescription = "Share",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    
-                    IconButton(onClick = { /* TODO: Queue */ }) {
-                        Icon(
-                            Icons.Outlined.QueueMusic,
-                            contentDescription = "Queue",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // Lyrics Card (placeholder)
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                Icons.Outlined.MusicNote,
-                                contentDescription = null,
-                                modifier = Modifier.size(32.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Lyrics",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    Icons.Outlined.Info,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(28.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Track Information",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Additional details and metadata will appear here",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                         }
                     }
+                }
+                
+                // Bottom spacing
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }

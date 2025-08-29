@@ -123,6 +123,89 @@ class TrackRepositoryImpl(
             .map { entities -> trackMapper.mapEntitiesToDomain(entities) }
     }
     
+    // ======== LIKED TRACKS OPERATIONS ========
+    
+    override suspend fun addLikedTrack(track: Track) {
+        try {
+            logcat { "Adding track to liked: ${track.title}" }
+            val entity = trackMapper.mapDomainToEntity(track)
+            trackDao.insertTrack(entity)
+            trackDao.updateLikedStatus(track.id, true)
+        } catch (e: Exception) {
+            logcat { "Error adding to liked: ${e.message}" }
+            throw e
+        }
+    }
+    
+    override suspend fun removeLikedTrack(trackId: Long) {
+        try {
+            logcat { "Removing track from liked: $trackId" }
+            trackDao.updateLikedStatus(trackId, false)
+        } catch (e: Exception) {
+            logcat { "Error removing from liked: ${e.message}" }
+            throw e
+        }
+    }
+    
+    override suspend fun isLiked(trackId: Long): Boolean {
+        return try {
+            logcat { "Checking if track is liked: $trackId" }
+            trackDao.isLiked(trackId)
+        } catch (e: Exception) {
+            logcat { "Error checking liked status: ${e.message}" }
+            false
+        }
+    }
+    
+    override fun getLikedTracks(): Flow<List<Track>> {
+        logcat { "Getting liked tracks" }
+        return trackDao.getLikedTracks()
+            .map { entities -> trackMapper.mapEntitiesToDomain(entities) }
+    }
+    
+    // ======== DOWNLOADS OPERATIONS ========
+    
+    override suspend fun addDownloadedTrack(track: Track, filePath: String) {
+        try {
+            logcat { "Adding track to downloads: ${track.title}" }
+            val entity = trackMapper.mapDomainToEntity(track.copy(
+                streamUrl = filePath // Store file path as stream URL for downloaded tracks
+            ))
+            trackDao.insertTrack(entity)
+            trackDao.updateDownloadStatus(track.id, true, filePath)
+        } catch (e: Exception) {
+            logcat { "Error adding to downloads: ${e.message}" }
+            throw e
+        }
+    }
+    
+    override suspend fun deleteDownloadedTrack(trackId: Long) {
+        try {
+            logcat { "Deleting downloaded track: $trackId" }
+            trackDao.updateDownloadStatus(trackId, false, null)
+            // TODO: Delete actual file from storage
+        } catch (e: Exception) {
+            logcat { "Error deleting downloaded track: ${e.message}" }
+            throw e
+        }
+    }
+    
+    override suspend fun isDownloaded(trackId: Long): Boolean {
+        return try {
+            logcat { "Checking if track is downloaded: $trackId" }
+            trackDao.isDownloaded(trackId)
+        } catch (e: Exception) {
+            logcat { "Error checking download status: ${e.message}" }
+            false
+        }
+    }
+    
+    override fun getDownloadedTracks(): Flow<List<Track>> {
+        logcat { "Getting downloaded tracks" }
+        return trackDao.getDownloadedTracks()
+            .map { entities -> trackMapper.mapEntitiesToDomain(entities) }
+    }
+    
     // ======== PLAYBACK OPERATIONS ========
     
     override suspend fun getStreamUrl(track: Track): AsyncResult<String, TrackError> {

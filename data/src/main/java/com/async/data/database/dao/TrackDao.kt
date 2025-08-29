@@ -38,6 +38,12 @@ interface TrackDao {
     @Query("UPDATE tracks SET is_favorite = :isFavorite WHERE id = :trackId")
     suspend fun updateFavoriteStatus(trackId: Long, isFavorite: Boolean)
     
+    @Query("UPDATE tracks SET is_liked = :isLiked WHERE id = :trackId")
+    suspend fun updateLikedStatus(trackId: Long, isLiked: Boolean)
+    
+    @Query("UPDATE tracks SET is_downloaded = :isDownloaded, download_path = :downloadPath WHERE id = :trackId")
+    suspend fun updateDownloadStatus(trackId: Long, isDownloaded: Boolean, downloadPath: String?)
+    
     @Query("UPDATE tracks SET stream_url = :streamUrl WHERE id = :trackId")
     suspend fun updateStreamUrl(trackId: Long, streamUrl: String?)
     
@@ -87,6 +93,12 @@ interface TrackDao {
     @Query("SELECT * FROM tracks WHERE is_favorite = 1 ORDER BY date_added DESC")
     fun getFavoriteTracks(): Flow<List<TrackEntity>>
     
+    @Query("SELECT * FROM tracks WHERE is_liked = 1 ORDER BY date_added DESC")
+    fun getLikedTracks(): Flow<List<TrackEntity>>
+    
+    @Query("SELECT * FROM tracks WHERE is_downloaded = 1 ORDER BY date_added DESC")
+    fun getDownloadedTracks(): Flow<List<TrackEntity>>
+    
     @Query("SELECT * FROM tracks WHERE last_played IS NOT NULL ORDER BY last_played DESC LIMIT :limit")
     fun getRecentTracks(limit: Int = 50): Flow<List<TrackEntity>>
     
@@ -101,6 +113,12 @@ interface TrackDao {
     
     @Query("SELECT is_favorite FROM tracks WHERE id = :trackId")
     suspend fun isFavorite(trackId: Long): Boolean
+    
+    @Query("SELECT is_liked FROM tracks WHERE id = :trackId")
+    suspend fun isLiked(trackId: Long): Boolean
+    
+    @Query("SELECT is_downloaded FROM tracks WHERE id = :trackId")
+    suspend fun isDownloaded(trackId: Long): Boolean
     
     // ======== SEARCH OPERATIONS ========
     
