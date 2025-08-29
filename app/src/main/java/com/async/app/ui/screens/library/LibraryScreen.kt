@@ -1042,17 +1042,17 @@ private fun CustomPlaylistCard(
             
             // Menu button with dropdown
             Box {
-                IconButton(
+            IconButton(
                     onClick = { showMenu = true },
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        Icons.Outlined.MoreVert,
-                        contentDescription = "Playlist options",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    Icons.Outlined.MoreVert,
+                    contentDescription = "Playlist options",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
                 
                 DropdownMenu(
                     expanded = showMenu,

@@ -14,6 +14,7 @@ import com.async.app.di.AppModule
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.Flow
 import logcat.logcat
 
 /**
@@ -595,6 +596,25 @@ class LibraryViewModel : ViewModel() {
         // Access the state version to ensure this is observed
         _stateVersion
         return _trackPlaylistState[trackId]?.toMap() ?: emptyMap()
+    }
+
+    /**
+     * Get tracks for a specific playlist
+     */
+    fun getPlaylistTracks(playlistId: Long): Flow<List<Track>> {
+        return playlistRepository.getPlaylistTracks(playlistId)
+    }
+    
+    /**
+     * Get tracks for a specific playlist as one-time fetch
+     */
+    suspend fun getPlaylistTracksOnce(playlistId: Long): List<Track> {
+        return try {
+            playlistRepository.getPlaylistTracks(playlistId).firstOrNull() ?: emptyList()
+        } catch (e: Exception) {
+            logcat("LibraryViewModel") { "Error loading tracks for playlist $playlistId: ${e.message}" }
+            emptyList()
+        }
     }
 }
 

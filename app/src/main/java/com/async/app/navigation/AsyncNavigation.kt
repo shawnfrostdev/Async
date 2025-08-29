@@ -34,6 +34,8 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.async.app.ui.vm.LibraryViewModel
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 /**
  * Main navigation setup using Voyager
@@ -255,13 +257,16 @@ data class PlaylistDetailCustomScreen(val playlistId: Long) : Screen {
         // Find the playlist by ID
         val playlist = libraryViewModel.uiState.customPlaylists.find { it.id == playlistId }
         
+        // Load tracks for this playlist
+        val playlistTracks by libraryViewModel.getPlaylistTracks(playlistId).collectAsState(initial = emptyList())
+        
         if (playlist != null) {
             PlaylistDetailScreen(
                 playlistName = playlist.name,
                 playlistDescription = playlist.description,
                 playlistIcon = Icons.AutoMirrored.Outlined.PlaylistPlay,
                 playlistIconTint = MaterialTheme.colorScheme.primary,
-                tracks = emptyList(), // TODO: Load tracks for this playlist
+                tracks = playlistTracks, // Now using actual tracks from database
                 onNavigateBack = { navigator?.pop() },
                 onTrackClick = { searchResult ->
                     // Handle track click - could navigate to player or start playback
@@ -280,13 +285,13 @@ data class PlaylistDetailCustomScreen(val playlistId: Long) : Screen {
                     logcat("PlaylistDetail") { "Play clicked for ${playlist.name}" }
                 },
                 onEditPlaylist = {
-                    // Show edit playlist dialog
                     libraryViewModel.showEditPlaylistDialog(playlist)
                 }
             )
         } else {
             // Playlist not found, show error or navigate back
             LaunchedEffect(Unit) {
+                logcat("PlaylistDetail") { "Playlist with ID $playlistId not found" }
                 navigator?.pop()
             }
         }
