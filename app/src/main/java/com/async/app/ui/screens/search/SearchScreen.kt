@@ -10,6 +10,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.automirrored.outlined.PlaylistAdd
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -135,7 +136,8 @@ fun SearchScreen(
                 selectedTrackForPlaylist = track
                 showAddToPlaylistDialog = true
             },
-            onRetrySearch = { searchViewModel.search(uiState.lastSearchQuery, forceRefresh = true) }
+            onRetrySearch = { searchViewModel.search(uiState.lastSearchQuery, forceRefresh = true) },
+            libraryViewModel = libraryViewModel
         )
     }
     
@@ -157,7 +159,8 @@ fun SearchScreen(
             onDismiss = {
                 showAddToPlaylistDialog = false
                 selectedTrackForPlaylist = null
-            }
+            },
+            libraryViewModel = libraryViewModel
         )
     }
 }
@@ -474,7 +477,8 @@ private fun SearchResultsSection(
     onTrackClick: (SearchResult) -> Unit,
     onPlayTrack: (SearchResult) -> Unit,
     onAddToPlaylist: (SearchResult) -> Unit,
-    onRetrySearch: () -> Unit
+    onRetrySearch: () -> Unit,
+    libraryViewModel: LibraryViewModel
 ) {
         if (uiState.isLoading) {
         LoadingContent()
@@ -521,7 +525,8 @@ private fun SearchResultsSection(
                 resultsByExtension = uiState.resultsByExtension,
                 onTrackClick = onTrackClick,
                 onPlayTrack = onPlayTrack,
-                onAddToPlaylist = onAddToPlaylist
+                onAddToPlaylist = onAddToPlaylist,
+                libraryViewModel = libraryViewModel
             )
         }
     } else if (uiState.lastSearchQuery.isNotEmpty()) {
@@ -613,7 +618,8 @@ private fun ResultsByExtensionStandard(
     resultsByExtension: Map<String, List<SearchResult>>,
     onTrackClick: (SearchResult) -> Unit,
     onPlayTrack: (SearchResult) -> Unit,
-    onAddToPlaylist: (SearchResult) -> Unit
+    onAddToPlaylist: (SearchResult) -> Unit,
+    libraryViewModel: LibraryViewModel
 ) {
             LazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -625,7 +631,8 @@ private fun ResultsByExtensionStandard(
                     results = results,
                     onTrackClick = onTrackClick,
                     onPlayTrack = onPlayTrack,
-                    onAddToPlaylist = onAddToPlaylist
+                    onAddToPlaylist = onAddToPlaylist,
+                    libraryViewModel = libraryViewModel
                 )
             }
         }
@@ -638,7 +645,8 @@ private fun ExtensionResultsSectionStandard(
     results: List<SearchResult>,
     onTrackClick: (SearchResult) -> Unit,
     onPlayTrack: (SearchResult) -> Unit,
-    onAddToPlaylist: (SearchResult) -> Unit
+    onAddToPlaylist: (SearchResult) -> Unit,
+    libraryViewModel: LibraryViewModel
 ) {
     Column {
         // Extension header - clean, standard style
@@ -668,7 +676,8 @@ private fun ExtensionResultsSectionStandard(
                         track = track,
                         onTrackClick = onTrackClick,
                         onPlayClick = onPlayTrack,
-                        onAddToPlaylist = onAddToPlaylist
+                        onAddToPlaylist = onAddToPlaylist,
+                        libraryViewModel = libraryViewModel
                     )
             if (track != results.last()) {
                 Spacer(modifier = Modifier.height(1.dp))
@@ -698,8 +707,11 @@ private fun StandardSearchResultItem(
     track: SearchResult,
     onTrackClick: (SearchResult) -> Unit,
     onPlayClick: (SearchResult) -> Unit,
-    onAddToPlaylist: (SearchResult) -> Unit
+    onAddToPlaylist: (SearchResult) -> Unit,
+    libraryViewModel: LibraryViewModel
 ) {
+    val isLiked = libraryViewModel.isTrackLiked(track.id ?: "")
+    
     Surface(
         modifier = Modifier.fillMaxWidth(),
         onClick = { 
@@ -797,16 +809,33 @@ private fun StandardSearchResultItem(
             // Add to playlist button
             IconButton(
                 onClick = { 
-                    onAddToPlaylist(track)
+                    if (isLiked) {
+                        // Track is already liked, open dialog for advanced management
+                        onAddToPlaylist(track)
+                    } else {
+                        // First click: Add to liked playlist automatically
+                        libraryViewModel.toggleTrackLiked(track)
+                    }
                 },
                 modifier = Modifier.size(40.dp)
             ) {
-                Icon(
-                    Icons.Outlined.Add,
-                    contentDescription = "Add to playlist",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
+                if (isLiked) {
+                    // Show filled circle with checkmark for liked tracks
+                    Icon(
+                        Icons.Filled.CheckCircle,
+                        contentDescription = "Added to liked - tap to manage playlists",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                } else {
+                    // Show add icon for non-liked tracks
+                    Icon(
+                        Icons.Outlined.Add,
+                        contentDescription = "Add to liked playlist",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
     }
@@ -1065,14 +1094,17 @@ private fun AddToPlaylistDialog(
     playlists: List<com.async.domain.model.Playlist>,
     onPlaylistSelected: (com.async.domain.model.Playlist) -> Unit,
     onCreateNewPlaylist: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    libraryViewModel: LibraryViewModel
 ) {
+    val isLiked = libraryViewModel.isTrackLiked(track.id ?: "")
+    
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Column {
                 Text(
-                    text = "Add to Playlist",
+                    text = "Manage Playlists",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Medium
                 )
@@ -1091,13 +1123,66 @@ private fun AddToPlaylistDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // Liked playlist (always first)
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { 
+                            libraryViewModel.toggleTrackLiked(track)
+                        },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isLiked) 
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                            else MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                if (isLiked) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
+                                contentDescription = if (isLiked) "Remove from liked" else "Add to liked",
+                                tint = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = "Liked Songs",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = if (isLiked) FontWeight.Medium else FontWeight.Normal
+                                )
+                                Text(
+                                    text = "Your favorite tracks",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                // Divider
+                item {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+                }
+                
                 // Create new playlist option
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = onCreateNewPlaylist,
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
                         )
                     ) {
                         Row(
@@ -1109,26 +1194,37 @@ private fun AddToPlaylistDialog(
                             Icon(
                                 Icons.Outlined.Add,
                                 contentDescription = "Create new playlist",
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = MaterialTheme.colorScheme.secondary,
                                 modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
                                 text = "Create New Playlist",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MaterialTheme.colorScheme.secondary,
                                 fontWeight = FontWeight.Medium
                             )
                         }
                     }
                 }
                 
-                // Existing playlists
+                // Custom playlists
                 if (playlists.isNotEmpty()) {
                     items(playlists) { playlist ->
+                        // For now, we'll assume track is not in custom playlists
+                        // This should be enhanced with real check
+                        val isInPlaylist = false // TODO: Implement real check
+                        
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            onClick = { onPlaylistSelected(playlist) }
+                            onClick = { 
+                                libraryViewModel.toggleTrackInPlaylist(playlist.id, track)
+                            },
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isInPlaylist) 
+                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                                else MaterialTheme.colorScheme.surface
+                            )
                         ) {
                             Row(
                                 modifier = Modifier
@@ -1137,9 +1233,9 @@ private fun AddToPlaylistDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    Icons.AutoMirrored.Outlined.PlaylistAdd,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    if (isInPlaylist) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
+                                    contentDescription = if (isInPlaylist) "Remove from playlist" else "Add to playlist",
+                                    tint = if (isInPlaylist) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(24.dp)
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
@@ -1149,6 +1245,8 @@ private fun AddToPlaylistDialog(
                                     Text(
                                         text = playlist.name,
                                         style = MaterialTheme.typography.bodyLarge,
+                                        color = if (isInPlaylist) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                        fontWeight = if (isInPlaylist) FontWeight.Medium else FontWeight.Normal,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -1186,7 +1284,7 @@ private fun AddToPlaylistDialog(
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = "No playlists yet",
+                                        text = "No custom playlists yet",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -1200,7 +1298,7 @@ private fun AddToPlaylistDialog(
         confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text("Done")
             }
         }
     )

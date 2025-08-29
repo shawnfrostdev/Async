@@ -439,6 +439,88 @@ class LibraryViewModel : ViewModel() {
             }
         }
     }
+    
+    /**
+     * Smart add to playlist - adds to liked first, then opens dialog on second click
+     */
+    fun smartAddToPlaylist(searchResult: SearchResult): Boolean {
+        val currentlyLiked = isTrackLiked(searchResult.id ?: "")
+        
+        if (!currentlyLiked) {
+            // First click: Add to liked playlist automatically
+            viewModelScope.launch {
+                try {
+                    val track = trackRepository.cacheTrack(searchResult)
+                    trackRepository.addLikedTrack(track)
+                    loadLikedTracks()
+                    logcat("LibraryViewModel") { "Added track to liked: ${searchResult.title}" }
+                } catch (e: Exception) {
+                    uiState = uiState.copy(error = "Failed to add track: ${e.message}")
+                    logcat("LibraryViewModel") { "Error in smart add: ${e.message}" }
+                }
+            }
+        }
+        
+        // Return true if track should open dialog (already liked), false if just added to liked
+        return currentlyLiked
+    }
+    
+    /**
+     * Check if track is in a specific playlist
+     * For now, returns false - this should be implemented with proper state management
+     */
+    fun isTrackInPlaylist(playlistId: Long, searchResult: SearchResult): Boolean {
+        // TODO: Implement proper playlist membership checking
+        // This would require caching track states or using suspend functions properly
+        return false
+    }
+    
+    /**
+     * Toggle track in playlist (add if not present, remove if present)
+     */
+    fun toggleTrackInPlaylist(playlistId: Long, searchResult: SearchResult) {
+        viewModelScope.launch {
+            try {
+                val track = trackRepository.cacheTrack(searchResult)
+                val isInPlaylist = playlistRepository.isTrackInPlaylist(playlistId, track.id)
+                
+                if (isInPlaylist) {
+                    // Remove from playlist
+                    val result = playlistRepository.removeTrackFromPlaylist(playlistId, track.id)
+                    when (result) {
+                        is com.async.core.result.AsyncResult.Success -> {
+                            loadCustomPlaylists()
+                            if (playlistId == -1L) { // Liked playlist (using -1 as liked playlist ID)
+                                loadLikedTracks()
+                            }
+                            logcat("LibraryViewModel") { "Removed track from playlist: ${searchResult.title}" }
+                        }
+                        else -> {
+                            uiState = uiState.copy(error = "Failed to remove track from playlist")
+                        }
+                    }
+                } else {
+                    // Add to playlist
+                    val result = playlistRepository.addTrackToPlaylist(playlistId, track.id)
+                    when (result) {
+                        is com.async.core.result.AsyncResult.Success -> {
+                            loadCustomPlaylists()
+                            if (playlistId == -1L) { // Liked playlist
+                                loadLikedTracks()
+                            }
+                            logcat("LibraryViewModel") { "Added track to playlist: ${searchResult.title}" }
+                        }
+                        else -> {
+                            uiState = uiState.copy(error = "Failed to add track to playlist")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                uiState = uiState.copy(error = "Failed to toggle track: ${e.message}")
+                logcat("LibraryViewModel") { "Error toggling track: ${e.message}" }
+            }
+        }
+    }
 }
 
 /**
