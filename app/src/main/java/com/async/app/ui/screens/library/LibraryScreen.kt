@@ -515,51 +515,7 @@ private fun EmptyArtistsContent() {
     }
 }
 
-@Composable
-private fun CreatePlaylistDialog(
-    onDismiss: () -> Unit,
-    onConfirm: (String, String) -> Unit
-) {
-    var name by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Create Playlist") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Playlist Name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Description (Optional)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onConfirm(name, description) },
-                enabled = name.isNotBlank()
-            ) {
-                Text("Create")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
-}
+
 
 
 
@@ -1101,6 +1057,10 @@ private fun CreatePlaylistDialog(
     var playlistName by remember { mutableStateOf("") }
     var playlistDescription by remember { mutableStateOf("") }
     
+    // Character limits
+    val maxNameLength = 50
+    val maxDescriptionLength = 200
+    
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -1111,10 +1071,19 @@ private fun CreatePlaylistDialog(
                 // Playlist name field
                 OutlinedTextField(
                     value = playlistName,
-                    onValueChange = { playlistName = it },
+                    onValueChange = { if (it.length <= maxNameLength) playlistName = it },
                     label = { Text("Playlist Name") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    supportingText = {
+                        Text(
+                            text = "${playlistName.length}/$maxNameLength",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (playlistName.length > maxNameLength * 0.9) 
+                                MaterialTheme.colorScheme.error 
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -1122,10 +1091,19 @@ private fun CreatePlaylistDialog(
                 // Description field (optional)
                 OutlinedTextField(
                     value = playlistDescription,
-                    onValueChange = { playlistDescription = it },
+                    onValueChange = { if (it.length <= maxDescriptionLength) playlistDescription = it },
                     label = { Text("Description (Optional)") },
                     modifier = Modifier.fillMaxWidth(),
-                    maxLines = 3
+                    maxLines = 3,
+                    supportingText = {
+                        Text(
+                            text = "${playlistDescription.length}/$maxDescriptionLength",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (playlistDescription.length > maxDescriptionLength * 0.9) 
+                                MaterialTheme.colorScheme.error 
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 )
             }
         },
@@ -1158,6 +1136,10 @@ private fun EditPlaylistDialog(
     var playlistName by remember { mutableStateOf(playlist.name) }
     var playlistDescription by remember { mutableStateOf(playlist.description ?: "") }
     
+    // Character limits
+    val maxNameLength = 50
+    val maxDescriptionLength = 200
+    
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -1168,10 +1150,19 @@ private fun EditPlaylistDialog(
                 // Playlist name field
                 OutlinedTextField(
                     value = playlistName,
-                    onValueChange = { playlistName = it },
+                    onValueChange = { if (it.length <= maxNameLength) playlistName = it },
                     label = { Text("Playlist Name") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    supportingText = {
+                        Text(
+                            text = "${playlistName.length}/$maxNameLength",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (playlistName.length > maxNameLength * 0.9) 
+                                MaterialTheme.colorScheme.error 
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -1179,10 +1170,19 @@ private fun EditPlaylistDialog(
                 // Description field (optional)
                 OutlinedTextField(
                     value = playlistDescription,
-                    onValueChange = { playlistDescription = it },
+                    onValueChange = { if (it.length <= maxDescriptionLength) playlistDescription = it },
                     label = { Text("Description (Optional)") },
                     modifier = Modifier.fillMaxWidth(),
-                    maxLines = 3
+                    maxLines = 3,
+                    supportingText = {
+                        Text(
+                            text = "${playlistDescription.length}/$maxDescriptionLength",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (playlistDescription.length > maxDescriptionLength * 0.9) 
+                                MaterialTheme.colorScheme.error 
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 )
             }
         },
