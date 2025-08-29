@@ -139,34 +139,28 @@ class LibraryViewModel : ViewModel() {
     fun toggleTrackLiked(track: SearchResult) {
         viewModelScope.launch {
             try {
-                val currentLiked = uiState.likedTracks.toMutableList()
-                val existingTrack = currentLiked.find { it.externalId == track.id }
+                val currentlyLiked = isTrackLiked(track.id ?: "")
+                val cachedTrack = trackRepository.cacheTrack(track)
                 
-                if (existingTrack != null) {
-                    trackRepository.removeLikedTrack(existingTrack.id)
-                    currentLiked.remove(existingTrack)
-                    logcat("LibraryViewModel") { "Removed track from liked: ${track.title}" }
+                if (currentlyLiked) {
+                    // Remove from liked
+                    trackRepository.removeLikedTrack(cachedTrack.id)
+                    // Update cached state
+                    updateTrackPlaylistState(track.id ?: "", -1L, false)
                 } else {
-                    val newTrack = Track(
-                        id = track.id.toLongOrNull() ?: track.hashCode().toLong(),
-                        externalId = track.id,
-                        extensionId = track.extensionId ?: "unknown",
-                        title = track.title,
-                        artist = track.artist ?: "Unknown Artist",
-                        album = track.album ?: "Unknown Album",
-                        duration = track.duration ?: 180000L,
-                        thumbnailUrl = track.thumbnailUrl,
-                        streamUrl = null,
-                        dateAdded = System.currentTimeMillis()
-                    )
-                    trackRepository.addLikedTrack(newTrack)
-                    currentLiked.add(0, newTrack)
-                    logcat("LibraryViewModel") { "Added track to liked: ${track.title}" }
+                    // Add to liked
+                    trackRepository.addLikedTrack(cachedTrack)
+                    // Update cached state
+                    updateTrackPlaylistState(track.id ?: "", -1L, true)
                 }
                 
-                uiState = uiState.copy(likedTracks = currentLiked)
+                // Reload UI state
+                loadLikedTracks()
+                logcat("LibraryViewModel") { "Toggled track liked: ${track.title}" }
+                
             } catch (e: Exception) {
-                logcat("LibraryViewModel") { "Error toggling liked track: ${e.message}" }
+                uiState = uiState.copy(error = "Failed to toggle track: ${e.message}")
+                logcat("LibraryViewModel") { "Error toggling track: ${e.message}" }
             }
         }
     }
@@ -493,6 +487,8 @@ class LibraryViewModel : ViewModel() {
                             if (playlistId == -1L) { // Liked playlist (using -1 as liked playlist ID)
                                 loadLikedTracks()
                             }
+                            // Update cached state
+                            updateTrackPlaylistState(searchResult.id ?: "", playlistId, false)
                             logcat("LibraryViewModel") { "Removed track from playlist: ${searchResult.title}" }
                         }
                         else -> {
@@ -508,6 +504,8 @@ class LibraryViewModel : ViewModel() {
                             if (playlistId == -1L) { // Liked playlist
                                 loadLikedTracks()
                             }
+                            // Update cached state
+                            updateTrackPlaylistState(searchResult.id ?: "", playlistId, true)
                             logcat("LibraryViewModel") { "Added track to playlist: ${searchResult.title}" }
                         }
                         else -> {
@@ -520,6 +518,67 @@ class LibraryViewModel : ViewModel() {
                 logcat("LibraryViewModel") { "Error toggling track: ${e.message}" }
             }
         }
+    }
+    
+    /**
+     * Check if track is in ANY playlist (including liked)
+     */
+    fun isTrackInAnyPlaylist(searchResult: SearchResult): Boolean {
+        val trackId = searchResult.id ?: ""
+        
+        // Check if track is liked
+        if (isTrackLiked(trackId)) {
+            return true
+        }
+        
+        // Check cached state for any playlist membership
+        val trackState = _trackPlaylistState[trackId]
+        if (trackState != null) {
+            return trackState.values.any { it }
+        }
+        
+        return false
+    }
+    
+    /**
+     * Get playlist membership status for a track
+     * Returns a map of playlist IDs to membership status
+     */
+    fun getTrackPlaylistMembership(searchResult: SearchResult): Map<Long, Boolean> {
+        val membership = mutableMapOf<Long, Boolean>()
+        
+        // Add liked status (using -1 as liked playlist ID)
+        membership[-1L] = isTrackLiked(searchResult.id ?: "")
+        
+        // TODO: Add custom playlist membership checks
+        // For now, all custom playlists show as false
+        uiState.customPlaylists.forEach { playlist ->
+            membership[playlist.id] = false // TODO: Implement real check
+        }
+        
+        return membership
+    }
+    
+    /**
+     * Enhanced state tracking for playlist membership
+     */
+    private val _trackPlaylistState = mutableMapOf<String, MutableMap<Long, Boolean>>()
+    
+    /**
+     * Update track playlist membership state
+     */
+    fun updateTrackPlaylistState(trackId: String, playlistId: Long, isInPlaylist: Boolean) {
+        if (_trackPlaylistState[trackId] == null) {
+            _trackPlaylistState[trackId] = mutableMapOf()
+        }
+        _trackPlaylistState[trackId]!![playlistId] = isInPlaylist
+    }
+    
+    /**
+     * Get track playlist membership from cached state
+     */
+    fun getTrackPlaylistState(trackId: String, playlistId: Long): Boolean {
+        return _trackPlaylistState[trackId]?.get(playlistId) ?: false
     }
 }
 

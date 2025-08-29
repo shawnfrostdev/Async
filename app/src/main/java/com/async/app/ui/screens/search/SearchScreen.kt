@@ -711,6 +711,7 @@ private fun StandardSearchResultItem(
     libraryViewModel: LibraryViewModel
 ) {
     val isLiked = libraryViewModel.isTrackLiked(track.id ?: "")
+    val isInAnyPlaylist = libraryViewModel.isTrackInAnyPlaylist(track)
     
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -809,8 +810,8 @@ private fun StandardSearchResultItem(
             // Add to playlist button
             IconButton(
                 onClick = { 
-                    if (isLiked) {
-                        // Track is already liked, open dialog for advanced management
+                    if (isInAnyPlaylist) {
+                        // Track is in some playlist, open dialog for advanced management
                         onAddToPlaylist(track)
                     } else {
                         // First click: Add to liked playlist automatically
@@ -819,16 +820,16 @@ private fun StandardSearchResultItem(
                 },
                 modifier = Modifier.size(40.dp)
             ) {
-                if (isLiked) {
-                    // Show filled circle with checkmark for liked tracks
+                if (isInAnyPlaylist) {
+                    // Show filled circle with checkmark for tracks in any playlist
                     Icon(
                         Icons.Filled.CheckCircle,
-                        contentDescription = "Added to liked - tap to manage playlists",
+                        contentDescription = "In playlist - tap to manage playlists",
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
                 } else {
-                    // Show add icon for non-liked tracks
+                    // Show add icon for tracks not in any playlist
                     Icon(
                         Icons.Outlined.Add,
                         contentDescription = "Add to liked playlist",
@@ -1098,6 +1099,7 @@ private fun AddToPlaylistDialog(
     libraryViewModel: LibraryViewModel
 ) {
     val isLiked = libraryViewModel.isTrackLiked(track.id ?: "")
+    val playlistMembership = libraryViewModel.getTrackPlaylistMembership(track)
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1129,6 +1131,12 @@ private fun AddToPlaylistDialog(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = { 
                             libraryViewModel.toggleTrackLiked(track)
+                            // Update the cached state immediately for UI responsiveness
+                            libraryViewModel.updateTrackPlaylistState(
+                                track.id ?: "", 
+                                -1L, 
+                                !isLiked
+                            )
                         },
                         colors = CardDefaults.cardColors(
                             containerColor = if (isLiked) 
@@ -1211,14 +1219,20 @@ private fun AddToPlaylistDialog(
                 // Custom playlists
                 if (playlists.isNotEmpty()) {
                     items(playlists) { playlist ->
-                        // For now, we'll assume track is not in custom playlists
-                        // This should be enhanced with real check
-                        val isInPlaylist = false // TODO: Implement real check
+                        // Get membership status from the map or cached state
+                        val isInPlaylist = playlistMembership[playlist.id] ?: 
+                                          libraryViewModel.getTrackPlaylistState(track.id ?: "", playlist.id)
                         
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             onClick = { 
                                 libraryViewModel.toggleTrackInPlaylist(playlist.id, track)
+                                // Update the cached state immediately for UI responsiveness
+                                libraryViewModel.updateTrackPlaylistState(
+                                    track.id ?: "", 
+                                    playlist.id, 
+                                    !isInPlaylist
+                                )
                             },
                             colors = CardDefaults.cardColors(
                                 containerColor = if (isInPlaylist) 

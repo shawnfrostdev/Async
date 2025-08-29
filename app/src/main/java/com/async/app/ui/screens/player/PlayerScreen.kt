@@ -191,9 +191,9 @@ fun PlayerScreenContent(
                         IconButton(
                             onClick = { 
                                 if (uiState.currentTrack != null) {
-                                    val isLiked = libraryViewModel.isTrackLiked(uiState.currentTrack?.id ?: "")
-                                    if (isLiked) {
-                                        // Track is already liked, open dialog for advanced management
+                                    val isInAnyPlaylist = libraryViewModel.isTrackInAnyPlaylist(uiState.currentTrack!!)
+                                    if (isInAnyPlaylist) {
+                                        // Track is in some playlist, open dialog for advanced management
                                         showAddToPlaylistDialog = true
                                     } else {
                                         // First click: Add to liked playlist automatically
@@ -203,16 +203,16 @@ fun PlayerScreenContent(
                             }
                         ) {
                             if (uiState.currentTrack != null) {
-                                val isLiked = libraryViewModel.isTrackLiked(uiState.currentTrack?.id ?: "")
-                                if (isLiked) {
-                                    // Show filled circle with checkmark for liked tracks
+                                val isInAnyPlaylist = libraryViewModel.isTrackInAnyPlaylist(uiState.currentTrack!!)
+                                if (isInAnyPlaylist) {
+                                    // Show filled circle with checkmark for tracks in any playlist
                                     Icon(
                                         Icons.Filled.CheckCircle,
-                                        contentDescription = "Added to liked - tap to manage playlists",
+                                        contentDescription = "In playlist - tap to manage playlists",
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 } else {
-                                    // Show add icon for non-liked tracks
+                                    // Show add icon for tracks not in any playlist
                                     Icon(
                                         Icons.Outlined.Add,
                                         contentDescription = "Add to liked playlist",
@@ -671,6 +671,7 @@ private fun AddToPlaylistDialog(
     libraryViewModel: LibraryViewModel
 ) {
     val isLiked = libraryViewModel.isTrackLiked(track.id ?: "")
+    val playlistMembership = libraryViewModel.getTrackPlaylistMembership(track)
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -702,6 +703,12 @@ private fun AddToPlaylistDialog(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = { 
                             libraryViewModel.toggleTrackLiked(track)
+                            // Update the cached state immediately for UI responsiveness
+                            libraryViewModel.updateTrackPlaylistState(
+                                track.id ?: "", 
+                                -1L, 
+                                !isLiked
+                            )
                         },
                         colors = CardDefaults.cardColors(
                             containerColor = if (isLiked) 
@@ -784,14 +791,20 @@ private fun AddToPlaylistDialog(
                 // Custom playlists
                 if (playlists.isNotEmpty()) {
                     items(playlists) { playlist ->
-                        // For now, we'll assume track is not in custom playlists
-                        // This should be enhanced with real check
-                        val isInPlaylist = false // TODO: Implement real check
+                        // Get membership status from the map or cached state
+                        val isInPlaylist = playlistMembership[playlist.id] ?: 
+                                          libraryViewModel.getTrackPlaylistState(track.id ?: "", playlist.id)
                         
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             onClick = { 
                                 libraryViewModel.toggleTrackInPlaylist(playlist.id, track)
+                                // Update the cached state immediately for UI responsiveness
+                                libraryViewModel.updateTrackPlaylistState(
+                                    track.id ?: "", 
+                                    playlist.id, 
+                                    !isInPlaylist
+                                )
                             },
                             colors = CardDefaults.cardColors(
                                 containerColor = if (isInPlaylist) 
