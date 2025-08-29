@@ -560,25 +560,41 @@ class LibraryViewModel : ViewModel() {
     }
     
     /**
-     * Enhanced state tracking for playlist membership
+     * Enhanced state tracking for playlist membership - now observable
      */
     private val _trackPlaylistState = mutableMapOf<String, MutableMap<Long, Boolean>>()
     
+    // Create a state holder to trigger recomposition
+    private var _stateVersion by mutableStateOf(0)
+    
     /**
-     * Update track playlist membership state
+     * Update track playlist membership state and trigger recomposition
      */
     fun updateTrackPlaylistState(trackId: String, playlistId: Long, isInPlaylist: Boolean) {
         if (_trackPlaylistState[trackId] == null) {
             _trackPlaylistState[trackId] = mutableMapOf()
         }
         _trackPlaylistState[trackId]!![playlistId] = isInPlaylist
+        // Trigger recomposition
+        _stateVersion++
     }
     
     /**
-     * Get track playlist membership from cached state
+     * Get track playlist membership from cached state (observable)
      */
     fun getTrackPlaylistState(trackId: String, playlistId: Long): Boolean {
+        // Access the state version to ensure this is observed
+        _stateVersion
         return _trackPlaylistState[trackId]?.get(playlistId) ?: false
+    }
+    
+    /**
+     * Get all playlist states for a track (observable)
+     */
+    fun getObservableTrackPlaylistStates(trackId: String): Map<Long, Boolean> {
+        // Access the state version to ensure this is observed
+        _stateVersion
+        return _trackPlaylistState[trackId]?.toMap() ?: emptyMap()
     }
 }
 

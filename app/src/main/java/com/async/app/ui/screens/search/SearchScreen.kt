@@ -712,6 +712,10 @@ private fun StandardSearchResultItem(
 ) {
     val isLiked = libraryViewModel.isTrackLiked(track.id ?: "")
     val isInAnyPlaylist = libraryViewModel.isTrackInAnyPlaylist(track)
+    val observableStates = libraryViewModel.getObservableTrackPlaylistStates(track.id ?: "")
+    
+    // Check if track is in any playlist (including from observable state)
+    val currentIsInAnyPlaylist = observableStates.values.any { it } || isInAnyPlaylist
     
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -810,7 +814,7 @@ private fun StandardSearchResultItem(
             // Add to playlist button
             IconButton(
                 onClick = { 
-                    if (isInAnyPlaylist) {
+                    if (currentIsInAnyPlaylist) {
                         // Track is in some playlist, open dialog for advanced management
                         onAddToPlaylist(track)
                     } else {
@@ -820,7 +824,7 @@ private fun StandardSearchResultItem(
                 },
                 modifier = Modifier.size(40.dp)
             ) {
-                if (isInAnyPlaylist) {
+                if (currentIsInAnyPlaylist) {
                     // Show filled circle with checkmark for tracks in any playlist
                     Icon(
                         Icons.Filled.CheckCircle,
@@ -1100,6 +1104,7 @@ private fun AddToPlaylistDialog(
 ) {
     val isLiked = libraryViewModel.isTrackLiked(track.id ?: "")
     val playlistMembership = libraryViewModel.getTrackPlaylistMembership(track)
+    val observableStates = libraryViewModel.getObservableTrackPlaylistStates(track.id ?: "")
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1127,6 +1132,9 @@ private fun AddToPlaylistDialog(
             ) {
                 // Liked playlist (always first)
                 item {
+                    // Get current liked state (can be from observable state or current state)
+                    val currentLikedState = observableStates[-1L] ?: isLiked
+                    
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = { 
@@ -1135,11 +1143,11 @@ private fun AddToPlaylistDialog(
                             libraryViewModel.updateTrackPlaylistState(
                                 track.id ?: "", 
                                 -1L, 
-                                !isLiked
+                                !currentLikedState
                             )
                         },
                         colors = CardDefaults.cardColors(
-                            containerColor = if (isLiked) 
+                            containerColor = if (currentLikedState) 
                                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                             else MaterialTheme.colorScheme.surface
                         )
@@ -1151,9 +1159,9 @@ private fun AddToPlaylistDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                if (isLiked) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
-                                contentDescription = if (isLiked) "Remove from liked" else "Add to liked",
-                                tint = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                if (currentLikedState) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
+                                contentDescription = if (currentLikedState) "Remove from liked" else "Add to liked",
+                                tint = if (currentLikedState) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
@@ -1163,8 +1171,8 @@ private fun AddToPlaylistDialog(
                                 Text(
                                     text = "Liked Songs",
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                                    fontWeight = if (isLiked) FontWeight.Medium else FontWeight.Normal
+                                    color = if (currentLikedState) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = if (currentLikedState) FontWeight.Medium else FontWeight.Normal
                                 )
                                 Text(
                                     text = "Your favorite tracks",
@@ -1219,9 +1227,10 @@ private fun AddToPlaylistDialog(
                 // Custom playlists
                 if (playlists.isNotEmpty()) {
                     items(playlists) { playlist ->
-                        // Get membership status from the map or cached state
-                        val isInPlaylist = playlistMembership[playlist.id] ?: 
-                                          libraryViewModel.getTrackPlaylistState(track.id ?: "", playlist.id)
+                        // Get membership status from observable state first, then fallback to initial state
+                        val isInPlaylist = observableStates[playlist.id] 
+                            ?: playlistMembership[playlist.id] 
+                            ?: libraryViewModel.getTrackPlaylistState(track.id ?: "", playlist.id)
                         
                         Card(
                             modifier = Modifier.fillMaxWidth(),
