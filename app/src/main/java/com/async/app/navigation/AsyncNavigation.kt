@@ -73,11 +73,13 @@ object SearchTab : Tab {
     @Composable
     override fun Content() {
         val playerViewModel: PlayerViewModel = viewModel()
+        val libraryViewModel: LibraryViewModel = viewModel()
         SearchScreen(
             onPlayTrack = { track -> 
                 logcat("Navigation") { "onPlayTrack called for: ${track.title}" }
                 playerViewModel.playTrack(track) 
-            }
+            },
+            libraryViewModel = libraryViewModel
         )
     }
 }

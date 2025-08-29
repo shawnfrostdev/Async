@@ -406,6 +406,39 @@ class LibraryViewModel : ViewModel() {
             playlistToDelete = null
         )
     }
+    
+    /**
+     * Add track to playlist
+     */
+    fun addTrackToPlaylist(playlistId: Long, searchResult: SearchResult) {
+        viewModelScope.launch {
+            try {
+                // First cache the track in the database
+                val track = trackRepository.cacheTrack(searchResult)
+                
+                // Then add it to the playlist
+                val result = playlistRepository.addTrackToPlaylist(playlistId, track.id)
+                
+                when (result) {
+                    is com.async.core.result.AsyncResult.Success -> {
+                        // Reload playlists to update track counts
+                        loadCustomPlaylists()
+                        logcat("LibraryViewModel") { "Added track to playlist: ${searchResult.title}" }
+                    }
+                    is com.async.core.result.AsyncResult.Error -> {
+                        uiState = uiState.copy(error = "Failed to add track to playlist: ${result.getErrorOrNull()}")
+                        logcat("LibraryViewModel") { "Error adding track to playlist: ${result.getErrorOrNull()}" }
+                    }
+                    is com.async.core.result.AsyncResult.Loading -> {
+                        logcat("LibraryViewModel") { "Adding track to playlist..." }
+                    }
+                }
+            } catch (e: Exception) {
+                uiState = uiState.copy(error = "Failed to add track to playlist: ${e.message}")
+                logcat("LibraryViewModel") { "Error adding track to playlist: ${e.message}" }
+            }
+        }
+    }
 }
 
 /**

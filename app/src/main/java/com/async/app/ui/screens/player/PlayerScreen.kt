@@ -22,9 +22,11 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import coil.compose.AsyncImage
 import com.async.core.model.SearchResult
 import com.async.app.ui.vm.PlayerViewModel
+import com.async.app.ui.vm.LibraryViewModel
 import com.async.app.ui.vm.RepeatMode
 import com.async.app.ui.components.AppText
 import logcat.logcat
+import androidx.compose.ui.text.font.FontWeight
 
 enum class PlayerTab {
     NOW_PLAYING, QUEUE
@@ -62,10 +64,13 @@ class PlayerScreen(private val playerViewModel: PlayerViewModel) : Screen {
 @Composable
 fun PlayerScreenContent(
     onNavigateBack: () -> Unit = {},
-    playerViewModel: PlayerViewModel = viewModel()
+    playerViewModel: PlayerViewModel = viewModel(),
+    libraryViewModel: LibraryViewModel = viewModel()
 ) {
     val uiState = playerViewModel.uiState
+    val libraryUiState = libraryViewModel.uiState
     var selectedTab by remember { mutableStateOf(PlayerTab.NOW_PLAYING) }
+    var showAddToPlaylistDialog by remember { mutableStateOf(false) }
     
     Column(
         modifier = Modifier.fillMaxSize()
@@ -183,7 +188,11 @@ fun PlayerScreenContent(
                         
                         // Add to Playlist Icon
                         IconButton(
-                            onClick = { /* TODO: Add to playlist */ }
+                            onClick = { 
+                                if (uiState.currentTrack != null) {
+                                    showAddToPlaylistDialog = true
+                                }
+                            }
                         ) {
                             Icon(
                                 Icons.AutoMirrored.Outlined.PlaylistAdd,
@@ -396,6 +405,25 @@ fun PlayerScreenContent(
             }
         }
     }
+    
+    // Add to Playlist Dialog
+    if (showAddToPlaylistDialog && uiState.currentTrack != null) {
+        AddToPlaylistDialog(
+            track = uiState.currentTrack!!,
+            playlists = libraryUiState.customPlaylists,
+            onPlaylistSelected = { playlist ->
+                libraryViewModel.addTrackToPlaylist(playlist.id, uiState.currentTrack!!)
+                showAddToPlaylistDialog = false
+            },
+            onCreateNewPlaylist = {
+                libraryViewModel.showCreatePlaylistDialog()
+                showAddToPlaylistDialog = false
+            },
+            onDismiss = {
+                showAddToPlaylistDialog = false
+            }
+        )
+    }
 }
 
 @Composable
@@ -603,4 +631,146 @@ private fun formatTime(timeMs: Long): String {
     val seconds = (timeMs / 1000) % 60
     val minutes = (timeMs / (1000 * 60)) % 60
     return "%d:%02d".format(minutes, seconds)
+}
+
+@Composable
+private fun AddToPlaylistDialog(
+    track: SearchResult,
+    playlists: List<com.async.domain.model.Playlist>,
+    onPlaylistSelected: (com.async.domain.model.Playlist) -> Unit,
+    onCreateNewPlaylist: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                AppText.TitleMedium(text = "Add to Playlist")
+                Spacer(modifier = Modifier.height(4.dp))
+                AppText.BodySmall(
+                    text = track.title ?: "Unknown Track",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        },
+        text = {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Create new playlist option
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = onCreateNewPlaylist,
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Outlined.Add,
+                                contentDescription = "Create new playlist",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Create New Playlist",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+                
+                // Existing playlists
+                if (playlists.isNotEmpty()) {
+                    items(playlists) { playlist ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = { onPlaylistSelected(playlist) }
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.AutoMirrored.Outlined.PlaylistAdd,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(
+                                        text = playlist.name,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = "${playlist.trackCount} ${if (playlist.trackCount == 1) "track" else "tracks"}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(24.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.PlaylistAdd,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(32.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "No playlists yet",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 } 
