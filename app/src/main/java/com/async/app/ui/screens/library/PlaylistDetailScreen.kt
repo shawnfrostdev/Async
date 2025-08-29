@@ -258,120 +258,128 @@ private fun PlaylistHeader(
                     }
                 }
                 
-                // Medium-sized Sort and Edit icons below name/desc
+                // Combined row with Sort, Edit, Track Count on left and Shuffle, Play on right
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Sort button with text and background
-                    Card(
-                        onClick = onSortClick,
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        shape = RoundedCornerShape(50) // Full round corners
+                    // Left side - Sort, Edit, Track Count buttons
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        // Sort button with text and background
+                        Card(
+                            onClick = onSortClick,
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            ),
+                            shape = RoundedCornerShape(50) // Full round corners
                         ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Outlined.Sort,
-                                contentDescription = "Sort",
-                                modifier = Modifier.size(18.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Outlined.Sort,
+                                    contentDescription = "Sort",
+                                    modifier = Modifier.size(18.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = "Sort",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        
+                        // Edit button with text and background
+                        Card(
+                            onClick = onEditClick,
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            ),
+                            shape = RoundedCornerShape(50) // Full round corners
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Edit,
+                                    contentDescription = "Edit",
+                                    modifier = Modifier.size(18.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = "Edit",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        
+                        // Track count with matching background and styling
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            ),
+                            shape = RoundedCornerShape(50) // Full round corners
+                        ) {
                             Text(
-                                text = "Sort",
+                                text = "$trackCount ${if (trackCount == 1) "track" else "tracks"}",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                             )
                         }
                     }
                     
-                    // Edit button with text and background
-                    Card(
-                        onClick = onEditClick,
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        shape = RoundedCornerShape(50) // Full round corners
+                    Spacer(modifier = Modifier.weight(1f))
+                    
+                    // Right side - Shuffle and Play buttons
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        // Shuffle button
+                        IconButton(
+                            onClick = onShuffleClick,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                    MaterialTheme.shapes.medium
+                                )
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.Edit,
-                                contentDescription = "Edit",
-                                modifier = Modifier.size(18.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                imageVector = Icons.Outlined.Shuffle,
+                                contentDescription = "Shuffle",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
                             )
-                            Text(
-                                text = "Edit",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                        
+                        // Play button
+                        IconButton(
+                            onClick = onPlayClick,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.shapes.medium
+                                )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.PlayArrow,
+                                contentDescription = "Play",
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(24.dp)
                             )
                         }
                     }
-                    
-                    // Track count with matching background and styling
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        shape = RoundedCornerShape(50) // Full round corners
-                    ) {
-                        Text(
-                            text = "$trackCount ${if (trackCount == 1) "track" else "tracks"}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-                        )
-                    }
-                }
-            }
-            
-            // Right side - Control buttons (restored original)
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Shuffle button
-                IconButton(
-                    onClick = onShuffleClick,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                            MaterialTheme.shapes.medium
-                        )
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Shuffle,
-                        contentDescription = "Shuffle",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-                
-                // Play button
-                IconButton(
-                    onClick = onPlayClick,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(
-                            MaterialTheme.colorScheme.primary,
-                            MaterialTheme.shapes.medium
-                        )
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.PlayArrow,
-                        contentDescription = "Play",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(24.dp)
-                    )
                 }
             }
         }
@@ -660,6 +668,9 @@ private fun EditPlaylistDialog(
 ) {
     var playlistName by remember { mutableStateOf(playlist.name) }
     var playlistDescription by remember { mutableStateOf(playlist.description ?: "") }
+    // Character limits
+    val maxNameLength = 50
+    val maxDescriptionLength = 200
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -671,10 +682,19 @@ private fun EditPlaylistDialog(
                 // Playlist name field
                 OutlinedTextField(
                     value = playlistName,
-                    onValueChange = { playlistName = it },
+                    onValueChange = { if (it.length <= maxNameLength) playlistName = it },
                     label = { Text("Playlist Name") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    supportingText = {
+                        Text(
+                            text = "${playlistName.length}/$maxNameLength",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (playlistName.length > maxNameLength * 0.9) 
+                                MaterialTheme.colorScheme.error 
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -682,10 +702,19 @@ private fun EditPlaylistDialog(
                 // Description field (optional)
                 OutlinedTextField(
                     value = playlistDescription,
-                    onValueChange = { playlistDescription = it },
+                    onValueChange = { if (it.length <= maxDescriptionLength) playlistDescription = it },
                     label = { Text("Description (Optional)") },
                     modifier = Modifier.fillMaxWidth(),
-                    maxLines = 3
+                    maxLines = 3,
+                    supportingText = {
+                        Text(
+                            text = "${playlistDescription.length}/$maxDescriptionLength",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (playlistDescription.length > maxDescriptionLength * 0.9) 
+                                MaterialTheme.colorScheme.error 
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 )
             }
         },
