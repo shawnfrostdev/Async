@@ -4,8 +4,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.material3.MaterialTheme
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -16,6 +21,7 @@ import com.async.app.ui.screens.home.HomeScreen
 import com.async.app.ui.screens.search.SearchScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.async.app.ui.vm.PlayerViewModel
+import com.async.app.ui.vm.LibraryViewModel
 import logcat.logcat
 import com.async.app.ui.screens.library.LibraryScreen
 import com.async.app.ui.screens.library.PlaylistDetailScreen
@@ -29,13 +35,6 @@ import com.async.core.model.SearchResult
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.automirrored.outlined.PlaylistPlay
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.remember
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.async.app.ui.vm.LibraryViewModel
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 
 /**
  * Main navigation setup using Voyager
@@ -179,6 +178,7 @@ object PlaylistDetailLikedScreen : Screen {
     override fun Content() {
         val navigator = LocalNavigator.current
         val libraryViewModel: LibraryViewModel = viewModel()
+        val playerViewModel: PlayerViewModel = viewModel()
         
         PlaylistDetailScreen(
             playlistName = "Liked Songs",
@@ -188,20 +188,48 @@ object PlaylistDetailLikedScreen : Screen {
             tracks = libraryViewModel.uiState.likedTracks,
             onNavigateBack = { navigator?.pop() },
             onTrackClick = { searchResult ->
-                // Handle track click - could navigate to player or start playback
-                logcat("PlaylistDetail") { "Track clicked: ${searchResult.title}" }
+                // Play the clicked track and set up the playlist as queue
+                val allTracks = libraryViewModel.tracksToSearchResults(libraryViewModel.uiState.likedTracks)
+                val clickedIndex = allTracks.indexOfFirst { it.id == searchResult.id }
+                if (clickedIndex >= 0) {
+                    playerViewModel.setQueue(allTracks, clickedIndex)
+                }
+                logcat("PlaylistDetail") { "Playing track: ${searchResult.title} from Liked Songs" }
             },
             onTrackMenuClick = { track ->
                 // Handle track menu click
                 logcat("PlaylistDetail") { "Track menu clicked: ${track.title}" }
             },
             onShuffleClick = {
-                // Handle shuffle play
-                logcat("PlaylistDetail") { "Shuffle clicked for Liked Songs" }
+                // Smart shuffle: toggle shuffle mode if already playing this playlist, otherwise start shuffled
+                val allTracks = libraryViewModel.tracksToSearchResults(libraryViewModel.uiState.likedTracks)
+                val currentTrack = playerViewModel.uiState.currentTrack
+                val isPlayingFromThisPlaylist = currentTrack != null && allTracks.any { it.id == currentTrack.id }
+                
+                if (isPlayingFromThisPlaylist) {
+                    // Just toggle shuffle mode without changing current track
+                    playerViewModel.toggleShuffle()
+                } else {
+                    // Start playing shuffled from beginning
+                    val shuffledTracks = allTracks.shuffled()
+                    playerViewModel.setQueue(shuffledTracks, 0)
+                }
+                logcat("PlaylistDetail") { "Shuffle action for Liked Songs" }
             },
             onPlayClick = {
-                // Handle normal play
-                logcat("PlaylistDetail") { "Play clicked for Liked Songs" }
+                // Smart play: resume if paused, or start from beginning if not playing this playlist
+                val allTracks = libraryViewModel.tracksToSearchResults(libraryViewModel.uiState.likedTracks)
+                val currentTrack = playerViewModel.uiState.currentTrack
+                val isPlayingFromThisPlaylist = currentTrack != null && allTracks.any { it.id == currentTrack.id }
+                
+                if (isPlayingFromThisPlaylist && !playerViewModel.uiState.isPlaying) {
+                    // Resume current track
+                    playerViewModel.playPause()
+                } else if (!isPlayingFromThisPlaylist || currentTrack == null) {
+                    // Start playing from beginning
+                    playerViewModel.setQueue(allTracks, 0)
+                }
+                logcat("PlaylistDetail") { "Play action for Liked Songs" }
             },
             onEditPlaylist = {
                 // System playlists can't be edited
@@ -216,6 +244,7 @@ object PlaylistDetailDownloadsScreen : Screen {
     override fun Content() {
         val navigator = LocalNavigator.current
         val libraryViewModel: LibraryViewModel = viewModel()
+        val playerViewModel: PlayerViewModel = viewModel()
         
         PlaylistDetailScreen(
             playlistName = "Downloads",
@@ -225,20 +254,48 @@ object PlaylistDetailDownloadsScreen : Screen {
             tracks = libraryViewModel.uiState.downloadedTracks,
             onNavigateBack = { navigator?.pop() },
             onTrackClick = { searchResult ->
-                // Handle track click - could navigate to player or start playback
-                logcat("PlaylistDetail") { "Track clicked: ${searchResult.title}" }
+                // Play the clicked track and set up the playlist as queue
+                val allTracks = libraryViewModel.tracksToSearchResults(libraryViewModel.uiState.downloadedTracks)
+                val clickedIndex = allTracks.indexOfFirst { it.id == searchResult.id }
+                if (clickedIndex >= 0) {
+                    playerViewModel.setQueue(allTracks, clickedIndex)
+                }
+                logcat("PlaylistDetail") { "Playing track: ${searchResult.title} from Downloads" }
             },
             onTrackMenuClick = { track ->
                 // Handle track menu click
                 logcat("PlaylistDetail") { "Track menu clicked: ${track.title}" }
             },
             onShuffleClick = {
-                // Handle shuffle play
-                logcat("PlaylistDetail") { "Shuffle clicked for Downloads" }
+                // Smart shuffle: toggle shuffle mode if already playing this playlist, otherwise start shuffled
+                val allTracks = libraryViewModel.tracksToSearchResults(libraryViewModel.uiState.downloadedTracks)
+                val currentTrack = playerViewModel.uiState.currentTrack
+                val isPlayingFromThisPlaylist = currentTrack != null && allTracks.any { it.id == currentTrack.id }
+                
+                if (isPlayingFromThisPlaylist) {
+                    // Just toggle shuffle mode without changing current track
+                    playerViewModel.toggleShuffle()
+                } else {
+                    // Start playing shuffled from beginning
+                    val shuffledTracks = allTracks.shuffled()
+                    playerViewModel.setQueue(shuffledTracks, 0)
+                }
+                logcat("PlaylistDetail") { "Shuffle action for Downloads" }
             },
             onPlayClick = {
-                // Handle normal play
-                logcat("PlaylistDetail") { "Play clicked for Downloads" }
+                // Smart play: resume if paused, or start from beginning if not playing this playlist
+                val allTracks = libraryViewModel.tracksToSearchResults(libraryViewModel.uiState.downloadedTracks)
+                val currentTrack = playerViewModel.uiState.currentTrack
+                val isPlayingFromThisPlaylist = currentTrack != null && allTracks.any { it.id == currentTrack.id }
+                
+                if (isPlayingFromThisPlaylist && !playerViewModel.uiState.isPlaying) {
+                    // Resume current track
+                    playerViewModel.playPause()
+                } else if (!isPlayingFromThisPlaylist || currentTrack == null) {
+                    // Start playing from beginning
+                    playerViewModel.setQueue(allTracks, 0)
+                }
+                logcat("PlaylistDetail") { "Play action for Downloads" }
             },
             onEditPlaylist = {
                 // System playlists can't be edited
@@ -253,12 +310,22 @@ data class PlaylistDetailCustomScreen(val playlistId: Long) : Screen {
     override fun Content() {
         val navigator = LocalNavigator.current
         val libraryViewModel: LibraryViewModel = viewModel()
+        val playerViewModel: PlayerViewModel = viewModel()
         
         // Find the playlist by ID
         val playlist = libraryViewModel.uiState.customPlaylists.find { it.id == playlistId }
         
-        // Load tracks for this playlist
-        val playlistTracks by libraryViewModel.getPlaylistTracks(playlistId).collectAsState(initial = emptyList())
+        // Preload tracks when this screen is opened
+        LaunchedEffect(playlistId) {
+            libraryViewModel.preloadPlaylistTracks(playlistId)
+        }
+        
+        // Use cached tracks first, then fall back to flow if cache is empty
+        val cachedTracks = libraryViewModel.getCachedPlaylistTracks(playlistId)
+        val flowTracks by libraryViewModel.getPlaylistTracks(playlistId).collectAsState(initial = emptyList())
+        
+        val playlistTracks = if (cachedTracks.isNotEmpty()) cachedTracks else flowTracks
+        val isLoading = playlist != null && playlistTracks.isEmpty() && cachedTracks.isEmpty()
         
         if (playlist != null) {
             PlaylistDetailScreen(
@@ -267,22 +334,51 @@ data class PlaylistDetailCustomScreen(val playlistId: Long) : Screen {
                 playlistIcon = Icons.AutoMirrored.Outlined.PlaylistPlay,
                 playlistIconTint = MaterialTheme.colorScheme.primary,
                 tracks = playlistTracks, // Now using actual tracks from database
+                isLoading = isLoading,
                 onNavigateBack = { navigator?.pop() },
                 onTrackClick = { searchResult ->
-                    // Handle track click - could navigate to player or start playback
-                    logcat("PlaylistDetail") { "Track clicked: ${searchResult.title}" }
+                    // Play the clicked track and set up the playlist as queue
+                    val allTracks = libraryViewModel.tracksToSearchResults(playlistTracks)
+                    val clickedIndex = allTracks.indexOfFirst { it.id == searchResult.id }
+                    if (clickedIndex >= 0) {
+                        playerViewModel.setQueue(allTracks, clickedIndex)
+                    }
+                    logcat("PlaylistDetail") { "Playing track: ${searchResult.title} from ${playlist.name}" }
                 },
                 onTrackMenuClick = { track ->
                     // Handle track menu click
                     logcat("PlaylistDetail") { "Track menu clicked: ${track.title}" }
                 },
                 onShuffleClick = {
-                    // Handle shuffle play
-                    logcat("PlaylistDetail") { "Shuffle clicked for ${playlist.name}" }
+                    // Smart shuffle: toggle shuffle mode if already playing this playlist, otherwise start shuffled
+                    val allTracks = libraryViewModel.tracksToSearchResults(playlistTracks)
+                    val currentTrack = playerViewModel.uiState.currentTrack
+                    val isPlayingFromThisPlaylist = currentTrack != null && allTracks.any { it.id == currentTrack.id }
+                    
+                    if (isPlayingFromThisPlaylist) {
+                        // Just toggle shuffle mode without changing current track
+                        playerViewModel.toggleShuffle()
+                    } else {
+                        // Start playing shuffled from beginning
+                        val shuffledTracks = allTracks.shuffled()
+                        playerViewModel.setQueue(shuffledTracks, 0)
+                    }
+                    logcat("PlaylistDetail") { "Shuffle action for ${playlist.name}" }
                 },
                 onPlayClick = {
-                    // Handle normal play
-                    logcat("PlaylistDetail") { "Play clicked for ${playlist.name}" }
+                    // Smart play: resume if paused, or start from beginning if not playing this playlist
+                    val allTracks = libraryViewModel.tracksToSearchResults(playlistTracks)
+                    val currentTrack = playerViewModel.uiState.currentTrack
+                    val isPlayingFromThisPlaylist = currentTrack != null && allTracks.any { it.id == currentTrack.id }
+                    
+                    if (isPlayingFromThisPlaylist && !playerViewModel.uiState.isPlaying) {
+                        // Resume current track
+                        playerViewModel.playPause()
+                    } else if (!isPlayingFromThisPlaylist || currentTrack == null) {
+                        // Start playing from beginning
+                        playerViewModel.setQueue(allTracks, 0)
+                    }
+                    logcat("PlaylistDetail") { "Play action for ${playlist.name}" }
                 },
                 onEditPlaylist = {
                     libraryViewModel.showEditPlaylistDialog(playlist)

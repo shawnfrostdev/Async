@@ -21,7 +21,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.ContentScale
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.async.core.model.SearchResult
 import com.async.domain.model.Playlist
 import com.async.domain.model.Track
@@ -742,23 +744,33 @@ private fun TrackCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Track artwork placeholder
+            // Track artwork with real album cover
             Card(
                 modifier = Modifier.size(56.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                ),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        Icons.Outlined.MusicNote,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (track.thumbnailUrl != null) {
+                        AsyncImage(
+                            model = track.thumbnailUrl,
+                            contentDescription = "Album Art",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(
+                            Icons.Outlined.MusicNote,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
             
@@ -845,23 +857,33 @@ private fun DownloadedTrackCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Track artwork placeholder
+            // Track artwork with real album cover
             Card(
                 modifier = Modifier.size(56.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                ),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        Icons.Outlined.MusicNote,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (track.thumbnailUrl != null) {
+                        AsyncImage(
+                            model = track.thumbnailUrl,
+                            contentDescription = "Album Art",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(
+                            Icons.Outlined.MusicNote,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
             

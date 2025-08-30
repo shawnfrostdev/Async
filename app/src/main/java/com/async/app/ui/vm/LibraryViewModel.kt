@@ -418,6 +418,10 @@ class LibraryViewModel : ViewModel() {
                     is com.async.core.result.AsyncResult.Success -> {
                         // Reload playlists to update track counts
                         loadCustomPlaylists()
+                        // Invalidate cache for this playlist so it refreshes
+                        uiState = uiState.copy(
+                            cachedPlaylistTracks = uiState.cachedPlaylistTracks - playlistId
+                        )
                         logcat("LibraryViewModel") { "Added track to playlist: ${searchResult.title}" }
                     }
                     is com.async.core.result.AsyncResult.Error -> {
@@ -488,6 +492,10 @@ class LibraryViewModel : ViewModel() {
                             if (playlistId == -1L) { // Liked playlist (using -1 as liked playlist ID)
                                 loadLikedTracks()
                             }
+                            // Invalidate cache for this playlist so it refreshes
+                            uiState = uiState.copy(
+                                cachedPlaylistTracks = uiState.cachedPlaylistTracks - playlistId
+                            )
                             // Update cached state
                             updateTrackPlaylistState(searchResult.id ?: "", playlistId, false)
                             logcat("LibraryViewModel") { "Removed track from playlist: ${searchResult.title}" }
@@ -505,6 +513,10 @@ class LibraryViewModel : ViewModel() {
                             if (playlistId == -1L) { // Liked playlist
                                 loadLikedTracks()
                             }
+                            // Invalidate cache for this playlist so it refreshes
+                            uiState = uiState.copy(
+                                cachedPlaylistTracks = uiState.cachedPlaylistTracks - playlistId
+                            )
                             // Update cached state
                             updateTrackPlaylistState(searchResult.id ?: "", playlistId, true)
                             logcat("LibraryViewModel") { "Added track to playlist: ${searchResult.title}" }
@@ -616,6 +628,47 @@ class LibraryViewModel : ViewModel() {
             emptyList()
         }
     }
+    
+    /**
+     * Preload tracks for a playlist and cache them in UI state
+     */
+    fun preloadPlaylistTracks(playlistId: Long) {
+        viewModelScope.launch {
+            try {
+                val tracks = getPlaylistTracksOnce(playlistId)
+                uiState = uiState.copy(
+                    cachedPlaylistTracks = uiState.cachedPlaylistTracks + (playlistId to tracks)
+                )
+                logcat("LibraryViewModel") { "Preloaded ${tracks.size} tracks for playlist $playlistId" }
+            } catch (e: Exception) {
+                logcat("LibraryViewModel") { "Error preloading tracks for playlist $playlistId: ${e.message}" }
+            }
+        }
+    }
+    
+    /**
+     * Get cached tracks for a playlist, or empty list if not cached
+     */
+    fun getCachedPlaylistTracks(playlistId: Long): List<Track> {
+        return uiState.cachedPlaylistTracks[playlistId] ?: emptyList()
+    }
+    
+    /**
+     * Convert tracks to SearchResult format for playback
+     */
+    fun tracksToSearchResults(tracks: List<Track>): List<SearchResult> {
+        return tracks.map { track ->
+            SearchResult(
+                id = track.externalId,
+                title = track.title,
+                artist = track.artist,
+                album = track.album,
+                duration = track.duration,
+                extensionId = track.extensionId,
+                thumbnailUrl = track.thumbnailUrl
+            )
+        }
+    }
 }
 
 /**
@@ -626,6 +679,7 @@ data class LibraryUiState(
     val likedTracks: List<Track> = emptyList(),
     val downloadedTracks: List<Track> = emptyList(),
     val customPlaylists: List<Playlist> = emptyList(),
+    val cachedPlaylistTracks: Map<Long, List<Track>> = emptyMap(), // Cache tracks for playlists
     val error: String? = null,
     val isSyncing: Boolean = false,
     val lastSyncTime: Long? = null,

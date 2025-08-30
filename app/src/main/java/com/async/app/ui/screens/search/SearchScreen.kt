@@ -136,7 +136,6 @@ fun SearchScreen(
                 selectedTrackForPlaylist = track
                 showAddToPlaylistDialog = true
             },
-            onRetrySearch = { searchViewModel.search(uiState.lastSearchQuery, forceRefresh = true) },
             libraryViewModel = libraryViewModel
         )
     }
@@ -244,7 +243,7 @@ private fun SearchInputSection(
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(
                 onSearch = {
-                    searchViewModel.search(query)
+                    searchViewModel.search(query, isAutoSearch = false)
                     keyboardController?.hide()
                     onHistoryDismiss()
                 }
@@ -477,16 +476,10 @@ private fun SearchResultsSection(
     onTrackClick: (SearchResult) -> Unit,
     onPlayTrack: (SearchResult) -> Unit,
     onAddToPlaylist: (SearchResult) -> Unit,
-    onRetrySearch: () -> Unit,
     libraryViewModel: LibraryViewModel
 ) {
         if (uiState.isLoading) {
         LoadingContent()
-    } else if (uiState.error != null) {
-        ErrorContent(
-            error = uiState.error!!,
-            onRetry = onRetrySearch
-        )
     } else if (uiState.results.isNotEmpty()) {
         // Results grouped by extension (standard layout)
         Column {
@@ -529,10 +522,12 @@ private fun SearchResultsSection(
                 libraryViewModel = libraryViewModel
             )
         }
-    } else if (uiState.lastSearchQuery.isNotEmpty()) {
-        NoResultsContent(query = uiState.lastSearchQuery)
-    } else if (!uiState.hasExtensions) {
+        } else if (!uiState.hasExtensions && uiState.lastSearchQuery.isNotEmpty()) {
+        // User searched but no extensions available
         NoExtensionsContent()
+    } else if (uiState.lastSearchQuery.isNotEmpty()) {
+        // User searched but no results found
+        NoResultsContent(query = uiState.lastSearchQuery)
     } else {
         EmptySearchContent()
     }
@@ -558,60 +553,7 @@ private fun LoadingContent() {
             }
 }
 
-@Composable
-private fun ErrorContent(
-    error: String,
-    onRetry: () -> Unit
-) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.Outlined.Error,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onErrorContainer
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                        text = "Search Error",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = error,
-                style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
-                    )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-                    Button(
-                onClick = onRetry,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error
-                        )
-                    ) {
-                Icon(Icons.Outlined.Refresh, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                        Text("Retry Search")
-                    }
-                }
-            }
-}
+
 
 @Composable
 private fun ResultsByExtensionStandard(

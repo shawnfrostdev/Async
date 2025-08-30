@@ -19,7 +19,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.ContentScale
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.async.app.ui.components.AppText
 import com.async.app.ui.components.AppCards
 import com.async.domain.model.Track
@@ -49,6 +51,7 @@ fun PlaylistDetailScreen(
     playlistIcon: androidx.compose.ui.graphics.vector.ImageVector,
     playlistIconTint: Color,
     tracks: List<Track>,
+    isLoading: Boolean = false,
     onNavigateBack: () -> Unit = {},
     onTrackClick: (SearchResult) -> Unit = {},
     onTrackMenuClick: (Track) -> Unit = {},
@@ -96,53 +99,96 @@ fun PlaylistDetailScreen(
         }
     }
 
-    Column(
-        modifier = modifier.fillMaxSize()
-    ) {
-        // Playlist header with cover, name, and controls
-        PlaylistHeader(
-            name = playlistName,
-            description = playlistDescription,
-            trackCount = sortedTracks.size,
-            icon = playlistIcon,
-            iconTint = playlistIconTint,
-            onShuffleClick = onShuffleClick,
-            onPlayClick = onPlayClick,
-            onNavigateBack = onNavigateBack,
-            onSortClick = { showSortBottomSheet = true },
-            onEditClick = onEditPlaylist
-        )
-        
-        // Track list
-        if (sortedTracks.isEmpty()) {
-            EmptyPlaylistContent(
-                message = "No tracks in this playlist yet"
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(sortedTracks) { track ->
-                    PlaylistTrackCard(
-                        track = track,
-                        onClick = {
-                            val searchResult = SearchResult(
-                                id = track.externalId,
-                                title = track.title,
-                                artist = track.artist,
-                                album = track.album,
-                                duration = track.duration,
-                                extensionId = track.extensionId,
-                                thumbnailUrl = track.thumbnailUrl
-                            )
-                            onTrackClick(searchResult)
-                        },
-                        onMenuClick = { onTrackMenuClick(track) }
-                    )
+    // Box to overlay floating back button over scrolling content
+    Box(modifier = modifier.fillMaxSize()) {
+        // Single scrollable container for entire playlist screen
+        when {
+            isLoading -> {
+                LoadingPlaylistContent()
+            }
+            sortedTracks.isEmpty() -> {
+                // For empty state, we still want the header + empty content in one scroll
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(top = 56.dp, bottom = 16.dp) // Top padding for floating back button
+                ) {
+                    item {
+                        PlaylistHeader(
+                            name = playlistName,
+                            description = playlistDescription,
+                            trackCount = sortedTracks.size,
+                            icon = playlistIcon,
+                            iconTint = playlistIconTint,
+                            onShuffleClick = onShuffleClick,
+                            onPlayClick = onPlayClick,
+                            onSortClick = { showSortBottomSheet = true },
+                            onEditClick = onEditPlaylist
+                        )
+                    }
+                    item {
+                        EmptyPlaylistContent(
+                            message = "No tracks in this playlist yet"
+                        )
+                    }
                 }
             }
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(top = 56.dp, bottom = 16.dp) // Top padding for floating back button
+                ) {
+                    // Header as first item
+                    item {
+                        PlaylistHeader(
+                            name = playlistName,
+                            description = playlistDescription,
+                            trackCount = sortedTracks.size,
+                            icon = playlistIcon,
+                            iconTint = playlistIconTint,
+                            onShuffleClick = onShuffleClick,
+                            onPlayClick = onPlayClick,
+                            onSortClick = { showSortBottomSheet = true },
+                            onEditClick = onEditPlaylist
+                        )
+                    }
+                    
+                    // Tracks as subsequent items
+                    items(sortedTracks) { track ->
+                        PlaylistTrackCard(
+                            track = track,
+                            onClick = {
+                                val searchResult = SearchResult(
+                                    id = track.externalId,
+                                    title = track.title,
+                                    artist = track.artist,
+                                    album = track.album,
+                                    duration = track.duration,
+                                    extensionId = track.extensionId,
+                                    thumbnailUrl = track.thumbnailUrl
+                                )
+                                onTrackClick(searchResult)
+                            },
+                            onMenuClick = { onTrackMenuClick(track) },
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+        }
+        
+        // Floating back button
+        FloatingActionButton(
+            onClick = onNavigateBack,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(16.dp),
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back"
+            )
         }
     }
     
@@ -183,7 +229,6 @@ private fun PlaylistHeader(
     iconTint: Color,
     onShuffleClick: () -> Unit,
     onPlayClick: () -> Unit,
-    onNavigateBack: () -> Unit,
     onSortClick: () -> Unit,
     onEditClick: () -> Unit
 ) {
@@ -192,17 +237,6 @@ private fun PlaylistHeader(
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        // Back button
-        IconButton(
-            onClick = onNavigateBack,
-            modifier = Modifier.padding(bottom = 16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back"
-            )
-        }
-        
         // Playlist cover image (centered)
         Card(
             modifier = Modifier
@@ -390,10 +424,11 @@ private fun PlaylistHeader(
 private fun PlaylistTrackCard(
     track: Track,
     onClick: () -> Unit,
-    onMenuClick: () -> Unit
+    onMenuClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         onClick = onClick,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -405,23 +440,33 @@ private fun PlaylistTrackCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Track artwork placeholder
+            // Track artwork with real album cover
             Card(
                 modifier = Modifier.size(56.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                ),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        Icons.Outlined.MusicNote,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (track.thumbnailUrl != null) {
+                        AsyncImage(
+                            model = track.thumbnailUrl,
+                            contentDescription = "Album Art",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(
+                            Icons.Outlined.MusicNote,
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
             
@@ -484,6 +529,19 @@ private fun PlaylistTrackCard(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun LoadingPlaylistContent() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        AppCards.LoadingCard(
+            title = "Loading tracks...",
+            modifier = Modifier.padding(32.dp)
+        )
     }
 }
 

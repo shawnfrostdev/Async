@@ -47,6 +47,8 @@ class PlaybackManager(
             .build()
             .also { player ->
                 player.addListener(playerListener)
+                // Disable ExoPlayer's internal repeat mode so we can handle it ourselves
+                player.repeatMode = androidx.media3.common.Player.REPEAT_MODE_OFF
             }
     }
     
@@ -75,6 +77,10 @@ class PlaybackManager(
     
     private val _currentIndex = MutableStateFlow(0)
     val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
+    
+    // Store original queue order for when shuffle is disabled
+    private var originalQueue: List<SearchResult> = emptyList()
+    private var originalIndex: Int = 0
     
     private val _shuffleEnabled = MutableStateFlow(false)
     val shuffleEnabled: StateFlow<Boolean> = _shuffleEnabled.asStateFlow()
@@ -210,13 +216,33 @@ class PlaybackManager(
         val currentQueue = _queue.value
         val currentIdx = _currentIndex.value
         
-        if (currentQueue.isNotEmpty() && currentIdx < currentQueue.size - 1) {
-            val nextIndex = currentIdx + 1
-            _currentIndex.value = nextIndex
-            playTrack(currentQueue[nextIndex])
-        } else if (_repeatMode.value == RepeatMode.ALL && currentQueue.isNotEmpty()) {
-            _currentIndex.value = 0
-            playTrack(currentQueue[0])
+        if (_shuffleEnabled.value && currentQueue.isNotEmpty()) {
+            // In shuffle mode, if we're at the end, reshuffle or repeat
+            if (currentIdx < currentQueue.size - 1) {
+                val nextIndex = currentIdx + 1
+                _currentIndex.value = nextIndex
+                playTrack(currentQueue[nextIndex])
+            } else if (_repeatMode.value == RepeatMode.ALL) {
+                // Reshuffle and start over
+                val currentTrack = _currentTrack.value
+                val shuffledTracks = originalQueue.shuffled()
+                _queue.value = shuffledTracks
+                _currentIndex.value = 0
+                playTrack(shuffledTracks[0])
+            }
+        } else {
+            // Normal mode
+            if (currentQueue.isNotEmpty() && currentIdx < currentQueue.size - 1) {
+                val nextIndex = currentIdx + 1
+                _currentIndex.value = nextIndex
+                playTrack(currentQueue[nextIndex])
+            } else if (_repeatMode.value == RepeatMode.ALL && currentQueue.isNotEmpty()) {
+                logcat { "PlaybackManager: End of queue reached, repeating from beginning (Repeat ALL)" }
+                _currentIndex.value = 0
+                playTrack(currentQueue[0])
+            } else {
+                logcat { "PlaybackManager: End of queue reached, no repeat mode active" }
+            }
         }
     }
     
@@ -243,11 +269,29 @@ class PlaybackManager(
      */
     suspend fun setQueue(tracks: List<SearchResult>, startIndex: Int = 0) {
         logcat { "PlaybackManager: Setting queue with ${tracks.size} tracks, starting at index $startIndex" }
-        _queue.value = tracks
-        _currentIndex.value = startIndex
         
-        if (tracks.isNotEmpty() && startIndex < tracks.size) {
-            playTrack(tracks[startIndex])
+        // Store original queue order
+        originalQueue = tracks
+        originalIndex = startIndex
+        
+        // Apply shuffle if enabled
+        val finalTracks = if (_shuffleEnabled.value && tracks.isNotEmpty()) {
+            val currentTrack = tracks[startIndex]
+            val shuffledTracks = tracks.shuffled()
+            // Ensure the selected track is first in shuffled queue
+            val shuffledWithCurrentFirst = listOf(currentTrack) + shuffledTracks.filter { it.id != currentTrack.id }
+            shuffledWithCurrentFirst
+        } else {
+            tracks
+        }
+        
+        val finalIndex = if (_shuffleEnabled.value && tracks.isNotEmpty()) 0 else startIndex
+        
+        _queue.value = finalTracks
+        _currentIndex.value = finalIndex
+        
+        if (finalTracks.isNotEmpty() && finalIndex < finalTracks.size) {
+            playTrack(finalTracks[finalIndex])
         }
     }
     
@@ -291,7 +335,38 @@ class PlaybackManager(
      * Toggle shuffle mode
      */
     fun toggleShuffle() {
+        val wasShuffled = _shuffleEnabled.value
         _shuffleEnabled.value = !_shuffleEnabled.value
+        
+        val currentQueue = _queue.value
+        val currentTrack = _currentTrack.value
+        
+        if (currentQueue.isNotEmpty()) {
+            if (_shuffleEnabled.value) {
+                // Enable shuffle: shuffle the queue but keep current track first
+                if (currentTrack != null) {
+                    val shuffledTracks = currentQueue.shuffled()
+                    val shuffledWithCurrentFirst = listOf(currentTrack) + shuffledTracks.filter { it.id != currentTrack.id }
+                    _queue.value = shuffledWithCurrentFirst
+                    _currentIndex.value = 0
+                } else {
+                    _queue.value = currentQueue.shuffled()
+                }
+            } else {
+                // Disable shuffle: restore original queue order
+                if (originalQueue.isNotEmpty()) {
+                    _queue.value = originalQueue
+                    // Find the current track in the original queue
+                    if (currentTrack != null) {
+                        val originalCurrentIndex = originalQueue.indexOfFirst { it.id == currentTrack.id }
+                        _currentIndex.value = if (originalCurrentIndex >= 0) originalCurrentIndex else 0
+                    } else {
+                        _currentIndex.value = originalIndex
+                    }
+                }
+            }
+        }
+        
         logcat { "PlaybackManager: Shuffle ${if (_shuffleEnabled.value) "enabled" else "disabled"}" }
     }
     
@@ -304,6 +379,10 @@ class PlaybackManager(
             RepeatMode.ALL -> RepeatMode.ONE
             RepeatMode.ONE -> RepeatMode.OFF
         }
+        
+        // Ensure ExoPlayer's repeat mode stays disabled so we handle repeat ourselves
+        exoPlayer.repeatMode = androidx.media3.common.Player.REPEAT_MODE_OFF
+        
         logcat { "PlaybackManager: Repeat mode: ${_repeatMode.value}" }
     }
     
@@ -330,16 +409,18 @@ class PlaybackManager(
                     logcat { "PlaybackManager: Buffering..." }
                 }
                 Player.STATE_ENDED -> {
-                    logcat { "PlaybackManager: Track ended" }
+                    logcat { "PlaybackManager: Track ended, repeat mode: ${_repeatMode.value}" }
                     scope.launch {
                         when (_repeatMode.value) {
                             RepeatMode.ONE -> {
                                 // Repeat current track
+                                logcat { "PlaybackManager: Repeating current track" }
                                 exoPlayer.seekTo(0)
                                 exoPlayer.play()
                             }
                             RepeatMode.ALL, RepeatMode.OFF -> {
                                 // Skip to next track
+                                logcat { "PlaybackManager: Skipping to next track (repeat mode: ${_repeatMode.value})" }
                                 skipToNext()
                             }
                         }

@@ -61,15 +61,14 @@ class SearchViewModel : ViewModel() {
     /**
      * Perform search with debouncing and caching
      */
-    fun search(query: String, forceRefresh: Boolean = false) {
+    fun search(query: String, forceRefresh: Boolean = false, isAutoSearch: Boolean = false) {
         if (query.isBlank()) {
-            uiState = uiState.copy(
-                results = emptyList(),
-                resultsByExtension = emptyMap(),
-                isLoading = false,
-                error = null,
-                lastSearchQuery = ""
-            )
+                    uiState = uiState.copy(
+            results = emptyList(),
+            resultsByExtension = emptyMap(),
+            isLoading = false,
+            lastSearchQuery = ""
+        )
             return
         }
         
@@ -84,8 +83,7 @@ class SearchViewModel : ViewModel() {
         
         searchJob = viewModelScope.launch {
             uiState = uiState.copy(
-                isLoading = true, 
-                error = null,
+                isLoading = true,
                 lastSearchQuery = query,
                 searchSource = "Extensions"
             )
@@ -100,8 +98,9 @@ class SearchViewModel : ViewModel() {
                 if (installedExtensions.isEmpty()) {
                     uiState = uiState.copy(
                         isLoading = false,
-                        error = "No extensions installed. Install music extensions to search for tracks.",
-                        hasExtensions = false
+                        hasExtensions = false,
+                        results = emptyList(),
+                        resultsByExtension = emptyMap()
                     )
                     return@launch
                 }
@@ -123,7 +122,8 @@ class SearchViewModel : ViewModel() {
                 if (extensionsToSearch.isEmpty()) {
                     uiState = uiState.copy(
                         isLoading = false,
-                        error = "No valid extensions selected for search."
+                        results = emptyList(),
+                        resultsByExtension = emptyMap()
                     )
                     return@launch
                 }
@@ -133,7 +133,6 @@ class SearchViewModel : ViewModel() {
                 // Search across all selected extensions in parallel
                 val allResults = mutableListOf<SearchResult>()
                 val resultsByExtension = mutableMapOf<String, List<SearchResult>>()
-                var searchErrors = mutableListOf<String>()
                 
                 // Create deferred searches for parallel execution
                 val searches = extensionsToSearch.map { extensionId ->
@@ -161,7 +160,7 @@ class SearchViewModel : ViewModel() {
                             }
                         } catch (e: Exception) {
                             logcat("SearchViewModel") { "Error searching extension $extensionId: ${e.message}" }
-                            searchErrors.add("$extensionId: ${e.message}")
+                            // Just log errors, don't collect them for UI display
                         }
                     }
                 }
@@ -185,7 +184,6 @@ class SearchViewModel : ViewModel() {
                     isLoading = false,
                     results = sortedResults,
                     resultsByExtension = resultsByExtension,
-                    error = if (searchErrors.isNotEmpty()) "Some extensions failed: ${searchErrors.joinToString(", ")}" else null,
                     totalResults = sortedResults.size
                 )
                 
@@ -193,10 +191,8 @@ class SearchViewModel : ViewModel() {
                 
             } catch (e: Exception) {
                 logcat("SearchViewModel") { "Search failed: ${e.message}" }
-                uiState = uiState.copy(
-                    isLoading = false,
-                    error = "Search failed: ${e.message}"
-                )
+                // Just stop loading, don't show errors
+                uiState = uiState.copy(isLoading = false)
             }
         }
     }
@@ -263,8 +259,8 @@ class SearchViewModel : ViewModel() {
         if (newQuery.length >= 3) {
             searchJob?.cancel()
             searchJob = viewModelScope.launch {
-                delay(800) // Debounce delay
-                search(newQuery)
+                delay(1200) // Increased debounce delay to give users more time to type
+                search(newQuery, isAutoSearch = true)
             }
         } else if (newQuery.isEmpty()) {
             clearSearch()
@@ -299,7 +295,7 @@ class SearchViewModel : ViewModel() {
         
         // Re-search if we have a query
         if (uiState.lastSearchQuery.isNotEmpty()) {
-            search(uiState.lastSearchQuery, forceRefresh = true)
+            search(uiState.lastSearchQuery, forceRefresh = true, isAutoSearch = false)
         }
     }
     
@@ -397,7 +393,6 @@ data class SearchUiState(
     val isLoading: Boolean = false,
     val results: List<SearchResult> = emptyList(),
     val resultsByExtension: Map<String, List<SearchResult>> = emptyMap(),
-    val error: String? = null,
     val totalResults: Int = 0,
     val searchHistory: List<String> = emptyList(),
     val availableExtensions: List<String> = emptyList(),
