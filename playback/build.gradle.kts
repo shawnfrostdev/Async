@@ -1,12 +1,12 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
 }
 
 android {
-    namespace = "com.async.playback"
+    namespace = "app.async.playback"
     compileSdk = 35
 
     defaultConfig {
@@ -27,12 +27,12 @@ android {
     }
     
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 }
 
@@ -51,21 +51,18 @@ dependencies {
     implementation(libs.androidx.media3.session)
     
     // MediaSession support
-    implementation("androidx.media:media:1.7.0")
-    
-    // Notifications
-    implementation("androidx.core:core:1.13.1")
+    implementation(libs.androidx.media)
     
     // Image loading for album art
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-    kapt("com.github.bumptech.glide:compiler:4.16.0")
+    implementation(libs.glide)
+    ksp(libs.glide.compiler)
     
     // Hilt
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
     
     // Logcat for logging
-    implementation("com.squareup.logcat:logcat:0.1")
+    implementation(libs.logcat)
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -3,22 +3,29 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
 }
 
 android {
-    namespace = "com.example.async"
+    namespace = "app.async"
     compileSdk = 35
+    
+    buildFeatures {
+        buildConfig = true
+        compose = true
+        viewBinding = true
+    }
+    
+    // Enable namespaced R class
+    resourcePrefix = ""
 
     defaultConfig {
-        applicationId = "com.example.async"
+        applicationId = "app.async"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -31,15 +38,18 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
-    buildFeatures {
-        compose = true
-        buildConfig = true
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "2.0.0"
+    }
+    lint {
+        baseline = file("lint-baseline.xml")
     }
 }
 
@@ -67,9 +77,9 @@ dependencies {
     implementation(libs.androidx.material3)
     
     // Navigation - Voyager
-    implementation("cafe.adriel.voyager:voyager-navigator:1.0.0")
-    implementation("cafe.adriel.voyager:voyager-tab-navigator:1.0.0")
-    implementation("cafe.adriel.voyager:voyager-transitions:1.0.0")
+    implementation(libs.voyager.navigator)
+    implementation(libs.voyager.tab.navigator)
+    implementation(libs.voyager.transitions)
     
     // ViewModel
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -84,20 +94,21 @@ dependencies {
     // Room Database
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
     
     // Hilt
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
     
     // Material Icons Extended
     implementation(libs.androidx.material.icons.extended)
     
     // Image Loading
-    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation(libs.coil.compose)
     
     // Logging
-    implementation("com.squareup.logcat:logcat:0.1")
+    implementation(libs.logcat)
     
     // Testing
     testImplementation(libs.junit)
@@ -107,4 +118,11 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // Haze - iOS style blur effects
+    implementation("dev.chrisbanes.haze:haze:0.5.4")
+    implementation("dev.chrisbanes.haze:haze-materials:0.5.4")
+    
+    // Networking
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
