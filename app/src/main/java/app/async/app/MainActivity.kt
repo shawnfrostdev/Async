@@ -13,11 +13,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.NavigatorDisposeBehavior
-import cafe.adriel.voyager.transitions.SlideTransition
+import cafe.adriel.voyager.navigator.LocalNavigator
 import app.async.app.navigation.HomeScreen
+import app.async.app.navigation.DefaultNavigatorScreenTransition
 import app.async.app.ui.theme.AsyncTheme
 import logcat.logcat
 
@@ -60,11 +62,16 @@ class MainActivity : ComponentActivity() {
                         disposeSteps = true
                     ),
                 ) { navigator ->
-                    Scaffold(
-                        contentWindowInsets = WindowInsets(0)
-                    ) { contentPadding ->
-                        Box(modifier = Modifier.padding(contentPadding)) {
-                            SlideTransition(navigator)
+                    CompositionLocalProvider(
+                        LocalNavigator provides navigator
+                    ) {
+                        Scaffold(
+                            contentWindowInsets = WindowInsets(0)
+                        ) { contentPadding ->
+                            Box(modifier = Modifier.padding(contentPadding)) {
+                                // Use Voyager's SlideTransition for screen navigation
+                                DefaultNavigatorScreenTransition(navigator = navigator)
+                            }
                         }
                     }
                 }

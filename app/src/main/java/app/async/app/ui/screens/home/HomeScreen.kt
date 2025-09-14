@@ -15,7 +15,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.async.R
-import app.async.app.ui.components.AppButtons
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Alignment
 import app.async.app.ui.components.AppCards
 import app.async.app.ui.components.AppText
 import app.async.app.ui.components.layout.*
@@ -78,17 +81,18 @@ fun HomeScreen(
 
         // Error state using standardized component
         uiState.error?.let { error ->
-            StandardErrorState(
+            AppCards.ErrorCard(
+                title = "Error",
                 message = error,
-                onRetryClick = { viewModel.refresh() },
-                modifier = Modifier.padding(dimensionResource(R.dimen.spacing_normal))
+                onRetry = { viewModel.refresh() },
+                modifier = Modifier.padding(16.dp)
             )
         }
 
-        // Content using standardized lazy column
-        StandardLazyColumn(
-            hasTopBar = true,
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_xl))
+        // Content using Material 3 LazyColumn
+        LazyColumn(
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // Trending tracks section
             if (uiState.trendingTracks.isNotEmpty()) {
@@ -144,24 +148,39 @@ fun HomeScreen(
                 }
             }
             
-            // Empty state using standardized component
+            // Empty state
             if (uiState.trendingTracks.isEmpty() && uiState.recentlyPlayed.isEmpty() && 
                 uiState.recommendations.isEmpty() && !uiState.isLoading) {
                 item {
-                    StandardEmptyState(
-                        icon = {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
                             Icon(
                                 imageVector = Icons.Outlined.MusicNote,
                                 contentDescription = null,
-                                modifier = Modifier.size(dimensionResource(R.dimen.icon_size_xl)),
+                                modifier = Modifier.size(64.dp),
                                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
-                        },
-                        title = stringResource(R.string.home_welcome_title),
-                        subtitle = stringResource(R.string.home_welcome_subtitle),
-                        actionText = stringResource(R.string.home_get_started),
-                        onActionClick = { viewModel.refresh() }
-                    )
+                            Text(
+                                text = stringResource(R.string.home_welcome_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                            )
+                            Text(
+                                text = stringResource(R.string.home_welcome_subtitle),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Button(onClick = { viewModel.refresh() }) {
+                                Text(stringResource(R.string.home_get_started))
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -178,14 +197,32 @@ private fun HomeSection(
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        StandardSectionHeader(
-            title = title,
-            subtitle = subtitle,
-            actionText = stringResource(R.string.home_see_all),
-            onActionClick = onSeeAllClick
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                subtitle?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            
+            androidx.compose.material3.TextButton(onClick = onSeeAllClick) {
+                Text(stringResource(R.string.home_see_all))
+            }
+        }
         
-        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_normal)))
+        Spacer(modifier = Modifier.height(16.dp))
         
         content()
     }

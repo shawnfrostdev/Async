@@ -3,30 +3,138 @@ package app.async.app.ui.components.layout
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridScope
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.stringResource
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.PaddingValues
-import app.async.R
-import app.async.app.ui.components.AppText
-import app.async.app.ui.theme.AsyncColors
+import androidx.compose.ui.unit.LayoutDirection
+import app.async.app.ui.theme.padding
 
 /**
- * Standardized layout components following Material Design 3 and Android development best practices.
- * These components ensure consistent spacing, responsive behavior, and accessibility across all screens.
+ * Mihon-style custom Scaffold as per UI guide
+ * Handles WindowInsets, StartBar (Navigation rail for tablets), Animated FAB, Dynamic Heights
  */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Scaffold(
+    modifier: Modifier = Modifier,
+    topBarScrollBehavior: TopAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(),
+    topBar: @Composable (TopAppBarScrollBehavior) -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
+    startBar: @Composable () -> Unit = {},
+    snackbarHost: @Composable () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit = {},
+    floatingActionButtonPosition: FabPosition = FabPosition.End,
+    containerColor: Color = MaterialTheme.colorScheme.background,
+    contentColor: Color = contentColorFor(containerColor),
+    contentWindowInsets: WindowInsets = ScaffoldDefaults.contentWindowInsets,
+    content: @Composable (PaddingValues) -> Unit,
+) {
+    androidx.compose.material3.Surface(
+        modifier = Modifier
+            .nestedScroll(topBarScrollBehavior.nestedScrollConnection)
+            .then(modifier),
+        color = containerColor,
+        contentColor = contentColor,
+    ) {
+        ScaffoldLayout(
+            fabPosition = floatingActionButtonPosition,
+            topBar = { topBar(topBarScrollBehavior) },
+            startBar = startBar,
+            bottomBar = bottomBar,
+            content = content,
+            snackbar = snackbarHost,
+            contentWindowInsets = contentWindowInsets,
+            fab = floatingActionButton,
+        )
+    }
+}
+
+/**
+ * Custom Scaffold Layout with startBar support for Navigation Rail
+ */
+@Composable
+private fun ScaffoldLayout(
+    fabPosition: FabPosition,
+    topBar: @Composable () -> Unit,
+    startBar: @Composable () -> Unit,
+    bottomBar: @Composable () -> Unit,
+    content: @Composable (PaddingValues) -> Unit,
+    snackbar: @Composable () -> Unit,
+    contentWindowInsets: WindowInsets,
+    fab: @Composable () -> Unit,
+) {
+    BoxWithConstraints {
+        val maxWidth = maxWidth
+        
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                topBar()
+                
+                Row(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    startBar()
+                    
+                    Box(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        content(
+                            PaddingValues(
+                                bottom = if (fabPosition == FabPosition.End) 0.dp else 56.dp
+                            )
+                        )
+                    }
+                }
+                
+                bottomBar()
+            }
+            
+            // FAB positioning
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = when (fabPosition) {
+                    FabPosition.Start -> Alignment.BottomStart
+                    FabPosition.Center -> Alignment.BottomCenter
+                    FabPosition.End -> Alignment.BottomEnd
+                    else -> Alignment.BottomEnd
+                }
+            ) {
+                fab()
+            }
+            
+            // Snackbar
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                snackbar()
+            }
+        }
+    }
+}
 
 /**
  * Standard screen container with consistent padding and responsive behavior.
- * Automatically adjusts margins based on screen size.
+ * Based on Mihon screen-level padding patterns
  */
 @Composable
 fun StandardScreenLayout(
@@ -35,8 +143,8 @@ fun StandardScreenLayout(
     hasBottomPadding: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val horizontalPadding = dimensionResource(R.dimen.screen_margin_horizontal)
-    val verticalPadding = if (hasTopBar) 0.dp else dimensionResource(R.dimen.screen_margin_vertical)
+    val horizontalPadding = MaterialTheme.padding.large // 24.dp as per Mihon guide
+    val verticalPadding = if (hasTopBar) 0.dp else MaterialTheme.padding.large
     
     Column(
         modifier = modifier
@@ -45,50 +153,24 @@ fun StandardScreenLayout(
                 start = horizontalPadding,
                 end = horizontalPadding,
                 top = verticalPadding,
-                bottom = if (hasBottomPadding) dimensionResource(R.dimen.screen_margin_vertical) else 0.dp
+                bottom = if (hasBottomPadding) MaterialTheme.padding.large else 0.dp
             ),
         content = content
     )
 }
 
 /**
- * Scrollable screen layout for content that might overflow.
- */
-@Composable
-fun ScrollableScreenLayout(
-    modifier: Modifier = Modifier,
-    hasTopBar: Boolean = true,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    val horizontalPadding = dimensionResource(R.dimen.screen_margin_horizontal)
-    val verticalPadding = if (hasTopBar) 0.dp else dimensionResource(R.dimen.screen_margin_vertical)
-    
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(
-                start = horizontalPadding,
-                end = horizontalPadding,
-                top = verticalPadding,
-                bottom = dimensionResource(R.dimen.screen_margin_vertical)
-            ),
-        content = content
-    )
-}
-
-/**
- * Standard lazy column layout with consistent spacing and responsive behavior.
+ * Standard lazy column layout with consistent spacing based on Mihon guide
  */
 @Composable
 fun StandardLazyColumn(
     modifier: Modifier = Modifier,
     hasTopBar: Boolean = true,
-    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_medium)),
+    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(MaterialTheme.padding.large),
     content: LazyListScope.() -> Unit
 ) {
-    val horizontalPadding = dimensionResource(R.dimen.screen_margin_horizontal)
-    val topPadding = if (hasTopBar) dimensionResource(R.dimen.spacing_normal) else dimensionResource(R.dimen.screen_margin_vertical)
+    val horizontalPadding = MaterialTheme.padding.large // 24.dp as per Mihon guide
+    val topPadding = if (hasTopBar) MaterialTheme.padding.medium else MaterialTheme.padding.large
     
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -96,7 +178,7 @@ fun StandardLazyColumn(
             start = horizontalPadding,
             end = horizontalPadding,
             top = topPadding,
-            bottom = dimensionResource(R.dimen.screen_margin_vertical)
+            bottom = MaterialTheme.padding.large
         ),
         verticalArrangement = verticalArrangement,
         content = content
@@ -104,66 +186,37 @@ fun StandardLazyColumn(
 }
 
 /**
- * Standard screen header with consistent styling and responsive text sizing.
+ * Mihon-style Adaptive Grid System
  */
-@OptIn(ExperimentalMaterial3Api::class)
+object CommonItemDefaults {
+    val GridHorizontalSpacer = 4.dp      // Space between grid columns as per Mihon guide
+    val GridVerticalSpacer = 4.dp        // Space between grid rows as per Mihon guide
+}
+
 @Composable
-fun StandardScreenHeader(
-    title: String,
-    subtitle: String? = null,
-    actions: @Composable RowScope.() -> Unit = {},
-    modifier: Modifier = Modifier
+fun LazyLibraryGrid(
+    modifier: Modifier = Modifier,
+    columns: Int,
+    contentPadding: PaddingValues,
+    content: LazyGridScope.() -> Unit,
 ) {
-    if (subtitle != null) {
-        // Header with subtitle
-        Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(vertical = dimensionResource(R.dimen.spacing_xl))
-        ) {
-            AppText.TitleLarge(
-                text = title,
-                fontWeight = FontWeight.Bold,
-                color = AsyncColors.TextPrimary
-            )
-            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_tiny)))
-            AppText.BodyMedium(
-                text = subtitle,
-                color = AsyncColors.TextSecondary
-            )
-            
-            // Actions row if provided
-            actions.let { actionsComposable ->
-                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_normal)))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    content = actionsComposable
-                )
-            }
-        }
-    } else {
-        // Simple header with optional actions
-        Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(vertical = dimensionResource(R.dimen.spacing_xl)),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AppText.TitleLarge(
-                text = title,
-                fontWeight = FontWeight.Bold,
-                color = AsyncColors.TextPrimary
-            )
-            
-            Row(content = actions)
-        }
-    }
+    LazyVerticalGrid(
+        columns = if (columns == 0) GridCells.Adaptive(128.dp) else GridCells.Fixed(columns),
+        modifier = modifier,
+        contentPadding = PaddingValues(
+            start = contentPadding.calculateStartPadding(LayoutDirection.Ltr) + 8.dp,
+            end = contentPadding.calculateEndPadding(LayoutDirection.Ltr) + 8.dp,
+            top = contentPadding.calculateTopPadding() + 8.dp,
+            bottom = contentPadding.calculateBottomPadding() + 8.dp
+        ), // 8.dp around entire grid as per Mihon guide
+        verticalArrangement = Arrangement.spacedBy(CommonItemDefaults.GridVerticalSpacer),
+        horizontalArrangement = Arrangement.spacedBy(CommonItemDefaults.GridHorizontalSpacer),
+        content = content,
+    )
 }
 
 /**
- * Standard section header for grouping content within screens.
+ * Standard section header for grouping content within screens based on Mihon guide
  */
 @Composable
 fun StandardSectionHeader(
@@ -176,99 +229,178 @@ fun StandardSectionHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = dimensionResource(R.dimen.spacing_small)),
+            .padding(vertical = MaterialTheme.padding.small),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
             modifier = Modifier.weight(1f)
         ) {
-            AppText.TitleMedium(
+            Text(
                 text = title,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = AsyncColors.TextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
             subtitle?.let {
-                AppText.BodySmall(
+                Text(
                     text = it,
-                    color = AsyncColors.TextSecondary
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
         
         actionText?.let { text ->
-            TextButton(
+            androidx.compose.material3.TextButton(
                 onClick = onActionClick ?: {},
                 enabled = onActionClick != null
             ) {
-                Text(
-                    text = text,
-                    color = AsyncColors.Primary
-                )
+                Text(text = text)
             }
         }
     }
 }
 
 /**
- * Standard list item layout with consistent sizing and accessibility.
+ * Standard screen header with consistent styling and responsive text sizing based on Mihon guide
  */
 @Composable
-fun StandardListItem(
-    modifier: Modifier = Modifier,
-    leadingIcon: (@Composable () -> Unit)? = null,
-    leadingContent: (@Composable () -> Unit)? = null,
-    trailingIcon: (@Composable () -> Unit)? = null,
-    trailingContent: (@Composable () -> Unit)? = null,
-    onClick: (() -> Unit)? = null,
-    content: @Composable ColumnScope.() -> Unit
+fun StandardScreenHeader(
+    title: String,
+    subtitle: String? = null,
+    actions: @Composable RowScope.() -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
-    val itemHeight = dimensionResource(R.dimen.list_item_height)
-    val itemPadding = dimensionResource(R.dimen.list_item_padding)
-    
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = itemHeight),
-        onClick = onClick ?: {},
-        enabled = onClick != null,
-        color = AsyncColors.Surface
-    ) {
-        Row(
-            modifier = Modifier
+    if (subtitle != null) {
+        // Header with subtitle
+        Column(
+            modifier = modifier
                 .fillMaxWidth()
-                .padding(itemPadding),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(vertical = MaterialTheme.padding.large)
         ) {
-            // Leading icon or content
-            leadingIcon?.let {
-                it()
-                Spacer(modifier = Modifier.width(dimensionResource(R.dimen.spacing_medium)))
-            } ?: leadingContent?.let {
-                it()
-                Spacer(modifier = Modifier.width(dimensionResource(R.dimen.spacing_medium)))
-            }
-            
-            // Main content
-            Column(
-                modifier = Modifier.weight(1f),
-                content = content
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(MaterialTheme.padding.extraSmall))
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             
-            // Trailing content or icon
-            trailingContent?.let {
-                Spacer(modifier = Modifier.width(dimensionResource(R.dimen.spacing_medium)))
-                it()
-            } ?: trailingIcon?.let {
-                Spacer(modifier = Modifier.width(dimensionResource(R.dimen.spacing_medium)))
-                it()
+            // Actions row if provided
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                content = actions
+            )
+        }
+    } else {
+        // Simple header with optional actions
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(vertical = MaterialTheme.padding.large),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            Row(content = actions)
+        }
+    }
+}
+
+/**
+ * Standard loading state layout based on Mihon guide
+ */
+@Composable
+fun StandardLoadingState(
+    message: String = "Loading...",
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.medium)
+        ) {
+            CircularProgressIndicator()
+            
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/**
+ * Standard error state layout with retry functionality based on Mihon guide
+ */
+@Composable
+fun StandardErrorState(
+    title: String = "Error",
+    message: String,
+    onRetryClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(MaterialTheme.padding.medium),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(MaterialTheme.padding.medium)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                fontWeight = FontWeight.Medium
+            )
+            
+            Spacer(modifier = Modifier.height(MaterialTheme.padding.small))
+            
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+            
+            onRetryClick?.let { retry ->
+                Spacer(modifier = Modifier.height(MaterialTheme.padding.medium))
+                Button(
+                    onClick = retry,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) {
+                    Text("Retry")
+                }
             }
         }
     }
 }
 
 /**
- * Standard empty state layout with consistent styling.
+ * Standard empty state layout based on Mihon guide
  */
 @Composable
 fun StandardEmptyState(
@@ -285,23 +417,27 @@ fun StandardEmptyState(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_normal))
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.padding.medium)
         ) {
             icon()
             
-            AppText.TitleMedium(
+            Text(
                 text = title,
-                color = AsyncColors.TextPrimary.copy(alpha = 0.8f),
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center
             )
             
-            AppText.BodyMedium(
+            Text(
                 text = subtitle,
-                color = AsyncColors.TextSecondary
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
             
             actionText?.let { text ->
-                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_small)))
+                Spacer(modifier = Modifier.height(MaterialTheme.padding.small))
                 Button(
                     onClick = onActionClick ?: {},
                     enabled = onActionClick != null
@@ -310,111 +446,5 @@ fun StandardEmptyState(
                 }
             }
         }
-    }
-}
-
-/**
- * Standard error state layout with retry functionality.
- */
-@Composable
-fun StandardErrorState(
-    title: String = stringResource(R.string.error_title),
-    message: String,
-    onRetryClick: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(dimensionResource(R.dimen.spacing_normal)),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(dimensionResource(R.dimen.spacing_normal))
-        ) {
-            AppText.TitleMedium(
-                text = title,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                fontWeight = FontWeight.Medium
-            )
-            
-            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_small)))
-            
-            AppText.BodyMedium(
-                text = message,
-                color = MaterialTheme.colorScheme.onErrorContainer
-            )
-            
-            onRetryClick?.let { retry ->
-                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_normal)))
-                Button(
-                    onClick = retry,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
-                    )
-                ) {
-                    Text(stringResource(R.string.action_retry))
-                }
-            }
-        }
-    }
-}
-
-/**
- * Standard loading state layout.
- */
-@Composable
-fun StandardLoadingState(
-    message: String = stringResource(R.string.loading_general),
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_normal))
-        ) {
-            CircularProgressIndicator(
-                color = AsyncColors.Primary,
-                strokeWidth = 2.dp
-            )
-            
-            AppText.BodyMedium(
-                text = message,
-                color = AsyncColors.TextSecondary
-            )
-        }
-    }
-}
-
-/**
- * Responsive grid layout that adapts to screen size.
- */
-@Composable
-fun ResponsiveGrid(
-    modifier: Modifier = Modifier,
-    minItemWidth: Int = 160, // dp
-    content: @Composable () -> Unit
-) {
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp
-    val itemSpacing = dimensionResource(R.dimen.spacing_normal).value.toInt()
-    val horizontalPadding = dimensionResource(R.dimen.screen_margin_horizontal).value.toInt() * 2
-    
-    val availableWidth = screenWidth - horizontalPadding
-    val columns = (availableWidth / (minItemWidth + itemSpacing)).coerceAtLeast(1)
-    
-    // For now, use a simple column since we don't have a grid layout
-    // In a real implementation, you would use LazyVerticalGrid
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_normal))
-    ) {
-        content()
     }
 } 

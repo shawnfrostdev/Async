@@ -13,22 +13,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import app.async.core.model.SearchResult
 import app.async.app.ui.theme.AsyncColors
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
+import app.async.app.ui.theme.padding
+import app.async.app.ui.theme.iconSizing
+import app.async.app.ui.theme.componentSizing
+import app.async.app.ui.theme.ComponentSizing
+import app.async.app.ui.theme.IconSizing
 
 /**
- * Centralized card components following design system specifications
+ * Centralized card components following Mihon design system specifications
  * 
- * Card Standards:
- * - Background: #202020 (Surface)
+ * Card Standards as per Mihon UI guide:
+ * - Background: Surface colors from theme
  * - Corner radius: 8-12dp for modern look
  * - Elevation: 2-4dp subtle shadow
- * - Padding: 16dp internal consistency
- * - Content: Title → Text Primary, Subtitle → Text Secondary
+ * - Padding: 16dp internal consistency (MaterialTheme.padding.medium)
+ * - Content: Title → titleMedium, Subtitle → bodyMedium
+ * - Icons: 24dp default size (MaterialTheme.iconSizing.default)
  */
 object AppCards {
     
@@ -43,16 +50,19 @@ object AppCards {
             modifier = modifier
                 .fillMaxWidth()
                 .clickable(onClick = onClick)
-                .padding(horizontal = 12.dp, vertical = 12.dp),
+                .padding(
+                    horizontal = MaterialTheme.padding.medium, // 16dp as per Mihon guide
+                    vertical = MaterialTheme.padding.medium // 16dp as per Mihon guide
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Album art placeholder
+            // Album art placeholder - 56dp size for list items
             Card(
-                modifier = Modifier.size(56.dp),
+                modifier = Modifier.size(ComponentSizing.ListItem.singleLine), // 56dp as per Mihon guide
                 colors = CardDefaults.cardColors(
-                    containerColor = AsyncColors.SurfaceVariant
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                 ),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(MaterialTheme.padding.small) // 8dp corner radius
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -69,29 +79,32 @@ object AppCards {
                         Icon(
                             imageVector = Icons.Default.MusicNote,
                             contentDescription = null,
-                            modifier = Modifier.size(24.dp),
-                            tint = AsyncColors.TextSecondary
+                            modifier = Modifier.size(IconSizing.default), // 24dp as per Mihon guide
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
             }
             
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(MaterialTheme.padding.medium)) // 16dp spacing
             
             // Track info
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                AppText.Title(
+                Text(
                     text = track.title,
+                    style = MaterialTheme.typography.titleMedium, // 16sp Medium as per Mihon guide
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    fontWeight = FontWeight.Medium
                 )
                 
                 track.artist?.let { artist ->
-                    AppText.SecondaryText(
+                    Text(
                         text = artist,
+                        style = MaterialTheme.typography.bodyMedium, // 14sp as per Mihon guide
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -101,63 +114,119 @@ object AppCards {
             // Play button
             IconButton(
                 onClick = onPlayClick,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(ComponentSizing.Button.large) // 48dp touch target
             ) {
                 Icon(
                     imageVector = Icons.Default.PlayArrow,
                     contentDescription = "Play",
-                    tint = AsyncColors.Primary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(IconSizing.default), // 24dp icon
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
         }
     }
     
     @Composable
-    fun InfoCard(
+    fun PlaylistCard(
         title: String,
         subtitle: String? = null,
-        onClick: (() -> Unit)? = null,
-        modifier: Modifier = Modifier,
-        containerColor: Color = AsyncColors.Surface,
-        contentColor: Color = AsyncColors.TextPrimary,
-        content: (@Composable ColumnScope.() -> Unit)? = null
+        thumbnailUrl: String? = null,
+        onClick: () -> Unit,
+        modifier: Modifier = Modifier
     ) {
         Card(
-            modifier = modifier,
-            onClick = onClick ?: {},
-            enabled = onClick != null,
+            modifier = modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick),
             colors = CardDefaults.cardColors(
-                containerColor = containerColor,
-                contentColor = contentColor
+                containerColor = MaterialTheme.colorScheme.surface
             ),
-            shape = RoundedCornerShape(12.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            shape = RoundedCornerShape(MaterialTheme.padding.medium) // 16dp corner radius
         ) {
             Column(
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(MaterialTheme.padding.medium) // 16dp internal padding
             ) {
-                AppText.Title(
+                // Thumbnail area
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(16f / 9f), // Standard aspect ratio
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    shape = RoundedCornerShape(MaterialTheme.padding.small) // 8dp corner radius
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (thumbnailUrl != null) {
+                            AsyncImage(
+                                model = thumbnailUrl,
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.MusicNote,
+                                contentDescription = null,
+                                modifier = Modifier.size(IconSizing.large), // 32dp for larger display
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(MaterialTheme.padding.medium)) // 16dp spacing
+                
+                // Title and subtitle
+                Text(
                     text = title,
-                    fontWeight = FontWeight.SemiBold,
-                    color = contentColor
+                    style = MaterialTheme.typography.titleMedium, // 16sp Medium as per Mihon guide
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
                 
                 subtitle?.let {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    AppText.SecondaryText(
+                    Spacer(modifier = Modifier.height(MaterialTheme.padding.extraSmall)) // 4dp spacing
+                    Text(
                         text = it,
-                        color = if (contentColor == AsyncColors.TextPrimary) 
-                            AsyncColors.TextSecondary 
-                        else 
-                            contentColor.copy(alpha = 0.8f)
+                        style = MaterialTheme.typography.bodyMedium, // 14sp as per Mihon guide
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
+            }
+        }
+    }
+    
+    @Composable
+    fun SectionCard(
+        title: String,
+        modifier: Modifier = Modifier,
+        content: @Composable ColumnScope.() -> Unit
+    ) {
+        Card(
+            modifier = modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            ),
+            shape = RoundedCornerShape(MaterialTheme.padding.medium) // 16dp corner radius
+        ) {
+            Column(
+                modifier = Modifier.padding(MaterialTheme.padding.medium) // 16dp internal padding
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineSmall, // 24sp as per Mihon guide
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = MaterialTheme.padding.small) // 8dp bottom spacing
+                )
                 
-                content?.let {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    it()
-                }
+                content()
             }
         }
     }
@@ -169,19 +238,42 @@ object AppCards {
         onRetry: (() -> Unit)? = null,
         modifier: Modifier = Modifier
     ) {
-        InfoCard(
-            title = title,
-            subtitle = message,
-            modifier = modifier,
-            containerColor = AsyncColors.Surface,
-            contentColor = AsyncColors.Error
+        Card(
+            modifier = modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer
+            ),
+            shape = RoundedCornerShape(MaterialTheme.padding.medium) // 16dp corner radius
         ) {
-            onRetry?.let { retry ->
-                Spacer(modifier = Modifier.height(8.dp))
-                AppButtons.Primary(
-                    text = "Retry",
-                    onClick = retry
+            Column(
+                modifier = Modifier.padding(MaterialTheme.padding.medium) // 16dp internal padding
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium, // 16sp Medium as per Mihon guide
+                    color = MaterialTheme.colorScheme.onErrorContainer,
                 )
+                
+                Spacer(modifier = Modifier.height(MaterialTheme.padding.small)) // 8dp spacing
+                
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium, // 14sp as per Mihon guide
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+                
+                onRetry?.let { retry ->
+                    Spacer(modifier = Modifier.height(MaterialTheme.padding.medium)) // 16dp spacing
+                    Button(
+                        onClick = retry,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        )
+                    ) {
+                        Text("Retry")
+                    }
+                }
             }
         }
     }
@@ -191,40 +283,29 @@ object AppCards {
         title: String = "Loading...",
         modifier: Modifier = Modifier
     ) {
-        InfoCard(
-            title = title,
-            modifier = modifier,
-            containerColor = AsyncColors.Surface,
-            contentColor = AsyncColors.TextPrimary
+        Card(
+            modifier = modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            shape = RoundedCornerShape(MaterialTheme.padding.medium) // 16dp corner radius
         ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(24.dp),
-                strokeWidth = 2.dp,
-                color = AsyncColors.Primary
-            )
-        }
-    }
-    
-    @Composable
-    fun SuccessCard(
-        title: String,
-        message: String,
-        onDismiss: (() -> Unit)? = null,
-        modifier: Modifier = Modifier
-    ) {
-        InfoCard(
-            title = title,
-            subtitle = message,
-            modifier = modifier,
-            containerColor = AsyncColors.Surface,
-            contentColor = AsyncColors.Success
-        ) {
-            onDismiss?.let { dismiss ->
-                Spacer(modifier = Modifier.height(8.dp))
-                AppButtons.Text(
-                    text = "Dismiss",
-                    onClick = dismiss,
-                    color = AsyncColors.Success
+            Row(
+                modifier = Modifier.padding(MaterialTheme.padding.medium), // 16dp internal padding
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(IconSizing.default), // 24dp as per Mihon guide
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                
+                Spacer(modifier = Modifier.width(MaterialTheme.padding.medium)) // 16dp spacing
+                
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium, // 16sp Medium as per Mihon guide
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
         }

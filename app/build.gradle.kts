@@ -81,6 +81,9 @@ dependencies {
     implementation(libs.voyager.tab.navigator)
     implementation(libs.voyager.transitions)
     
+    // Material Motion
+    implementation(libs.material.motion.compose.core)
+    
     // ViewModel
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     

@@ -2,6 +2,7 @@ package app.async.app.navigation
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import soup.compose.material.motion.MaterialFadeThrough
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
@@ -16,6 +17,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.BackHandler
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
 import cafe.adriel.voyager.core.screen.Screen
@@ -34,7 +36,7 @@ import kotlinx.coroutines.launch
 import app.async.app.ui.screens.home.HomeScreen as HomeScreenContent
 import app.async.app.ui.screens.search.SearchScreen
 import app.async.app.ui.screens.library.LibraryScreen
-import app.async.app.ui.screens.settings.SettingsScreen
+import app.async.app.ui.screens.settings.MoreScreen
 import app.async.app.ui.screens.settings.AboutScreen
 import app.async.app.ui.screens.extensions.ExtensionManagementScreen
 import app.async.app.ui.vm.PlayerViewModel
@@ -49,7 +51,7 @@ import logcat.logcat
 /**
  * Tab fade animation duration as per Mihon guide
  */
-private const val TabFadeDuration = 300
+private const val TabFadeDuration = 200
 
 /**
  * Custom Tab interface that extends Voyager's tab system with reselection behavior
@@ -88,26 +90,20 @@ object HomeScreen : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val extensionService = AppModule.getExtensionService()
         var permissionsGranted by remember { mutableStateOf(false) }
         
-        // Sync extensions when app starts/resumes
-        LaunchedEffect(Unit) {
-            extensionService.syncInstalledExtensions()
-        }
+        // Note: Extension sync moved to be lazy to prevent startup crashes
 
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = AsyncColors.Background
         ) {
-            if (!permissionsGranted) {
-                // Show permission manager on first launch
-                PermissionManager(
-                    onPermissionsGranted = {
-                        permissionsGranted = true
-                    }
-                )
-            } else {
+            // Temporarily skip permissions for debugging
+            LaunchedEffect(Unit) {
+                permissionsGranted = true
+            }
+            
+            if (permissionsGranted) {
                 // Main tab navigation following Mihon pattern exactly
                 TabNavigator(
                     tab = HomeTab,  // Default tab as per Mihon
@@ -117,6 +113,27 @@ object HomeScreen : Screen {
                         val playerViewModel: PlayerViewModel = viewModel()
                         val playerUiState = playerViewModel.uiState
                         var isPlayerExpanded by remember { mutableStateOf(false) }
+                        
+                        // Tab-level back navigation - back goes to Home tab first, then pops screen
+                        BackHandler(
+                            enabled = true,
+                            onBack = {
+                                when {
+                                    // If not on Home tab, go to Home tab first
+                                    tabNavigator.current != HomeTab -> {
+                                        tabNavigator.current = HomeTab
+                                    }
+                                    // If on Home tab and can pop screen, pop the screen
+                                    navigator.canPop -> {
+                                        navigator.pop()
+                                    }
+                                    // Otherwise, let the system handle it (exit app)
+                                    else -> {
+                                        // Do nothing - let system handle app exit
+                                    }
+                                }
+                            }
+                        )
                         
                         AsyncScaffold(
                             startBar = {
@@ -161,14 +178,9 @@ object HomeScreen : Screen {
                             },
                             contentWindowInsets = WindowInsets(0),
                         ) { contentPadding ->
-                            // Tab content with fade transitions as per Mihon guide
-                            AnimatedContent(
-                                targetState = tabNavigator.current,
-                                transitionSpec = {
-                                    fadeIn(animationSpec = tween(TabFadeDuration)) togetherWith
-                                            fadeOut(animationSpec = tween(TabFadeDuration))
-                                },
-                                contentKey = { it::class },
+                            // Tab content with Material Fade Through as per animation.md guide
+                            MaterialFadeThrough(
+                                targetState = tabNavigator.current
                             ) { tab ->
                                 tab.Content()
                             }
@@ -262,7 +274,7 @@ object SettingsTab : AsyncTab {
         @Composable
         get() = TabOptions(
             index = 3u,
-            title = "Settings"
+            title = "More"
         )
 
     override suspend fun onReselect(navigator: Navigator) {
@@ -275,8 +287,8 @@ object SettingsTab : AsyncTab {
         val navigator = LocalNavigator.currentOrThrow
         val context = LocalContext.current
         
-        // Call SettingsScreen directly as per Mihon pattern
-        SettingsScreen()
+        // Call MoreScreen directly as per Mihon pattern
+        MoreScreen()
     }
 }
 
@@ -329,7 +341,7 @@ private fun RowScope.AsyncNavigationBarItem(tab: AsyncTab) {
                     is HomeTab -> Icons.Outlined.Home
                     is SearchTab -> Icons.Outlined.Search
                     is LibraryTab -> Icons.Outlined.LibraryMusic
-                    is SettingsTab -> Icons.Outlined.Settings
+                    is SettingsTab -> Icons.Outlined.MoreHoriz
                     else -> Icons.Outlined.Home
                 },
                 contentDescription = tab.options.title
@@ -369,7 +381,7 @@ fun NavigationRailItem(tab: AsyncTab) {
                     is HomeTab -> Icons.Outlined.Home
                     is SearchTab -> Icons.Outlined.Search
                     is LibraryTab -> Icons.Outlined.LibraryMusic
-                    is SettingsTab -> Icons.Outlined.Settings
+                    is SettingsTab -> Icons.Outlined.MoreHoriz
                     else -> Icons.Outlined.Home
                 },
                 contentDescription = tab.options.title
@@ -425,7 +437,7 @@ fun AsyncScaffold(
 object ExtensionManagementScreenNav : Screen {
     @Composable
     override fun Content() {
-        ExtensionManagementScreen()
+        ExtensionManagementScreen.Content()
     }
 }
 

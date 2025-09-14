@@ -28,24 +28,15 @@ class AsyncApplication : Application() {
         try {
             // Initialize dependency injection
             AppModule.initialize(this)
-            logcat { "AsyncApplication: AppModule initialized" }
+            logcat { "AsyncApplication: AppModule initialized successfully" }
             
-            // Initialize extension system asynchronously
-            applicationScope.launch {
-                try {
-                    logcat { "AsyncApplication: Starting extension service initialization" }
-                    val extensionService = AppModule.getExtensionService()
-                    logcat { "AsyncApplication: Got extension service instance" }
-                    extensionService.initialize()
-                    logcat { "AsyncApplication: Extension service initialized successfully" }
-                } catch (e: Exception) {
-                    logcat { "AsyncApplication: Failed to initialize extension service: ${e.message}" }
-                    e.printStackTrace()
-                }
-            }
+            // Note: Extension initialization moved to be lazy/on-demand
+            // to prevent blocking app startup
+            
         } catch (e: Exception) {
             logcat { "AsyncApplication: Failed during initialization: ${e.message}" }
             e.printStackTrace()
+            // Don't rethrow - allow app to continue with limited functionality
         }
     }
 } 

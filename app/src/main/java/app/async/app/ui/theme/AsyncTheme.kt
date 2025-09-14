@@ -10,62 +10,77 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+
+/**
+ * MaterialTheme extension for accessing Mihon spacing system
+ */
+val MaterialTheme.padding: Padding
+    get() = Padding()
 
 // Dark Color Scheme - Primary theme based on documentation
 private val AsyncDarkColorScheme = darkColorScheme(
     // Brand colors
     primary = AsyncColors.Primary,
+    onPrimary = AsyncColors.OnPrimary,
     secondary = AsyncColors.Accent,
-    tertiary = AsyncColors.Accent,
+    onSecondary = AsyncColors.TextPrimary,
+    
+    // Surface colors
+    surface = AsyncColors.Surface,
+    onSurface = AsyncColors.OnSurface,
+    surfaceVariant = AsyncColors.SurfaceVariant,
+    onSurfaceVariant = AsyncColors.OnSurfaceVariant,
     
     // Background colors
     background = AsyncColors.Background,
-    surface = AsyncColors.Surface,
-    surfaceVariant = AsyncColors.SurfaceVariant,
-    
-    // Text colors
-    onPrimary = AsyncColors.OnPrimary,
-    onSecondary = AsyncColors.TextPrimary,
-    onTertiary = AsyncColors.TextPrimary,
     onBackground = AsyncColors.OnBackground,
-    onSurface = AsyncColors.OnSurface,
-    onSurfaceVariant = AsyncColors.OnSurfaceVariant,
     
-    // Status colors
-    error = AsyncColors.Error,
-    onError = AsyncColors.TextPrimary,
+    // Container colors
+    primaryContainer = AsyncColors.Primary.copy(alpha = 0.2f),
+    onPrimaryContainer = AsyncColors.TextPrimary,
+    secondaryContainer = AsyncColors.Accent.copy(alpha = 0.2f),
+    onSecondaryContainer = AsyncColors.TextPrimary,
     
-    // Outline colors
+    // Border/Outline colors
     outline = AsyncColors.Outline,
     outlineVariant = AsyncColors.OutlineVariant,
     
-    // Container colors
-    primaryContainer = AsyncColors.Primary,
-    onPrimaryContainer = AsyncColors.TextPrimary,
-    secondaryContainer = AsyncColors.Surface,
-    onSecondaryContainer = AsyncColors.TextPrimary,
-    
-    // Surface tint
-    surfaceTint = AsyncColors.Primary,
-    
-    // Inverse colors for accessibility
-    inverseSurface = AsyncColors.TextPrimary,
-    inverseOnSurface = AsyncColors.Background,
-    inversePrimary = AsyncColors.Background
+    // Error colors
+    error = AsyncColors.Error,
+    onError = AsyncColors.TextPrimary
 )
 
-// Light Color Scheme - Fallback (though app is designed for dark theme)
+// Light Color Scheme - Secondary theme
 private val AsyncLightColorScheme = lightColorScheme(
+    // Brand colors  
     primary = AsyncColors.Primary,
+    onPrimary = Color.White,
     secondary = AsyncColors.Accent,
-    tertiary = AsyncColors.Accent,
-    background = AsyncColors.TextPrimary,
-    surface = AsyncColors.Surface,
-    onPrimary = AsyncColors.TextPrimary,
-    onSecondary = AsyncColors.TextPrimary,
-    onTertiary = AsyncColors.TextPrimary,
-    onBackground = AsyncColors.Background,
-    onSurface = AsyncColors.Background,
+    onSecondary = Color.White,
+    
+    // Surface colors
+    surface = Color.White,
+    onSurface = Color.Black,
+    surfaceVariant = Color(0xFFF5F5F5),
+    onSurfaceVariant = Color(0xFF666666),
+    
+    // Background colors
+    background = Color(0xFFFAFAFA),
+    onBackground = Color.Black,
+    
+    // Container colors
+    primaryContainer = AsyncColors.Primary.copy(alpha = 0.1f),
+    onPrimaryContainer = AsyncColors.Primary,
+    secondaryContainer = AsyncColors.Accent.copy(alpha = 0.1f),
+    onSecondaryContainer = AsyncColors.Accent,
+    
+    // Border/Outline colors
+    outline = Color(0xFFE0E0E0),
+    outlineVariant = Color(0xFFF0F0F0),
+    
+    // Error colors
     error = AsyncColors.Error,
     onError = AsyncColors.TextPrimary
 )

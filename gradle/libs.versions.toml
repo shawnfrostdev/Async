@@ -50,6 +50,11 @@ materialIconsExtended = "1.7.6"
 # Voyager Navigation
 voyager = "1.0.0"
 
+# Material Motion
+materialMotionCore = "1.2.1"
+
+
+
 # Coil Image Loading
 coil = "2.6.0"
 
@@ -138,6 +143,11 @@ androidx-material-icons-extended = { group = "androidx.compose.material", name =
 voyager-navigator = { group = "cafe.adriel.voyager", name = "voyager-navigator", version.ref = "voyager" }
 voyager-tab-navigator = { group = "cafe.adriel.voyager", name = "voyager-tab-navigator", version.ref = "voyager" }
 voyager-transitions = { group = "cafe.adriel.voyager", name = "voyager-transitions", version.ref = "voyager" }
+
+# Material Motion
+material-motion-compose-core = { group = "io.github.fornewid", name = "material-motion-compose-core", version.ref = "materialMotionCore" }
+
+
 
 # Coil Image Loading
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
