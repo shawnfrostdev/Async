@@ -401,7 +401,7 @@ private fun SearchResultsSection(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -498,7 +498,7 @@ private fun ExtensionResultsSectionStandard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -568,7 +568,7 @@ private fun StandardSearchResultItem(
                 logcat("SearchScreen") { "Song card clicked: ${track.title}" }
                 onPlayClick(track)
             }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Track artwork - sized to match both text lines
@@ -697,7 +697,7 @@ private fun EnhancedSearchResultItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onTrackClick(track) }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Artwork

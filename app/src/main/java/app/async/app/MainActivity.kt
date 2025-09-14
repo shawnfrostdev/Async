@@ -9,7 +9,16 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.media3.common.util.UnstableApi
-import app.async.app.ui.AsyncApp
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.material3.Scaffold
+import androidx.compose.ui.Modifier
+import cafe.adriel.voyager.navigator.Navigator
+import cafe.adriel.voyager.navigator.NavigatorDisposeBehavior
+import cafe.adriel.voyager.transitions.SlideTransition
+import app.async.app.navigation.HomeScreen
+import app.async.app.ui.theme.AsyncTheme
 import logcat.logcat
 
 // @AndroidEntryPoint - Temporarily disabled due to missing Hilt setup
@@ -43,7 +52,23 @@ class MainActivity : ComponentActivity() {
         }
         
         setContent {
-            AsyncApp()
+            AsyncTheme {
+                Navigator(
+                    screen = HomeScreen,
+                    disposeBehavior = NavigatorDisposeBehavior(
+                        disposeNestedNavigators = false,
+                        disposeSteps = true
+                    ),
+                ) { navigator ->
+                    Scaffold(
+                        contentWindowInsets = WindowInsets(0)
+                    ) { contentPadding ->
+                        Box(modifier = Modifier.padding(contentPadding)) {
+                            SlideTransition(navigator)
+                        }
+                    }
+                }
+            }
         }
     }
 }

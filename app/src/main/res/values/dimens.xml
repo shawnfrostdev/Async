@@ -12,9 +12,9 @@
     <dimen name="spacing_xxxl">48dp</dimen>
 
     <!-- Screen Margins -->
-    <dimen name="screen_margin_horizontal">16dp</dimen>
+    <dimen name="screen_margin_horizontal">12dp</dimen>
     <dimen name="screen_margin_vertical">16dp</dimen>
-    <dimen name="screen_padding">16dp</dimen>
+    <dimen name="screen_padding">12dp</dimen>
 
     <!-- Component Sizing -->
     <dimen name="icon_size_small">16dp</dimen>

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Tablet-specific spacing (larger screens) -->
-    <dimen name="screen_margin_horizontal">24dp</dimen>
+    <dimen name="screen_margin_horizontal">12dp</dimen>
     <dimen name="screen_margin_vertical">24dp</dimen>
-    <dimen name="screen_padding">24dp</dimen>
+    <dimen name="screen_padding">12dp</dimen>
 
     <!-- Larger components for tablets -->
     <dimen name="icon_size_large">40dp</dimen>

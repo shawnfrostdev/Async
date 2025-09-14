@@ -726,7 +726,7 @@ private fun TrackCard(
                 selected = isSelected,
                 onClick = onClick
             )
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Track artwork with real album cover
@@ -827,7 +827,7 @@ private fun DownloadedTrackCard(
                 selected = isSelected,
                 onClick = onClick
             )
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Track artwork with real album cover

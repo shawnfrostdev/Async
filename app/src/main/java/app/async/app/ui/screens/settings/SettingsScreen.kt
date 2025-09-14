@@ -41,19 +41,21 @@ object SettingsMainScreen : cafe.adriel.voyager.core.screen.Screen {
     override fun Content() {
         val navigator = cafe.adriel.voyager.navigator.LocalNavigator.current
         
-        StandardScreenLayout(
-            hasTopBar = false,
-            modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.systemBars)
         ) {
             // Header section
             StandardScreenHeader(
                 title = stringResource(R.string.title_settings),
-                subtitle = stringResource(R.string.settings_subtitle)
+                subtitle = stringResource(R.string.settings_subtitle),
+                modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.screen_margin_horizontal))
             )
             
             // Settings content
             StandardLazyColumn(
-                hasTopBar = false,
+                hasTopBar = true,
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_small))
             ) {
                 item {
@@ -133,7 +135,7 @@ private fun SettingsSection(
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+        modifier = modifier.padding(horizontal = 12.dp, vertical = 8.dp)
     )
 }
 

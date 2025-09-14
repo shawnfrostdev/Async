@@ -95,6 +95,14 @@ fun isTablet(): Boolean {
 }
 
 /**
+ * Check if the current device should use tablet UI (following Mihon pattern)
+ */
+@Composable
+fun isTabletUi(): Boolean {
+    return isTablet()
+}
+
+/**
  * Check if the current device is in landscape orientation
  */
 @Composable
